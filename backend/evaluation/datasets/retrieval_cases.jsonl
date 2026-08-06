@@ -1,0 +1,15 @@
+{"id":"docker_cache_001","query":"How does Docker build cache work and when is it invalidated?","expected_source":"docker","expected_path":"content/get-started/docker-concepts/building-images/using-the-build-cache.md","status":"active"}
+{"id":"docker_dockerignore_001","query":"How does a .dockerignore file reduce the Docker build context?","expected_source":"docker","expected_path":"content/manuals/build/concepts/context.md","status":"active"}
+{"id":"kubernetes_configmap_001","query":"How does a Kubernetes ConfigMap provide configuration to a Pod?","expected_source":"kubernetes","expected_path":"content/en/docs/tasks/configure-pod-container/configure-pod-configmap.md","status":"active"}
+{"id":"kubernetes_liveness_001","query":"What is the difference between liveness, readiness, and startup probes in Kubernetes?","expected_source":"kubernetes","expected_path":"content/en/docs/concepts/workloads/pods/probes.md","status":"active"}
+{"id":"fastapi_background_tasks_001","query":"How do background tasks work in FastAPI?","expected_source":"fastapi","expected_path":"en/docs/tutorial/background-tasks.md","status":"active"}
+{"id":"fastapi_middleware_001","query":"How do I add middleware to a FastAPI application?","expected_source":"fastapi","expected_path":"en/docs/tutorial/middleware.md","status":"active"}
+{"id":"fastapi_validation_001","query":"How does FastAPI validate request bodies using Pydantic models?","expected_source":"fastapi","expected_path":"en/docs/tutorial/body.md","status":"active"}
+{"id":"langgraph_checkpoint_001","query":"How do LangGraph checkpointers persist graph state between executions?","expected_source":"langchain","expected_path":"langgraph/checkpointers.mdx","status":"active"}
+{"id":"langgraph_interrupt_001","query":"How can a LangGraph workflow pause for human approval and resume later?","expected_source":"langchain","expected_path":"langgraph/interrupts.mdx","status":"active"}
+{"id":"langgraph_state_001","query":"How is shared state defined and updated in a LangGraph graph?","expected_source":"langchain","expected_path":"langgraph/graph-api.mdx","status":"active"}
+{"id":"langgraph_memory_001","query":"What is the difference between short-term and long-term memory in LangGraph?","expected_source":"langchain","expected_path":"concepts/memory.mdx","status":"active"}
+{"id":"qdrant_filter_001","query":"How do Qdrant payload filters restrict vector search results?","expected_source":"qdrant","expected_path":"roadmap/roadmap-2022.md","status":"needs_review"}
+{"id":"qdrant_collection_001","query":"How do I create a Qdrant collection with cosine distance?","expected_source":"qdrant","expected_path":"DEVELOPMENT.md","status":"needs_review"}
+{"id":"qdrant_hybrid_001","query":"How does hybrid search combine dense and sparse vectors in Qdrant?","expected_source":"qdrant","expected_path":"roadmap/roadmap-2024.md","status":"needs_review"}
+{"id":"qdrant_payload_index_001","query":"Why should payload fields be indexed in Qdrant?","expected_source":"qdrant","expected_path":"roadmap/roadmap-2022.md","status":"needs_review"}
