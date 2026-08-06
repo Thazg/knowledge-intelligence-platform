@@ -82,7 +82,7 @@ class DocumentSerializer:
                     filename=record["filename"],
                     relative_path=relative_path,
                     extension=record["extension"],
-                    title=record.get("title"),
+                    title=record.get("title") or "",
                     headings=record.get("headings", []),
                     word_count=record.get("word_count", 0),
                     token_count=record.get("token_count", 0),

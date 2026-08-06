@@ -6,14 +6,16 @@ from backend.chunking.serializer import ChunkSerializer
 def main() -> None:
 
     serializer = ChunkSerializer()
+    chunks_path = Path(
+        "data/processed/chunks_fixed.jsonl"
+    )
+    expected_chunks = serializer.load_jsonl(chunks_path)
 
     total_chunks = 0
     total_batches = 0
 
     for batch in serializer.iter_jsonl_batches(
-        input_path=Path(
-            "data/processed/chunks_fixed.jsonl"
-        ),
+        input_path=chunks_path,
         batch_size=64,
     ):
         total_batches += 1
@@ -31,7 +33,7 @@ def main() -> None:
     print(f"Total batches : {total_batches:,}")
     print(f"Total chunks  : {total_chunks:,}")
 
-    assert total_chunks == 33_017
+    assert total_chunks == len(expected_chunks)
 
     print()
     print("All chunk batch iterator checks passed.")

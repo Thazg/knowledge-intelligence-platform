@@ -2,7 +2,7 @@ from pathlib import Path
 
 from backend.chunking.pipeline import ChunkingPipeline
 from backend.chunking.reporter import ChunkingReporter
-from backend.tokenization import reporter
+
 
 def main() -> None:
 
@@ -24,6 +24,7 @@ def main() -> None:
         chunks=chunks,
         chunk_size=384,
     )
+
 
 if __name__ == "__main__":
     main()

@@ -22,6 +22,30 @@ class DocumentTokenizer:
             add_special_tokens=False,
         )
 
+    def encode_with_offsets(
+        self,
+        text: str,
+    ) -> tuple[list[int], list[tuple[int, int]]] | None:
+        if not text:
+            return [], []
+
+        try:
+            encoded = self.tokenizer(
+                text,
+                add_special_tokens=False,
+                return_offsets_mapping=True,
+            )
+        except NotImplementedError:
+            return None
+
+        token_ids = list(encoded["input_ids"])
+        offsets = [
+            (int(start), int(end))
+            for start, end in encoded["offset_mapping"]
+        ]
+
+        return token_ids, offsets
+
     def decode(
         self,
         token_ids: list[int],

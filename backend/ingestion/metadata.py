@@ -8,7 +8,7 @@ TITLE_PATTERN = re.compile(
 )
 
 FRONTMATTER_TITLE_PATTERN = re.compile(
-    r"^---\s*\n.*?^title:\s*[\"']?(.+?)[\"']?\s*$.*?^---\s*$",
+    r"\A\s*---\s*\n.*?^title:\s*[\"']?(.+?)[\"']?\s*$.*?^---\s*$",
     re.MULTILINE | re.DOTALL,
 )
 

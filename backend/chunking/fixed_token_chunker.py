@@ -31,7 +31,15 @@ class FixedTokenChunker:
         self,
         document: Document,
     ) -> list[Chunk]:
-        token_ids = self.tokenizer.encode(document.content)
+        encoded_with_offsets = self.tokenizer.encode_with_offsets(
+            document.content
+        )
+
+        if encoded_with_offsets is None:
+            token_ids = self.tokenizer.encode(document.content)
+            offsets: list[tuple[int, int]] | None = None
+        else:
+            token_ids, offsets = encoded_with_offsets
 
         if not token_ids:
             return []
@@ -49,16 +57,26 @@ class FixedTokenChunker:
             end_index = start_index + self.chunk_size
 
             chunk_token_ids = token_ids[start_index:end_index]
+            chunk_offsets = (
+                None
+                if offsets is None
+                else offsets[start_index:end_index]
+            )
 
             if not chunk_token_ids:
                 break
 
-            chunk_token_ids = self._trim_leading_continuation_tokens(
-                chunk_token_ids
+            chunk_token_ids, chunk_offsets = (
+                self._trim_leading_continuation_tokens(
+                    chunk_token_ids,
+                    chunk_offsets,
+                )
             )
 
-            chunk_content, actual_token_count = self._build_safe_chunk_content(
-                chunk_token_ids
+            chunk_content, actual_token_count = self._build_chunk_content(
+                document.content,
+                chunk_token_ids,
+                chunk_offsets,
             )
 
             if not chunk_content:
@@ -93,8 +111,10 @@ class FixedTokenChunker:
     def _trim_leading_continuation_tokens(
         self,
         token_ids: list[int],
-    ) -> list[int]:
+        offsets: list[tuple[int, int]] | None = None,
+    ) -> tuple[list[int], list[tuple[int, int]] | None]:
         trimmed_token_ids = token_ids.copy()
+        trimmed_offsets = None if offsets is None else offsets.copy()
 
         while trimmed_token_ids:
             token = self.tokenizer.convert_id_to_token(
@@ -105,8 +125,43 @@ class FixedTokenChunker:
                 break
 
             trimmed_token_ids.pop(0)
+            if trimmed_offsets is not None:
+                trimmed_offsets.pop(0)
 
-        return trimmed_token_ids
+        return trimmed_token_ids, trimmed_offsets
+
+    def _build_chunk_content(
+        self,
+        document_content: str,
+        token_ids: list[int],
+        offsets: list[tuple[int, int]] | None,
+    ) -> tuple[str, int]:
+        if offsets is None:
+            return self._build_safe_chunk_content(token_ids)
+
+        valid_offsets = [
+            offset
+            for offset in offsets
+            if offset[1] > offset[0]
+        ]
+
+        if not valid_offsets:
+            return "", 0
+
+        start_char = valid_offsets[0][0]
+        end_char = valid_offsets[-1][1]
+
+        content = document_content[start_char:end_char].strip()
+
+        if not content:
+            return "", 0
+
+        actual_token_ids = self.tokenizer.encode(content)
+
+        if len(actual_token_ids) <= self.chunk_size:
+            return content, len(actual_token_ids)
+
+        return self._build_safe_chunk_content(token_ids)
 
     def _build_safe_chunk_content(
         self,

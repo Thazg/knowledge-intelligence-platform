@@ -121,11 +121,7 @@ def clone_and_extract(name: str, config: dict) -> None:
             else:
                 extracted_root = extract_dir
 
-            docs_source = (
-                extracted_root
-                if docs_path == "."
-                else extracted_root / docs_path
-            )
+            docs_source = extracted_root
 
             if not docs_source.exists():
                 print(f"[WARN] docs path not found: {docs_source}")
@@ -137,6 +133,7 @@ def clone_and_extract(name: str, config: dict) -> None:
                 docs_source,
                 output_dir,
                 dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(".git"),
             )
 
         finally:
@@ -168,6 +165,7 @@ def clone_and_extract(name: str, config: dict) -> None:
         docs_source,
         output_dir,
         dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns(".git"),
     )
 
     print(f"[CLEAN] {name}")

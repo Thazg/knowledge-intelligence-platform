@@ -9,19 +9,19 @@ DOCUMENT_SOURCES = {
     },
     "fastapi": {
         "repo": "https://github.com/fastapi/fastapi.git",
-        "docs_path": "docs/en/docs",
+        "docs_path": "docs",
     },
     "docker": {
         "repo": "https://github.com/docker/docs.git",
-        "docs_path": "content",
+        "docs_path": ".",
     },
     "kubernetes": {
         "repo": "https://github.com/kubernetes/website.git",
-        "docs_path": "content/en/docs",
+        "docs_path": ".",
     },
     "huggingface": {
         "repo": "https://github.com/huggingface/transformers.git",
-        "docs_path": "docs/source/en",
+        "docs_path": "docs",
     },
     "qdrant": {
         "repo": "https://github.com/qdrant/qdrant.git",
