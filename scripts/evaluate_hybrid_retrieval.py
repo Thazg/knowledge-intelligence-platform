@@ -118,6 +118,8 @@ def main() -> None:
         dense_retriever=dense_retriever,
         bm25_retriever=bm25_retriever,
         rrf_k=60,
+        dense_weight=0.7,
+        bm25_weight=0.3,
     )
 
     evaluator = RetrievalEvaluator(

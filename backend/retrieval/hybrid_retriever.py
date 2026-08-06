@@ -11,13 +11,32 @@ class HybridRetriever:
         dense_retriever: DenseRetriever,
         bm25_retriever: BM25Retriever,
         rrf_k: int = 60,
+        dense_weight: float = 0.7,
+        bm25_weight: float = 0.3,
     ) -> None:
         if rrf_k <= 0:
             raise ValueError("rrf_k must be greater than 0.")
 
+        if dense_weight < 0:
+            raise ValueError(
+                "dense_weight must be greater than or equal to 0."
+            )
+
+        if bm25_weight < 0:
+            raise ValueError(
+                "bm25_weight must be greater than or equal to 0."
+            )
+
+        if dense_weight + bm25_weight <= 0:
+            raise ValueError(
+                "At least one retrieval weight must be greater than 0."
+            )
+
         self.dense_retriever = dense_retriever
         self.bm25_retriever = bm25_retriever
         self.rrf_k = rrf_k
+        self.dense_weight = dense_weight
+        self.bm25_weight = bm25_weight
 
     def retrieve(
         self,
@@ -66,13 +85,13 @@ class HybridRetriever:
 
         for result in dense_results:
             fused_scores[result.chunk_id] += (
-                1.0 / (self.rrf_k + result.rank)
+                self.dense_weight/ (self.rrf_k + result.rank)
             )
             result_by_chunk_id[result.chunk_id] = result
 
         for result in bm25_results:
             fused_scores[result.chunk_id] += (
-                1.0 / (self.rrf_k + result.rank)
+                self.bm25_weight/ (self.rrf_k + result.rank)
             )
             result_by_chunk_id.setdefault(
                 result.chunk_id,
