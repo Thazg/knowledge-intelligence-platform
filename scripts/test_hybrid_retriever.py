@@ -55,7 +55,7 @@ def main() -> None:
     results = hybrid_retriever.retrieve(
         query=query,
         top_k=5,
-        candidate_k=30,
+        candidate_multiplier=6,
         max_chunks_per_document=1,
     )
 
