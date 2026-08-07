@@ -1,97 +1,80 @@
-import json
 from pathlib import Path
 
 from backend.chunking.serializer import ChunkSerializer
 from backend.embedding.embedder import LocalEmbedder
+from backend.evaluation.dataset_loader import (
+    load_evaluation_cases,
+)
+from backend.evaluation.metrics import (
+    calculate_metrics,
+    calculate_metrics_by_category,
+    print_metrics,
+)
 from backend.evaluation.retrieval_evaluator import (
-    EvaluationCase,
     RetrievalEvaluator,
 )
-from backend.retrieval.bm25_retriever import BM25Retriever
-from backend.retrieval.dense_retriever import DenseRetriever
-from backend.retrieval.hybrid_retriever import HybridRetriever
-from backend.vector_store.qdrant_store import QdrantVectorStore
 from backend.reranking.cross_encoder_reranker import (
     CrossEncoderReranker,
+)
+from backend.retrieval.bm25_retriever import (
+    BM25Retriever,
+)
+from backend.retrieval.dense_retriever import (
+    DenseRetriever,
+)
+from backend.retrieval.hybrid_retriever import (
+    HybridRetriever,
 )
 from backend.retrieval.reranked_retriever import (
     RerankedRetriever,
 )
+from backend.vector_store.qdrant_store import (
+    QdrantVectorStore,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATASET_PATH = Path(
-    "backend/evaluation/datasets/retrieval_cases.jsonl"
+
+DATASET_PATH = (
+    PROJECT_ROOT
+    / "benchmarks"
+    / "retrieval"
+    / "cases.jsonl"
 )
+
 CHUNKS_PATH = (
     PROJECT_ROOT
     / "data"
     / "processed"
     / "chunks_fixed.jsonl"
 )
-COLLECTION_NAME = "enterprise_knowledge_fixed_bge_small"
 
+COLLECTION_NAME = (
+    "enterprise_knowledge_fixed_bge_small"
+)
 
-def load_cases(
-    path: Path,
-) -> list[EvaluationCase]:
+EMBEDDING_MODEL = (
+    "BAAI/bge-small-en-v1.5"
+)
 
-    cases: list[EvaluationCase] = []
-
-    with path.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-        for line_number, line in enumerate(
-            file,
-            start=1,
-        ):
-            line = line.strip()
-
-            if not line:
-                continue
-
-            record = json.loads(line)
-
-            if record.get("status") != "active":
-                continue
-
-            cases.append(
-                EvaluationCase(
-                    case_id=record["id"],
-                    query=record["query"],
-                    expected_source=record[
-                        "expected_source"
-                    ],
-                    expected_path=record[
-                        "expected_path"
-                    ],
-                )
-            )
-
-    return cases
-
-
-def mean(values: list[float]) -> float:
-    if not values:
-        return 0.0
-
-    return sum(values) / len(values)
+RERANKER_MODEL = (
+    "mixedbread-ai/mxbai-rerank-base-v1"
+)
 
 
 def main() -> None:
-
-    cases = load_cases(DATASET_PATH)
+    cases = load_evaluation_cases(
+        DATASET_PATH,
+        active_only=True,
+    )
 
     if not cases:
         raise ValueError(
             "No active evaluation cases found."
         )
 
-    chunks_path = (
-        PROJECT_ROOT
-        / "data"
-        / "processed"
-        / "chunks_fixed.jsonl"
+    print(
+        f"Loaded cases : {len(cases)}"
     )
 
     serializer = ChunkSerializer()
@@ -100,10 +83,12 @@ def main() -> None:
         CHUNKS_PATH
     )
 
-    print(f"Loaded chunks: {len(chunks):,}")
+    print(
+        f"Loaded chunks: {len(chunks):,}"
+    )
 
     embedder = LocalEmbedder(
-        model_name="BAAI/bge-small-en-v1.5",
+        model_name=EMBEDDING_MODEL,
     )
 
     vector_store = QdrantVectorStore(
@@ -120,24 +105,25 @@ def main() -> None:
         chunks=chunks,
     )
 
-    hybrid_retriever  = HybridRetriever(
+    hybrid_retriever = HybridRetriever(
         dense_retriever=dense_retriever,
         bm25_retriever=bm25_retriever,
         rrf_k=60,
         dense_weight=0.7,
         bm25_weight=0.3,
     )
-    
 
     reranker = CrossEncoderReranker(
-        model_name="mixedbread-ai/mxbai-rerank-base-v1",
+        model_name=RERANKER_MODEL,
         batch_size=16,
     )
 
-    reranked_retriever = RerankedRetriever(
-        base_retriever=hybrid_retriever,
-        reranker=reranker,
-        candidate_multiplier=4,
+    reranked_retriever = (
+        RerankedRetriever(
+            base_retriever=hybrid_retriever,
+            reranker=reranker,
+            candidate_multiplier=4,
+        )
     )
 
     evaluator = RetrievalEvaluator(
@@ -149,78 +135,32 @@ def main() -> None:
         top_k=10,
     )
 
-    recall_at_1 = mean([
-        float(result.hit_at_k(1))
-        for result in results
-    ])
-
-    recall_at_3 = mean([
-        float(result.hit_at_k(3))
-        for result in results
-    ])
-
-    recall_at_5 = mean([
-        float(result.hit_at_k(5))
-        for result in results
-    ])
-
-    recall_at_10 = mean([
-        float(result.hit_at_k(10))
-        for result in results
-    ])
-
-    mrr = mean([
-        result.reciprocal_rank
-        for result in results
-    ])
-
-    print("=" * 80)
-    print("RERANKED HYBRID RETRIEVAL EVALUATION")
-    print("=" * 80)
-    print(f"Cases     : {len(results)}")
-    print(f"Recall@1  : {recall_at_1:.4f}")
-    print(f"Recall@3  : {recall_at_3:.4f}")
-    print(f"Recall@5  : {recall_at_5:.4f}")
-    print(f"Recall@10 : {recall_at_10:.4f}")
-    print(f"MRR       : {mrr:.4f}")
-
-    print()
-    print("=" * 80)
-    print("CASE RESULTS")
-    print("=" * 80)
-
-    for result in results:
-        rank = (
-            result.first_relevant_rank
-            if result.first_relevant_rank
-            is not None
-            else "MISS"
+    overall_metrics = (
+        calculate_metrics(
+            results
         )
+    )
 
-        print()
-        print("-" * 80)
-        print(f"Case          : {result.case_id}")
-        print(f"Relevant rank : {rank}")
-        print(f"Expected path : {result.expected_path}")
+    print_metrics(
+        "RERANKED HYBRID RETRIEVAL EVALUATION",
+        overall_metrics,
+    )
 
-        for index, path in enumerate(
-            result.retrieved_paths,
-            start=1,
-        ):
-            marker = (
-                " <-- expected"
-                if (
-                    path.replace("\\", "/").lower()
-                    == result.expected_path
-                    .replace("\\", "/")
-                    .lower()
-                )
-                else ""
-            )
+    category_metrics = (
+        calculate_metrics_by_category(
+            results
+        )
+    )
 
-            print(
-                f"{index:>2}. {path}{marker}"
-            )
+    for category in sorted(
+        category_metrics
+    ):
+        print_metrics(
+            f"CATEGORY: {category}",
+            category_metrics[
+                category
+            ],
+        )
 
 
 if __name__ == "__main__":

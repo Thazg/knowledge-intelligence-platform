@@ -70,6 +70,23 @@
       "ndcg_at_5": 0.6565,
       "ndcg_at_10": 0.683,
       "mrr": 0.7137
+    },
+    "reranked_hybrid": {
+      "base_retriever": "weighted_rrf",
+      "reranker_model": "mixedbread-ai/mxbai-rerank-base-v1",
+      "candidate_multiplier": 4,
+      "batch_size": 16,
+      "hit_at_1": 0.53,
+      "hit_at_3": 0.79,
+      "hit_at_5": 0.88,
+      "hit_at_10": 0.92,
+      "recall_at_3": 0.6192,
+      "recall_at_5": 0.7492,
+      "recall_at_10": 0.8208,
+      "ndcg_at_3": 0.5856,
+      "ndcg_at_5": 0.6375,
+      "ndcg_at_10": 0.6628,
+      "mrr": 0.6762
     }
   },
   "category_mrr": {
@@ -77,36 +94,49 @@
       "dense": 0.4183,
       "bm25": 0.2681,
       "weighted_rrf": 0.4592,
-      "multi_query": 0.5319
+      "multi_query": 0.5319,
+      "reranked_hybrid": 0.5889
     },
     "cross_tool": {
       "dense": 0.5671,
       "bm25": 0.6308,
       "weighted_rrf": 0.6181,
-      "multi_query": 0.5972
+      "multi_query": 0.5972,
+      "reranked_hybrid": 0.6433
     },
     "lexical": {
       "dense": 0.7363,
       "bm25": 0.666,
       "weighted_rrf": 0.8792,
-      "multi_query": 0.8517
+      "multi_query": 0.8517,
+      "reranked_hybrid": 0.6937
     },
     "semantic": {
       "dense": 0.7083,
       "bm25": 0.7,
       "weighted_rrf": 0.8088,
-      "multi_query": 0.8
+      "multi_query": 0.8,
+      "reranked_hybrid": 0.6683
     },
     "version_specific": {
       "dense": 0.8917,
       "bm25": 0.7767,
       "weighted_rrf": 0.8583,
-      "multi_query": 0.7875
+      "multi_query": 0.7875,
+      "reranked_hybrid": 0.7867
     }
   },
   "decision": {
     "default_retriever": "weighted_rrf",
     "advanced_strategy": "multi_query",
-    "reason": "Weighted RRF achieved the highest overall MRR and Hit@1 while avoiding the additional query rewriting and retrieval cost of Multi-Query Retrieval."
+    "selective_reranking": {
+      "enabled_globally": false,
+      "candidate_strategy": "reranked_hybrid",
+      "promising_categories": [
+        "ambiguous",
+        "cross_tool"
+      ]
+    },
+    "reason": "Weighted RRF achieved the highest overall MRR and Hit@1. Multi-Query improved retrieval coverage, while Cross-Encoder reranking improved ambiguous and cross-tool queries but reduced overall ranking quality."
   }
-}
+}   
