@@ -62,6 +62,7 @@ Configuration:
 - Base retriever: Weighted RRF
 - Reranker model: `mixedbread-ai/mxbai-rerank-base-v1`
 - Candidate multiplier: 4
+- Candidate pool at top_k=10: up to 40 candidates
 - Batch size: 16
 
 ## Evaluation Metrics
@@ -96,15 +97,15 @@ MRR measures how early the first relevant document appears in the ranking.
 | BM25 | 0.4700 | 0.7100 | 0.8000 | 0.8700 | 0.5317 | 0.6250 | 0.7308 | 0.4844 | 0.5257 | 0.5650 | 0.6083 |
 | Weighted RRF | **0.6200** | **0.8100** | 0.8700 | 0.9300 | **0.6408** | 0.7308 | 0.8392 | **0.6010** | 0.6402 | 0.6788 | **0.7247** |
 | Multi-Query | 0.5800 | **0.8100** | **0.8800** | **0.9500** | 0.6358 | **0.7658** | **0.8425** | 0.6007 | **0.6565** | **0.6830** | 0.7137 |
-| Reranked Hybrid | 0.5300 | 0.7900 | **0.8800** | 0.9200 | 0.6192 | 0.7492 | 0.8208 | 0.5856 | 0.6375 | 0.6628 | 0.6762 |
+| Reranked Hybrid | 0.5400 | 0.7900 | **0.8800** | 0.9100 | 0.6142 | 0.7425 | 0.8242 | 0.5832 | 0.6343 | 0.6558 | 0.6792 |
 
 ## Category MRR
 
 | Category | Dense | BM25 | Weighted RRF | Multi-Query | Reranked Hybrid |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Ambiguous | 0.4183 | 0.2681 | 0.4592 | 0.5319 | **0.5889** |
-| Cross-tool | 0.5671 | 0.6308 | 0.6181 | 0.5972 | **0.6433** |
-| Lexical | 0.7363 | 0.6660 | **0.8792** | 0.8517 | 0.6937 |
+| Ambiguous | 0.4183 | 0.2681 | 0.4592 | 0.5319 | **0.5729** |
+| Cross-tool | 0.5671 | 0.6308 | 0.6181 | 0.5972 | **0.6450** |
+| Lexical | 0.7363 | 0.6660 | **0.8792** | 0.8517 | 0.7229 |
 | Semantic | 0.7083 | 0.7000 | **0.8088** | 0.8000 | 0.6683 |
 | Version-specific | **0.8917** | 0.7767 | 0.8583 | 0.7875 | 0.7867 |
 
@@ -210,39 +211,39 @@ Cross-Encoder reranking did not improve overall retrieval quality when applied g
 Overall MRR decreased:
 
 - Weighted RRF: 0.7247
-- Reranked Hybrid: 0.6762
+- Reranked Hybrid: 0.6792
 
 Hit@1 also decreased:
 
 - Weighted RRF: 0.6200
-- Reranked Hybrid: 0.5300
+- Reranked Hybrid: 0.5400
 
 Overall ranking-quality metrics also declined:
 
 - Weighted RRF nDCG@3: 0.6010
-- Reranked Hybrid nDCG@3: 0.5856
+- Reranked Hybrid nDCG@3: 0.5832
 
 - Weighted RRF nDCG@10: 0.6788
-- Reranked Hybrid nDCG@10: 0.6628
+- Reranked Hybrid nDCG@10: 0.6558
 
 However, reranking produced strong gains in difficult categories.
 
 Ambiguous-query MRR improved:
 
 - Weighted RRF: 0.4592
-- Reranked Hybrid: 0.5889
+- Reranked Hybrid: 0.5729
 
 Cross-tool MRR improved:
 
 - Weighted RRF: 0.6181
-- Reranked Hybrid: 0.6433
+- Reranked Hybrid: 0.6450
 
 At the same time, reranking significantly reduced performance for lexical and semantic queries.
 
 Lexical MRR:
 
 - Weighted RRF: 0.8792
-- Reranked Hybrid: 0.6937
+- Reranked Hybrid: 0.7229
 
 Semantic MRR:
 
@@ -262,8 +263,8 @@ The best-performing strategy differs by query category.
 
 | Category | Best Strategy | MRR |
 | --- | --- | ---: |
-| Ambiguous | Reranked Hybrid | 0.5889 |
-| Cross-tool | Reranked Hybrid | 0.6433 |
+| Ambiguous | Reranked Hybrid | 0.5729 |
+| Cross-tool | Reranked Hybrid | 0.6450 |
 | Lexical | Weighted RRF | 0.8792 |
 | Semantic | Weighted RRF | 0.8088 |
 | Version-specific | Dense | 0.8917 |

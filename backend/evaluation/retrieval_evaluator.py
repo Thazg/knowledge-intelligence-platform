@@ -257,7 +257,6 @@ class RetrievalEvaluator:
                 query=case.query,
                 top_k=top_k,
                 max_chunks_per_document=1,
-                candidate_multiplier=5,
             )
         )
 

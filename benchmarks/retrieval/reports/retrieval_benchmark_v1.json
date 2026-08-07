@@ -72,21 +72,22 @@
       "mrr": 0.7137
     },
     "reranked_hybrid": {
-      "base_retriever": "weighted_rrf",
-      "reranker_model": "mixedbread-ai/mxbai-rerank-base-v1",
-      "candidate_multiplier": 4,
-      "batch_size": 16,
-      "hit_at_1": 0.53,
-      "hit_at_3": 0.79,
-      "hit_at_5": 0.88,
-      "hit_at_10": 0.92,
-      "recall_at_3": 0.6192,
-      "recall_at_5": 0.7492,
-      "recall_at_10": 0.8208,
-      "ndcg_at_3": 0.5856,
-      "ndcg_at_5": 0.6375,
-      "ndcg_at_10": 0.6628,
-      "mrr": 0.6762
+    "base_retriever": "weighted_rrf",
+    "reranker_model": "mixedbread-ai/mxbai-rerank-base-v1",
+    "candidate_multiplier": 4,
+    "candidate_pool_at_top_k_10": 40,
+    "batch_size": 16,
+    "hit_at_1": 0.54,
+    "hit_at_3": 0.79,
+    "hit_at_5": 0.88,
+    "hit_at_10": 0.91,
+    "recall_at_3": 0.6142,
+    "recall_at_5": 0.7425,
+    "recall_at_10": 0.8042,
+    "ndcg_at_3": 0.5832,
+    "ndcg_at_5": 0.6343,
+    "ndcg_at_10": 0.6558,
+    "mrr": 0.6792
     }
   },
   "category_mrr": {
@@ -95,21 +96,21 @@
       "bm25": 0.2681,
       "weighted_rrf": 0.4592,
       "multi_query": 0.5319,
-      "reranked_hybrid": 0.5889
+      "reranked_hybrid": 0.5729
     },
     "cross_tool": {
       "dense": 0.5671,
       "bm25": 0.6308,
       "weighted_rrf": 0.6181,
       "multi_query": 0.5972,
-      "reranked_hybrid": 0.6433
+      "reranked_hybrid": 0.6450
     },
     "lexical": {
       "dense": 0.7363,
       "bm25": 0.666,
       "weighted_rrf": 0.8792,
       "multi_query": 0.8517,
-      "reranked_hybrid": 0.6937
+      "reranked_hybrid": 0.7229
     },
     "semantic": {
       "dense": 0.7083,
