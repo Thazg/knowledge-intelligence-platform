@@ -8,7 +8,14 @@ from backend.evaluation.retrieval_evaluator import (
 )
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
-
+from backend.evaluation.dataset_loader import (
+    load_evaluation_cases,
+)
+from backend.evaluation.metrics import (
+    calculate_metrics,
+    calculate_metrics_by_category,
+    print_metrics,
+)
 
 DATASET_PATH = Path(
     "backend/evaluation/datasets/retrieval_cases.jsonl"
@@ -17,46 +24,6 @@ DATASET_PATH = Path(
 COLLECTION_NAME = (
     "enterprise_knowledge_fixed_bge_small"
 )
-
-
-def load_cases(
-    path: Path,
-) -> list[EvaluationCase]:
-
-    cases: list[EvaluationCase] = []
-
-    with path.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-        for line_number, line in enumerate(
-            file,
-            start=1,
-        ):
-            line = line.strip()
-
-            if not line:
-                continue
-
-            record = json.loads(line)
-
-            if record.get("status") != "active":
-                continue
-
-            cases.append(
-                EvaluationCase(
-                    case_id=record["id"],
-                    query=record["query"],
-                    expected_source=record[
-                        "expected_source"
-                    ],
-                    expected_path=record[
-                        "expected_path"
-                    ],
-                )
-            )
-
-    return cases
 
 
 def mean(values: list[float]) -> float:
@@ -68,7 +35,7 @@ def mean(values: list[float]) -> float:
 
 def main() -> None:
 
-    cases = load_cases(DATASET_PATH)
+    cases = load_evaluation_cases(DATASET_PATH)
 
     if not cases:
         raise ValueError(
@@ -98,79 +65,27 @@ def main() -> None:
         top_k=10,
     )
 
-    recall_at_1 = mean([
-        float(result.hit_at_k(1))
-        for result in results
-    ])
+    overall_metrics = calculate_metrics(
+        results
+    )
 
-    recall_at_3 = mean([
-        float(result.hit_at_k(3))
-        for result in results
-    ])
+    print_metrics(
+        "DENSE RETRIEVAL EVALUATION",
+        overall_metrics,
+    )
 
-    recall_at_5 = mean([
-        float(result.hit_at_k(5))
-        for result in results
-    ])
-
-    recall_at_10 = mean([
-        float(result.hit_at_k(10))
-        for result in results
-    ])
-
-    mrr = mean([
-        result.reciprocal_rank
-        for result in results
-    ])
-
-    print("=" * 80)
-    print("DENSE RETRIEVAL EVALUATION")
-    print("=" * 80)
-    print(f"Cases     : {len(results)}")
-    print(f"Hit@1  : {recall_at_1:.4f}")
-    print(f"Hit@3  : {recall_at_3:.4f}")
-    print(f"Hit@5  : {recall_at_5:.4f}")
-    print(f"Hit@10 : {recall_at_10:.4f}")
-    print(f"MRR       : {mrr:.4f}")
-
-    print()
-    print("=" * 80)
-    print("CASE RESULTS")
-    print("=" * 80)
-
-    for result in results:
-        rank = (
-            result.first_relevant_rank
-            if result.first_relevant_rank
-            is not None
-            else "MISS"
+    category_metrics = (
+        calculate_metrics_by_category(
+            results
         )
+    )
 
-        print()
-        print("-" * 80)
-        print(f"Case          : {result.case_id}")
-        print(f"Relevant rank : {rank}")
-        print(f"Expected path : {result.expected_path}")
-
-        for index, path in enumerate(
-            result.retrieved_paths,
-            start=1,
-        ):
-            marker = (
-                " <-- expected"
-                if (
-                    path.replace("\\", "/").lower()
-                    == result.expected_path
-                    .replace("\\", "/")
-                    .lower()
-                )
-                else ""
-            )
-
-            print(
-                f"{index:>2}. {path}{marker}"
-            )
-
-
+    for category in sorted(
+        category_metrics
+    ):
+        print_metrics(
+            f"CATEGORY: {category}",
+            category_metrics[category],
+        )
 if __name__ == "__main__":
     main()

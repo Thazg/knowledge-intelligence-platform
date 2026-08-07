@@ -1,7 +1,13 @@
 import json
 from pathlib import Path
 
-from backend.query_rewriting.query_rewriter import QueryRewriter
+from backend.evaluation.dataset_loader import (
+    load_evaluation_cases,
+)
+from backend.query_rewriting.query_rewriter import (
+    QueryRewriter,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,76 +28,132 @@ OUTPUT_PATH = (
 )
 
 
-def load_active_cases(path: Path) -> list[dict]:
-    cases: list[dict] = []
+def load_existing_rewrites(
+    path: Path,
+) -> dict[str, dict]:
+    if not path.exists():
+        return {}
+
+    records: dict[str, dict] = {}
 
     with path.open(
         "r",
         encoding="utf-8",
     ) as file:
-        for line in file:
+        for line_number, line in enumerate(
+            file,
+            start=1,
+        ):
             line = line.strip()
 
             if not line:
                 continue
 
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"Invalid JSON at line "
+                    f"{line_number} in {path}"
+                ) from exc
 
-            if record.get("status") != "active":
-                continue
+            case_id = record["case_id"]
 
-            cases.append(record)
+            records[case_id] = record
 
-    return cases
+    return records
 
 
 def main() -> None:
-    cases = load_active_cases(DATASET_PATH)
+    cases = load_evaluation_cases(
+        DATASET_PATH,
+        active_only=True,
+    )
 
     if not cases:
         raise ValueError(
             "No active evaluation cases found."
         )
 
+    existing_rewrites = load_existing_rewrites(
+        OUTPUT_PATH
+    )
+
+    missing_cases = [
+        case
+        for case in cases
+        if case.case_id
+        not in existing_rewrites
+    ]
+
+    print("=" * 80)
+    print("GENERATING MISSING FROZEN QUERY REWRITES")
+    print("=" * 80)
+    print(f"Active cases     : {len(cases)}")
+    print(
+        f"Existing rewrites: "
+        f"{len(existing_rewrites)}"
+    )
+    print(
+        f"Missing rewrites : "
+        f"{len(missing_cases)}"
+    )
+
+    if not missing_cases:
+        print()
+        print(
+            "No missing rewrites found."
+        )
+        return
+
     rewriter = QueryRewriter(
         model_name="qwen3:4b-instruct",
         num_rewrites=2,
     )
 
-    OUTPUT_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    new_records: list[dict] = []
 
-    print("=" * 80)
-    print("GENERATING FROZEN QUERY REWRITES")
-    print("=" * 80)
-    print(f"Cases : {len(cases)}")
-    print(f"Output: {OUTPUT_PATH}")
+    for index, case in enumerate(
+        missing_cases,
+        start=1,
+    ):
+        queries = rewriter.rewrite(
+            case.query
+        )
 
-    with OUTPUT_PATH.open(
-        "w",
-        encoding="utf-8",
-    ) as output_file:
-        for index, case in enumerate(
-            cases,
+        rewrites = queries[1:]
+
+        record = {
+            "case_id": case.case_id,
+            "original_query": case.query,
+            "rewrites": rewrites,
+        }
+
+        new_records.append(record)
+
+        print()
+        print(
+            f"[{index}/{len(missing_cases)}] "
+            f"{case.case_id}"
+        )
+        print(
+            f"Original : {case.query}"
+        )
+
+        for rewrite_index, rewrite in enumerate(
+            rewrites,
             start=1,
         ):
-            case_id = case["id"]
-            original_query = case["query"]
-
-            queries = rewriter.rewrite(
-                original_query
+            print(
+                f"Rewrite {rewrite_index}: "
+                f"{rewrite}"
             )
 
-            rewrites = queries[1:]
-
-            record = {
-                "case_id": case_id,
-                "original_query": original_query,
-                "rewrites": rewrites,
-            }
-
+    with OUTPUT_PATH.open(
+        "a",
+        encoding="utf-8",
+    ) as output_file:
+        for record in new_records:
             output_file.write(
                 json.dumps(
                     record,
@@ -100,30 +162,16 @@ def main() -> None:
                 + "\n"
             )
 
-            print()
-            print(
-                f"[{index}/{len(cases)}] "
-                f"{case_id}"
-            )
-            print(
-                f"Original : {original_query}"
-            )
-
-            for rewrite_index, rewrite in enumerate(
-                rewrites,
-                start=1,
-            ):
-                print(
-                    f"Rewrite {rewrite_index}: "
-                    f"{rewrite}"
-                )
-
     print()
     print("=" * 80)
     print("DONE")
     print("=" * 80)
     print(
-        f"Saved frozen rewrites to: "
+        f"Added rewrites: "
+        f"{len(new_records)}"
+    )
+    print(
+        f"Output        : "
         f"{OUTPUT_PATH}"
     )
 
