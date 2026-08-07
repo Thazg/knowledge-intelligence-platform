@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
-
+from math import log2
 from backend.retrieval.models import RetrievalResult
 
 
@@ -171,6 +171,67 @@ class EvaluationResult:
             / len(relevant_keys)
         )
 
+    def ndcg_at_k(
+        self,
+        k: int,
+    ) -> float:
+        if k < 1:
+            raise ValueError(
+                "k must be >= 1"
+            )
+
+        if not self.relevant_documents:
+            return 0.0
+
+        dcg = 0.0
+
+        for document in (
+            self.retrieved_relevant_documents
+        ):
+            if document.rank > k:
+                continue
+
+            gain = (
+                (2 ** document.relevance)
+                - 1
+            )
+
+            discount = log2(
+                document.rank + 1
+            )
+
+            dcg += gain / discount
+
+        ideal_relevances = sorted(
+            (
+                document.relevance
+                for document
+                in self.relevant_documents
+            ),
+            reverse=True,
+        )[:k]
+
+        idcg = 0.0
+
+        for rank, relevance in enumerate(
+            ideal_relevances,
+            start=1,
+        ):
+            gain = (
+                (2 ** relevance)
+                - 1
+            )
+
+            discount = log2(
+                rank + 1
+            )
+
+            idcg += gain / discount
+
+        if idcg == 0.0:
+            return 0.0
+
+        return dcg / idcg
 
 class RetrievalEvaluator:
 

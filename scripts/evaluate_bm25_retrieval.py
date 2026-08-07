@@ -18,7 +18,7 @@ from backend.evaluation.metrics import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = Path(
-    "backend/evaluation/datasets/retrieval_cases.jsonl"
+    "benchmarks/retrieval/cases.jsonl"
 )
 
 COLLECTION_NAME = (

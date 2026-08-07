@@ -16,12 +16,13 @@ from backend.evaluation.metrics import (
     calculate_metrics_by_category,
     print_metrics,
 )
+from collections import Counter
 
 DATASET_PATH = Path(
-    "backend/evaluation/datasets/retrieval_cases.jsonl"
+    "benchmarks/retrieval/cases.jsonl"
 )
 
-COLLECTION_NAME = (
+COLLECTION_NAME = ( 
     "enterprise_knowledge_fixed_bge_small"
 )
 

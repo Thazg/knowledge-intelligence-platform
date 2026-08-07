@@ -1,0 +1,112 @@
+{
+  "benchmark": {
+    "name": "retrieval_benchmark_v1",
+    "total_cases": 100,
+    "categories": {
+      "semantic": 20,
+      "lexical": 20,
+      "ambiguous": 20,
+      "version_specific": 20,
+      "cross_tool": 20
+    },
+    "relevance_levels": {
+      "3": "highly_relevant",
+      "2": "relevant",
+      "1": "partially_relevant"
+    }
+  },
+  "retrievers": {
+    "dense": {
+      "hit_at_1": 0.53,
+      "hit_at_3": 0.77,
+      "hit_at_5": 0.82,
+      "hit_at_10": 0.89,
+      "recall_at_3": 0.6225,
+      "recall_at_5": 0.7025,
+      "recall_at_10": 0.7958,
+      "ndcg_at_3": 0.5697,
+      "ndcg_at_5": 0.6,
+      "ndcg_at_10": 0.6364,
+      "mrr": 0.6644
+    },
+    "bm25": {
+      "hit_at_1": 0.47,
+      "hit_at_3": 0.71,
+      "hit_at_5": 0.8,
+      "hit_at_10": 0.87,
+      "recall_at_3": 0.5317,
+      "recall_at_5": 0.625,
+      "recall_at_10": 0.7308,
+      "ndcg_at_3": 0.4844,
+      "ndcg_at_5": 0.5257,
+      "ndcg_at_10": 0.565,
+      "mrr": 0.6083
+    },
+    "weighted_rrf": {
+      "dense_weight": 0.7,
+      "bm25_weight": 0.3,
+      "rrf_k": 60,
+      "hit_at_1": 0.62,
+      "hit_at_3": 0.81,
+      "hit_at_5": 0.87,
+      "hit_at_10": 0.93,
+      "recall_at_3": 0.6408,
+      "recall_at_5": 0.7308,
+      "recall_at_10": 0.8392,
+      "ndcg_at_3": 0.601,
+      "ndcg_at_5": 0.6402,
+      "ndcg_at_10": 0.6788,
+      "mrr": 0.7247
+    },
+    "multi_query": {
+      "hit_at_1": 0.58,
+      "hit_at_3": 0.81,
+      "hit_at_5": 0.88,
+      "hit_at_10": 0.95,
+      "recall_at_3": 0.6358,
+      "recall_at_5": 0.7658,
+      "recall_at_10": 0.8425,
+      "ndcg_at_3": 0.6007,
+      "ndcg_at_5": 0.6565,
+      "ndcg_at_10": 0.683,
+      "mrr": 0.7137
+    }
+  },
+  "category_mrr": {
+    "ambiguous": {
+      "dense": 0.4183,
+      "bm25": 0.2681,
+      "weighted_rrf": 0.4592,
+      "multi_query": 0.5319
+    },
+    "cross_tool": {
+      "dense": 0.5671,
+      "bm25": 0.6308,
+      "weighted_rrf": 0.6181,
+      "multi_query": 0.5972
+    },
+    "lexical": {
+      "dense": 0.7363,
+      "bm25": 0.666,
+      "weighted_rrf": 0.8792,
+      "multi_query": 0.8517
+    },
+    "semantic": {
+      "dense": 0.7083,
+      "bm25": 0.7,
+      "weighted_rrf": 0.8088,
+      "multi_query": 0.8
+    },
+    "version_specific": {
+      "dense": 0.8917,
+      "bm25": 0.7767,
+      "weighted_rrf": 0.8583,
+      "multi_query": 0.7875
+    }
+  },
+  "decision": {
+    "default_retriever": "weighted_rrf",
+    "advanced_strategy": "multi_query",
+    "reason": "Weighted RRF achieved the highest overall MRR and Hit@1 while avoiding the additional query rewriting and retrieval cost of Multi-Query Retrieval."
+  }
+}

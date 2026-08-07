@@ -13,17 +13,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 DATASET_PATH = (
     PROJECT_ROOT
-    / "backend"
-    / "evaluation"
-    / "datasets"
-    / "retrieval_cases.jsonl"
+    / "benchmarks"
+    / "retrieval"
+    / "cases.jsonl"
 )
 
 OUTPUT_PATH = (
     PROJECT_ROOT
-    / "backend"
-    / "evaluation"
-    / "datasets"
+    / "benchmarks"
+    / "retrieval"
     / "query_rewrites.jsonl"
 )
 
@@ -79,11 +77,16 @@ def main() -> None:
         OUTPUT_PATH
     )
 
-    missing_cases = [
+    cases_to_generate = [
         case
         for case in cases
-        if case.case_id
-        not in existing_rewrites
+        if (
+            case.case_id not in existing_rewrites
+            or existing_rewrites[
+                case.case_id
+            ].get("original_query")
+            != case.query
+        )
     ]
 
     print("=" * 80)
@@ -95,11 +98,11 @@ def main() -> None:
         f"{len(existing_rewrites)}"
     )
     print(
-        f"Missing rewrites : "
-        f"{len(missing_cases)}"
+        f"Rewrites to generate: "
+        f"{len(cases_to_generate)}"
     )
 
-    if not missing_cases:
+    if not cases_to_generate:
         print()
         print(
             "No missing rewrites found."
@@ -114,7 +117,7 @@ def main() -> None:
     new_records: list[dict] = []
 
     for index, case in enumerate(
-        missing_cases,
+        cases_to_generate,
         start=1,
     ):
         queries = rewriter.rewrite(
@@ -133,7 +136,7 @@ def main() -> None:
 
         print()
         print(
-            f"[{index}/{len(missing_cases)}] "
+            f"[{index}/{len(cases_to_generate)}] "
             f"{case.case_id}"
         )
         print(
@@ -149,11 +152,21 @@ def main() -> None:
                 f"{rewrite}"
             )
 
+    for record in new_records:
+        existing_rewrites[
+            record["case_id"]
+        ] = record
+
+
     with OUTPUT_PATH.open(
-        "a",
+        "w",
         encoding="utf-8",
     ) as output_file:
-        for record in new_records:
+        for case in cases:
+            record = existing_rewrites[
+                case.case_id
+            ]
+
             output_file.write(
                 json.dumps(
                     record,

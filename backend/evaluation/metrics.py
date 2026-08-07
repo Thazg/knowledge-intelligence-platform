@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
 
 from backend.evaluation.retrieval_evaluator import (
     EvaluationResult,
@@ -11,10 +11,20 @@ from backend.evaluation.retrieval_evaluator import (
 @dataclass(frozen=True)
 class RetrievalMetrics:
     cases: int
+
     hit_at_1: float
     hit_at_3: float
     hit_at_5: float
     hit_at_10: float
+
+    recall_at_3: float
+    recall_at_5: float
+    recall_at_10: float
+    
+    ndcg_at_3: float
+    ndcg_at_5: float
+    ndcg_at_10: float
+
     mrr: float
 
 
@@ -37,11 +47,18 @@ def calculate_metrics(
             hit_at_3=0.0,
             hit_at_5=0.0,
             hit_at_10=0.0,
+            recall_at_3=0.0,
+            recall_at_5=0.0,
+            recall_at_10=0.0,
+            ndcg_at_3=0.0,
+            ndcg_at_5=0.0,
+            ndcg_at_10=0.0,
             mrr=0.0,
         )
 
     return RetrievalMetrics(
         cases=len(results),
+
         hit_at_1=mean([
             float(result.hit_at_k(1))
             for result in results
@@ -58,10 +75,38 @@ def calculate_metrics(
             float(result.hit_at_k(10))
             for result in results
         ]),
+
+        recall_at_3=mean([
+            result.recall_at_k(3)
+            for result in results
+        ]),
+        recall_at_5=mean([
+            result.recall_at_k(5)
+            for result in results
+        ]),
+        recall_at_10=mean([
+            result.recall_at_k(10)
+            for result in results
+        ]),
+        
+        ndcg_at_3=mean([
+            result.ndcg_at_k(3)
+            for result in results
+        ]),
+        ndcg_at_5=mean([
+            result.ndcg_at_k(5)
+            for result in results
+        ]),
+        ndcg_at_10=mean([
+            result.ndcg_at_k(10)
+            for result in results
+        ]),
+
         mrr=mean([
             result.reciprocal_rank
             for result in results
         ]),
+    
     )
 
 
@@ -113,21 +158,44 @@ def print_metrics(
     print("=" * 80)
     print(title)
     print("=" * 80)
+
     print(
-        f"Cases  : {metrics.cases}"
+        f"Cases     : {metrics.cases}"
+    )
+
+    print(
+        f"Hit@1     : {metrics.hit_at_1:.4f}"
     )
     print(
-        f"Hit@1  : {metrics.hit_at_1:.4f}"
+        f"Hit@3     : {metrics.hit_at_3:.4f}"
     )
     print(
-        f"Hit@3  : {metrics.hit_at_3:.4f}"
+        f"Hit@5     : {metrics.hit_at_5:.4f}"
     )
     print(
-        f"Hit@5  : {metrics.hit_at_5:.4f}"
+        f"Hit@10    : {metrics.hit_at_10:.4f}"
+    )
+
+    print(
+        f"Recall@3  : {metrics.recall_at_3:.4f}"
     )
     print(
-        f"Hit@10 : {metrics.hit_at_10:.4f}"
+        f"Recall@5  : {metrics.recall_at_5:.4f}"
     )
     print(
-        f"MRR    : {metrics.mrr:.4f}"
+        f"Recall@10 : {metrics.recall_at_10:.4f}"
+    )
+
+    print(
+        f"nDCG@3    : {metrics.ndcg_at_3:.4f}"
+    )
+    print(
+        f"nDCG@5    : {metrics.ndcg_at_5:.4f}"
+    )
+    print(
+        f"nDCG@10   : {metrics.ndcg_at_10:.4f}"
+    )
+    
+    print(
+        f"MRR       : {metrics.mrr:.4f}"
     )
