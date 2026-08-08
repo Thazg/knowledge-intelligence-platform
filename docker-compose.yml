@@ -1,0 +1,45 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: enterprise-rag-qdrant
+
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+
+    container_name: enterprise-rag-api
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      OLLAMA_URL: http://host.docker.internal:11434
+      CHUNKS_PATH: /app/data/processed/chunks_fixed.jsonl
+      QDRANT_COLLECTION: enterprise_knowledge_fixed_bge_small
+      EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
+      GENERATION_MODEL: qwen3:4b-instruct
+
+    volumes:
+      - ./data/processed:/app/data/processed:ro
+
+    depends_on:
+      - qdrant
+
+    restart: unless-stopped
+
+
+volumes:
+  qdrant_storage:
+    external: true
+    name: docker_qdrant_storage

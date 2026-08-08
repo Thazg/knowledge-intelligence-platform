@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -15,19 +16,51 @@ from backend.services.rag_service import RAGService
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
 
-CHUNKS_PATH = Path("data/processed/chunks_fixed.jsonl")
+CHUNKS_PATH = Path(
+    os.getenv(
+        "CHUNKS_PATH",
+        "data/processed/chunks_fixed.jsonl",
+    )
+)
 
-QDRANT_COLLECTION = "enterprise_knowledge_fixed_bge_small"
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
-GENERATION_MODEL = "qwen3:4b-instruct"
+QDRANT_URL = os.getenv(
+    "QDRANT_URL",
+    "http://localhost:6333",
+)
+
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434",
+)
+
+QDRANT_COLLECTION = os.getenv(
+    "QDRANT_COLLECTION",
+    "enterprise_knowledge_fixed_bge_small",
+)
+
+EMBEDDING_MODEL = os.getenv(
+    "EMBEDDING_MODEL",
+    "BAAI/bge-small-en-v1.5",
+)
+
+GENERATION_MODEL = os.getenv(
+    "GENERATION_MODEL",
+    "qwen3:4b-instruct",
+)
 
 
 @lru_cache(maxsize=1)
 def get_rag_service() -> RAGService:
     print("Initializing RAG service...")
+    print(f"Qdrant URL: {QDRANT_URL}")
+    print(f"Ollama URL: {OLLAMA_URL}")
+    print(f"Chunks path: {CHUNKS_PATH}")
 
     serializer = ChunkSerializer()
-    chunks = serializer.load_jsonl(CHUNKS_PATH)
+
+    chunks = serializer.load_jsonl(
+        CHUNKS_PATH
+    )
 
     embedder = LocalEmbedder(
         model_name=EMBEDDING_MODEL,
@@ -36,6 +69,7 @@ def get_rag_service() -> RAGService:
     vector_store = QdrantVectorStore(
         collection_name=QDRANT_COLLECTION,
         vector_size=embedder.dimension,
+        url=QDRANT_URL,
     )
 
     dense = DenseRetriever(
@@ -62,6 +96,7 @@ def get_rag_service() -> RAGService:
 
     generator = OllamaGenerator(
         model=GENERATION_MODEL,
+        base_url=OLLAMA_URL,
     )
 
     pipeline = RAGPipeline(

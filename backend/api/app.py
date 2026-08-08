@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import httpx
+import os
 
+import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
@@ -10,6 +11,17 @@ from backend.api.routes.query import router as query_router
 from backend.api.schemas.health import (
     DependencyStatus,
     ReadinessResponse,
+)
+
+
+QDRANT_URL = os.getenv(
+    "QDRANT_URL",
+    "http://localhost:6333",
+)
+
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434",
 )
 
 
@@ -43,7 +55,7 @@ def readiness():
 
     try:
         response = httpx.get(
-            "http://localhost:6333",
+            QDRANT_URL,
             timeout=2.0,
         )
         response.raise_for_status()
@@ -52,7 +64,7 @@ def readiness():
 
     try:
         response = httpx.get(
-            "http://localhost:11434/api/tags",
+            f"{OLLAMA_URL}/api/tags",
             timeout=2.0,
         )
         response.raise_for_status()
