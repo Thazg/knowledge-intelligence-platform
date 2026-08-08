@@ -73,59 +73,59 @@
     },
     "reranked_hybrid": {
     "base_retriever": "weighted_rrf",
-    "reranker_model": "mixedbread-ai/mxbai-rerank-base-v1",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L12-v2",
     "candidate_multiplier": 4,
     "candidate_pool_at_top_k_10": 40,
     "batch_size": 16,
-    "hit_at_1": 0.54,
-    "hit_at_3": 0.79,
-    "hit_at_5": 0.88,
-    "hit_at_10": 0.91,
-    "recall_at_3": 0.6142,
-    "recall_at_5": 0.7425,
-    "recall_at_10": 0.8042,
-    "ndcg_at_3": 0.5832,
-    "ndcg_at_5": 0.6343,
-    "ndcg_at_10": 0.6558,
-    "mrr": 0.6792
-    }
+    "hit_at_1": 0.53,
+    "hit_at_3": 0.72,
+    "hit_at_5": 0.8,
+    "hit_at_10": 0.92,
+    "recall_at_3": 0.5792,
+    "recall_at_5": 0.6642,
+    "recall_at_10": 0.7858,
+    "ndcg_at_3": 0.5489,
+    "ndcg_at_5": 0.5851,
+    "ndcg_at_10": 0.6266,
+    "mrr": 0.6461
+  }
   },
   "category_mrr": {
     "ambiguous": {
-      "dense": 0.4183,
-      "bm25": 0.2681,
-      "weighted_rrf": 0.4592,
-      "multi_query": 0.5319,
-      "reranked_hybrid": 0.5729
-    },
-    "cross_tool": {
-      "dense": 0.5671,
-      "bm25": 0.6308,
-      "weighted_rrf": 0.6181,
-      "multi_query": 0.5972,
-      "reranked_hybrid": 0.6450
-    },
-    "lexical": {
-      "dense": 0.7363,
-      "bm25": 0.666,
-      "weighted_rrf": 0.8792,
-      "multi_query": 0.8517,
-      "reranked_hybrid": 0.7229
-    },
-    "semantic": {
-      "dense": 0.7083,
-      "bm25": 0.7,
-      "weighted_rrf": 0.8088,
-      "multi_query": 0.8,
-      "reranked_hybrid": 0.6683
-    },
-    "version_specific": {
-      "dense": 0.8917,
-      "bm25": 0.7767,
-      "weighted_rrf": 0.8583,
-      "multi_query": 0.7875,
-      "reranked_hybrid": 0.7867
-    }
+    "dense": 0.4183,
+    "bm25": 0.2681,
+    "weighted_rrf": 0.4592,
+    "multi_query": 0.5319,
+    "reranked_hybrid": 0.5005
+  },
+  "cross_tool": {
+    "dense": 0.5671,
+    "bm25": 0.6308,
+    "weighted_rrf": 0.6181,
+    "multi_query": 0.5972,
+    "reranked_hybrid": 0.5226
+  },
+  "lexical": {
+    "dense": 0.7363,
+    "bm25": 0.666,
+    "weighted_rrf": 0.8792,
+    "multi_query": 0.8517,
+    "reranked_hybrid": 0.7747
+  },
+  "semantic": {
+    "dense": 0.7083,
+    "bm25": 0.7,
+    "weighted_rrf": 0.8088,
+    "multi_query": 0.8,
+    "reranked_hybrid": 0.6153
+  },
+  "version_specific": {
+    "dense": 0.8917,
+    "bm25": 0.7767,
+    "weighted_rrf": 0.8583,
+    "multi_query": 0.7875,
+    "reranked_hybrid": 0.8175
+  }
   },
   "decision": {
     "default_retriever": "weighted_rrf",

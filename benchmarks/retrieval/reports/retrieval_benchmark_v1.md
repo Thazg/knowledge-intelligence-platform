@@ -60,7 +60,7 @@ Cross-Encoder reranking is applied on top of Weighted RRF candidates.
 Configuration:
 
 - Base retriever: Weighted RRF
-- Reranker model: `mixedbread-ai/mxbai-rerank-base-v1`
+- Reranker model: `cross-encoder/ms-marco-MiniLM-L12-v2`
 - Candidate multiplier: 4
 - Candidate pool at top_k=10: up to 40 candidates
 - Batch size: 16
@@ -97,17 +97,17 @@ MRR measures how early the first relevant document appears in the ranking.
 | BM25 | 0.4700 | 0.7100 | 0.8000 | 0.8700 | 0.5317 | 0.6250 | 0.7308 | 0.4844 | 0.5257 | 0.5650 | 0.6083 |
 | Weighted RRF | **0.6200** | **0.8100** | 0.8700 | 0.9300 | **0.6408** | 0.7308 | 0.8392 | **0.6010** | 0.6402 | 0.6788 | **0.7247** |
 | Multi-Query | 0.5800 | **0.8100** | **0.8800** | **0.9500** | 0.6358 | **0.7658** | **0.8425** | 0.6007 | **0.6565** | **0.6830** | 0.7137 |
-| Reranked Hybrid | 0.5400 | 0.7900 | **0.8800** | 0.9100 | 0.6142 | 0.7425 | 0.8242 | 0.5832 | 0.6343 | 0.6558 | 0.6792 |
+| Reranked Hybrid (MiniLM-L12-v2) | 0.5300 | 0.7200 | 0.8000 | 0.9200 | 0.5792 | 0.6642 | 0.7858 | 0.5489 | 0.5851 | 0.6266 | 0.6461 |
 
 ## Category MRR
 
-| Category | Dense | BM25 | Weighted RRF | Multi-Query | Reranked Hybrid |
+| Category | Dense | BM25 | Weighted RRF | Multi-Query | Reranked Hybrid (MiniLM-L12-v2) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Ambiguous | 0.4183 | 0.2681 | 0.4592 | 0.5319 | **0.5729** |
-| Cross-tool | 0.5671 | 0.6308 | 0.6181 | 0.5972 | **0.6450** |
-| Lexical | 0.7363 | 0.6660 | **0.8792** | 0.8517 | 0.7229 |
-| Semantic | 0.7083 | 0.7000 | **0.8088** | 0.8000 | 0.6683 |
-| Version-specific | **0.8917** | 0.7767 | 0.8583 | 0.7875 | 0.7867 |
+| Ambiguous | 0.4183 | 0.2681 | 0.4592 | **0.5319** | 0.5005 |
+| Cross-tool | 0.5671 | **0.6308** | 0.6181 | 0.5972 | 0.5226 |
+| Lexical | 0.7363 | 0.6660 | **0.8792** | 0.8517 | 0.7747 |
+| Semantic | 0.7083 | 0.7000 | **0.8088** | 0.8000 | 0.6153 |
+| Version-specific | **0.8917** | 0.7767 | 0.8583 | 0.7875 | 0.8175 |
 
 ## Findings
 
@@ -211,51 +211,61 @@ Cross-Encoder reranking did not improve overall retrieval quality when applied g
 Overall MRR decreased:
 
 - Weighted RRF: 0.7247
-- Reranked Hybrid: 0.6792
+- Reranked Hybrid: 0.6461
 
 Hit@1 also decreased:
 
 - Weighted RRF: 0.6200
-- Reranked Hybrid: 0.5400
+- Reranked Hybrid: 0.5300
 
 Overall ranking-quality metrics also declined:
 
 - Weighted RRF nDCG@3: 0.6010
-- Reranked Hybrid nDCG@3: 0.5832
+- Reranked Hybrid nDCG@3: 0.5489
 
 - Weighted RRF nDCG@10: 0.6788
-- Reranked Hybrid nDCG@10: 0.6558
+- Reranked Hybrid nDCG@10: 0.6266
 
-However, reranking produced strong gains in difficult categories.
+Reranking also reduced retrieval quality across most query categories.
 
-Ambiguous-query MRR improved:
+Ambiguous-query MRR:
 
 - Weighted RRF: 0.4592
-- Reranked Hybrid: 0.5729
+- Reranked Hybrid: 0.5005
 
-Cross-tool MRR improved:
+Although reranking improved ambiguous-query MRR relative to Weighted RRF, Multi-Query Retrieval remained stronger at 0.5319.
+
+Cross-tool MRR decreased:
 
 - Weighted RRF: 0.6181
-- Reranked Hybrid: 0.6450
+- Reranked Hybrid: 0.5226
 
-At the same time, reranking significantly reduced performance for lexical and semantic queries.
-
-Lexical MRR:
+Lexical MRR decreased:
 
 - Weighted RRF: 0.8792
-- Reranked Hybrid: 0.7229
+- Reranked Hybrid: 0.7747
 
-Semantic MRR:
+Semantic MRR decreased:
 
 - Weighted RRF: 0.8088
-- Reranked Hybrid: 0.6683
+- Reranked Hybrid: 0.6153
 
 Version-specific MRR also decreased:
 
 - Weighted RRF: 0.8583
-- Reranked Hybrid: 0.7867
+- Reranked Hybrid: 0.8175
 
-These results indicate that the current Cross-Encoder configuration should not be applied globally.
+These results indicate that the selected Cross-Encoder reranker,
+`cross-encoder/ms-marco-MiniLM-L12-v2`, does not provide sufficient
+quality improvement to justify applying reranking globally.
+
+The only category where the reranker improved over Weighted RRF was
+ambiguous queries, but Multi-Query Retrieval still achieved higher MRR
+for that category.
+
+Weighted RRF therefore remains the preferred global retrieval strategy,
+while reranking remains an experimental component rather than part of
+the default production path.
 
 ## Category-Specific Behavior
 
@@ -263,8 +273,8 @@ The best-performing strategy differs by query category.
 
 | Category | Best Strategy | MRR |
 | --- | --- | ---: |
-| Ambiguous | Reranked Hybrid | 0.5729 |
-| Cross-tool | Reranked Hybrid | 0.6450 |
+| Ambiguous | Multi-Query | 0.5319 |
+| Cross-tool | BM25 | 0.6308 |
 | Lexical | Weighted RRF | 0.8792 |
 | Semantic | Weighted RRF | 0.8088 |
 | Version-specific | Dense | 0.8917 |
@@ -307,13 +317,47 @@ Multi-Query Retrieval should remain available as an advanced strategy for ambigu
 
 Cross-Encoder reranking should not currently be enabled for all queries.
 
-Its strong performance on ambiguous and cross-tool cases suggests that it may be useful as a selectively activated retrieval stage.
+Cross-Encoder reranking remains an experimental component.
+
+It improved ambiguous-query MRR relative to Weighted RRF, but Multi-Query Retrieval still performed better on ambiguous queries. It did not improve the strongest strategy in any benchmark category.
+
+The current evidence therefore does not justify enabling Cross-Encoder reranking in the production retrieval path.
+
+## Quality vs Latency
+
+Retrieval quality must be considered together with operational cost.
+
+The latency benchmark measures steady-state retrieval time across the same 100 evaluation queries used in Retrieval Benchmark v1.
+
+| Strategy | MRR | Recall@5 | nDCG@5 | Mean Latency |
+| --- | ---: | ---: | ---: | ---: |
+| Dense | 0.6644 | 0.7025 | 0.6000 | 32.57 ms |
+| BM25 | 0.6083 | 0.6250 | 0.5257 | 119.37 ms |
+| Weighted RRF | **0.7247** | 0.7308 | 0.6402 | 161.50 ms |
+| Multi-Query | 0.7137 | **0.7658** | **0.6565** | 587.09 ms |
+| Reranked Hybrid | 0.6461 | 0.6642 | 0.5851 | 663.09 ms |
+
+Weighted RRF provides the strongest overall quality-versus-latency trade-off.
+
+Compared with Dense Retrieval, Weighted RRF increases mean latency from 32.57 ms to 161.50 ms while improving MRR from 0.6644 to 0.7247.
+
+Multi-Query Retrieval increases mean latency to 587.09 ms, approximately 3.64 times the latency of Weighted RRF.
+
+Although Multi-Query improves Recall@5 and nDCG@5, it does not improve overall MRR.
+
+The reported Multi-Query latency uses frozen query rewrites and therefore does not include live LLM query-rewriting latency.
+
+Reranked Hybrid Retrieval increases mean latency to 663.09 ms, approximately 4.11 times the latency of Weighted RRF, while also reducing overall retrieval quality.
+
+These results reinforce Weighted RRF as the production default.
+
+Advanced retrieval stages should only be activated when their expected quality benefit justifies the additional latency and computational cost.
 
 ## Future Adaptive Retrieval
 
-The benchmark provides evidence for a future adaptive retrieval architecture.
+The benchmark provides evidence that different query categories can benefit from different retrieval strategies.
 
-A possible routing strategy is:
+A future adaptive retrieval architecture could therefore be explored:
 
 ```text
                          Query
@@ -324,28 +368,20 @@ A possible routing strategy is:
              +-------------+-------------+
              |                           |
              v                           v
-   Normal / lexical /             Ambiguous /
- semantic / version-specific       cross-tool
-             |                           |
-             v                           v
-        Weighted RRF               Advanced Path
-                                         |
-                              +----------+----------+
-                              |                     |
-                              v                     v
-                         Multi-Query          Cross-Encoder
-                              |                  Reranking
-                              +----------+----------+
-                                         |
-                                         v
-                                  Final Retrieval
+      Standard Queries             Difficult /
+             |                  Ambiguous Queries
+             v                           |
+        Weighted RRF                     v
+                                  Multi-Query
 ```
 
-This architecture is not yet selected as the production default.
+Cross-Encoder reranking remains an experimental component and is not currently included in the proposed adaptive production path.
+
+Category-specific routing should not be implemented directly from the current benchmark results.
 
 The adaptive strategy should only be adopted after additional validation to avoid overfitting routing decisions to the current benchmark.
 
-A separate development or tuning benchmark should be introduced before tuning routing rules or reranker configuration.
+A separate development or tuning benchmark should be introduced before tuning routing rules, query classification, or retrieval strategy selection.
 
 ## Benchmark Interpretation
 
@@ -355,7 +391,7 @@ The benchmark demonstrates several important retrieval-system behaviors:
 - BM25 contributes complementary lexical signals.
 - Weighted RRF provides the strongest overall first-stage retrieval quality.
 - Multi-Query Retrieval improves evidence coverage and ambiguous-query handling.
-- Cross-Encoder reranking improves difficult categories but currently harms overall ranking quality.
+- Cross-Encoder reranking did not improve overall retrieval quality and did not outperform the best strategy in any benchmark category.
 - Different query categories benefit from different retrieval strategies.
 - Additional retrieval stages should be validated empirically rather than assumed to improve quality.
 

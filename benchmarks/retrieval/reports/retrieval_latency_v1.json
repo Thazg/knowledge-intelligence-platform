@@ -1,0 +1,76 @@
+{
+  "benchmark": {
+    "name": "retrieval_latency_v1",
+    "cases": 100,
+    "top_k": 10,
+    "warmup_queries": 3
+  },
+  "configuration": {
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L12-v2",
+    "collection": "enterprise_knowledge_fixed_bge_small",
+    "weighted_rrf": {
+      "dense_weight": 0.7,
+      "bm25_weight": 0.3,
+      "rrf_k": 60
+    },
+    "multi_query": {
+      "candidate_multiplier": 5
+    },
+    "reranked_hybrid": {
+      "candidate_multiplier": 4
+    }
+  },
+  "latency_ms": {
+    "dense": {
+      "runs": 100,
+      "mean_ms": 32.57281000027433,
+      "median_ms": 29.09104998980183,
+      "p50_ms": 29.09104998980183,
+      "p95_ms": 58.23050498875091,
+      "p99_ms": 62.16669202054621,
+      "min_ms": 20.196400000713766,
+      "max_ms": 67.11589999031276
+    },
+    "bm25": {
+      "runs": 100,
+      "mean_ms": 119.37160700064851,
+      "median_ms": 121.27970001893118,
+      "p50_ms": 121.27970001893118,
+      "p95_ms": 159.0656600164948,
+      "p99_ms": 171.9206149861566,
+      "min_ms": 49.52900001080707,
+      "max_ms": 177.75319999782369
+    },
+    "weighted_rrf": {
+      "runs": 100,
+      "mean_ms": 161.49989500001539,
+      "median_ms": 163.8919499819167,
+      "p50_ms": 163.8919499819167,
+      "p95_ms": 212.62233497545822,
+      "p99_ms": 224.66523499577315,
+      "min_ms": 67.58870001067407,
+      "max_ms": 241.98380002053455
+    },
+    "multi_query": {
+      "runs": 100,
+      "mean_ms": 587.0877129994915,
+      "median_ms": 579.954649991123,
+      "p50_ms": 579.954649991123,
+      "p95_ms": 714.1117949839098,
+      "p99_ms": 896.6386090061861,
+      "min_ms": 425.8276000036858,
+      "max_ms": 920.5281999893486
+    },
+    "reranked_hybrid": {
+      "runs": 100,
+      "mean_ms": 663.0865950015141,
+      "median_ms": 658.0130500078667,
+      "p50_ms": 658.0130500078667,
+      "p95_ms": 761.0930500028189,
+      "p99_ms": 893.5367779899395,
+      "min_ms": 529.1231000155676,
+      "max_ms": 1018.8488000130747
+    }
+  }
+}

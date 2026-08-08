@@ -58,7 +58,7 @@ EMBEDDING_MODEL = (
 )
 
 RERANKER_MODEL = (
-    "mixedbread-ai/mxbai-rerank-base-v1"
+    "cross-encoder/ms-marco-MiniLM-L12-v2"
 )
 
 
