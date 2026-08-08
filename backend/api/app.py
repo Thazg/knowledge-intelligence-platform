@@ -1,28 +1,13 @@
 from __future__ import annotations
 
-import os
-
 import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from backend.api.dependencies import get_rag_service
 from backend.api.routes.query import router as query_router
-from backend.api.schemas.health import (
-    DependencyStatus,
-    ReadinessResponse,
-)
-
-
-QDRANT_URL = os.getenv(
-    "QDRANT_URL",
-    "http://localhost:6333",
-)
-
-OLLAMA_URL = os.getenv(
-    "OLLAMA_URL",
-    "http://localhost:11434",
-)
+from backend.api.schemas.health import DependencyStatus, ReadinessResponse
+from backend.core.config import get_settings
 
 
 app = FastAPI(
@@ -44,6 +29,8 @@ def health() -> dict[str, str]:
     tags=["health"],
 )
 def readiness():
+    settings = get_settings()
+
     rag_status = "ready"
     qdrant_status = "ready"
     ollama_status = "ready"
@@ -55,7 +42,7 @@ def readiness():
 
     try:
         response = httpx.get(
-            QDRANT_URL,
+            settings.qdrant_url,
             timeout=2.0,
         )
         response.raise_for_status()
@@ -64,7 +51,7 @@ def readiness():
 
     try:
         response = httpx.get(
-            f"{OLLAMA_URL}/api/tags",
+            f"{settings.ollama_url}/api/tags",
             timeout=2.0,
         )
         response.raise_for_status()

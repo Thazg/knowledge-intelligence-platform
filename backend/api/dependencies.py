@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import os
 from functools import lru_cache
-from pathlib import Path
 
 from backend.chunking.serializer import ChunkSerializer
+from backend.core.config import get_settings
 from backend.embedding.embedder import LocalEmbedder
 from backend.generation.context_builder import ContextBuilder
 from backend.generation.providers.ollama_generator import OllamaGenerator
@@ -16,60 +15,26 @@ from backend.services.rag_service import RAGService
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
 
-CHUNKS_PATH = Path(
-    os.getenv(
-        "CHUNKS_PATH",
-        "data/processed/chunks_fixed.jsonl",
-    )
-)
-
-QDRANT_URL = os.getenv(
-    "QDRANT_URL",
-    "http://localhost:6333",
-)
-
-OLLAMA_URL = os.getenv(
-    "OLLAMA_URL",
-    "http://localhost:11434",
-)
-
-QDRANT_COLLECTION = os.getenv(
-    "QDRANT_COLLECTION",
-    "enterprise_knowledge_fixed_bge_small",
-)
-
-EMBEDDING_MODEL = os.getenv(
-    "EMBEDDING_MODEL",
-    "BAAI/bge-small-en-v1.5",
-)
-
-GENERATION_MODEL = os.getenv(
-    "GENERATION_MODEL",
-    "qwen3:4b-instruct",
-)
-
-
 @lru_cache(maxsize=1)
 def get_rag_service() -> RAGService:
+    settings = get_settings()
+
     print("Initializing RAG service...")
-    print(f"Qdrant URL: {QDRANT_URL}")
-    print(f"Ollama URL: {OLLAMA_URL}")
-    print(f"Chunks path: {CHUNKS_PATH}")
+    print(f"Qdrant URL: {settings.qdrant_url}")
+    print(f"Ollama URL: {settings.ollama_url}")
+    print(f"Chunks path: {settings.chunks_path}")
 
     serializer = ChunkSerializer()
-
-    chunks = serializer.load_jsonl(
-        CHUNKS_PATH
-    )
+    chunks = serializer.load_jsonl(settings.chunks_path)
 
     embedder = LocalEmbedder(
-        model_name=EMBEDDING_MODEL,
+        model_name=settings.embedding_model,
     )
 
     vector_store = QdrantVectorStore(
-        collection_name=QDRANT_COLLECTION,
+        collection_name=settings.qdrant_collection,
         vector_size=embedder.dimension,
-        url=QDRANT_URL,
+        url=settings.qdrant_url,
     )
 
     dense = DenseRetriever(
@@ -84,26 +49,26 @@ def get_rag_service() -> RAGService:
     retriever = HybridRetriever(
         dense_retriever=dense,
         bm25_retriever=bm25,
-        dense_weight=0.7,
-        bm25_weight=0.3,
-        rrf_k=60,
+        dense_weight=settings.dense_weight,
+        bm25_weight=settings.bm25_weight,
+        rrf_k=settings.rrf_k,
     )
 
     context_builder = ContextBuilder(
-        max_context_tokens=4000,
-        max_sources=6,
+        max_context_tokens=settings.max_context_tokens,
+        max_sources=settings.max_context_sources,
     )
 
     generator = OllamaGenerator(
-        model=GENERATION_MODEL,
-        base_url=OLLAMA_URL,
+        model=settings.generation_model,
+        base_url=settings.ollama_url,
     )
 
     pipeline = RAGPipeline(
         retriever=retriever,
         context_builder=context_builder,
         generator=generator,
-        top_k=10,
+        top_k=settings.retrieval_top_k,
     )
 
     return RAGService(
