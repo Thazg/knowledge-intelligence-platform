@@ -1,0 +1,71 @@
+{
+  "benchmark_name": "generation_benchmark_v1",
+  "cases": 12,
+  "categories": {
+    "semantic": 2,
+    "lexical": 2,
+    "ambiguous": 2,
+    "version_specific": 2,
+    "cross_tool": 2,
+    "insufficient": 2
+  },
+  "final_configuration": {
+    "retriever": {
+      "type": "weighted_rrf",
+      "dense_weight": 0.7,
+      "bm25_weight": 0.3,
+      "rrf_k": 60,
+      "top_k": 10
+    },
+    "context": {
+      "max_sources": 6,
+      "max_context_tokens": 4000
+    },
+    "generator": {
+      "model": "qwen3:4b-instruct",
+      "provider": "ollama",
+      "temperature": 0.0,
+      "num_predict": 384,
+      "prompt_version": "v3"
+    }
+  },
+  "final_results": {
+    "mean_prompt_tokens": 2954.25,
+    "mean_completion_tokens": 194.75,
+    "max_completion_tokens": 360,
+    "mean_retrieval_latency_ms": 178.0,
+    "mean_generation_latency_ms": 15376.63,
+    "mean_end_to_end_latency_ms": 15554.84,
+    "median_end_to_end_latency_ms": 17609.48,
+    "p95_end_to_end_latency_ms": 23224.35,
+    "truncated_cases": 0
+  },
+  "manual_quality_review": {
+    "pass": [
+      "gen-001",
+      "gen-002",
+      "gen-003",
+      "gen-004",
+      "gen-007",
+      "gen-008",
+      "gen-010",
+      "gen-011",
+      "gen-012"
+    ],
+    "partial": [
+      "gen-005",
+      "gen-006",
+      "gen-009"
+    ]
+  },
+  "known_limitations": [
+    "Ambiguous queries may cause overly broad or technology-specific answers.",
+    "Raw citation formatting is not perfectly compliant in all cases.",
+    "Local LLM inference dominates end-to-end latency."
+  ],
+  "decision": {
+    "production_candidate": true,
+    "stop_prompt_tuning": true,
+    "reason": "The v3 prompt removes truncation while preserving grounded answering and strong insufficient-evidence behavior. Further tuning on the same benchmark risks overfitting."
+  }
+}
