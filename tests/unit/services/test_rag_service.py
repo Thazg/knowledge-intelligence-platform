@@ -28,7 +28,7 @@ class StubPipeline:
         return self.result
 
 
-def test_query_maps_pipeline_result_to_api_response() -> None:
+def test_query_maps_pipeline_result_to_service_result() -> None:
     pipeline_result = GenerationResult(
         query="pipeline-normalized query",
         answer="A grounded answer [2][1].",
@@ -85,47 +85,18 @@ def test_query_maps_pipeline_result_to_api_response() -> None:
     response = service.query("  original request query  ")
 
     assert pipeline.queries == ["  original request query  "]
-    assert response.model_dump() == {
-        "query": "pipeline-normalized query",
-        "answer": "A grounded answer [2][1].",
-        "citations": [
-            {
-                "citation_id": "2",
-                "document_id": "document-2",
-                "chunk_id": "chunk-2",
-            },
-            {
-                "citation_id": "1",
-                "document_id": "document-1",
-                "chunk_id": "chunk-1",
-            },
-        ],
-        "sources": [
-            {
-                "citation_id": "1",
-                "document_id": "document-1",
-                "chunk_id": "chunk-1",
-                "title": "First source",
-                "source": "docker",
-                "url": "https://example.test/first",
-            },
-            {
-                "citation_id": "2",
-                "document_id": "document-2",
-                "chunk_id": "chunk-2",
-                "title": "Second source",
-                "source": "kubernetes",
-                "url": None,
-            },
-        ],
-        "model": "synthetic-model",
-        "metrics": {
-            "retrieval_latency_ms": 12.5,
-            "context_build_latency_ms": 2.25,
-            "generation_latency_ms": 30.75,
-            "end_to_end_latency_ms": 45.5,
-        },
+    assert response.query == "pipeline-normalized query"
+    assert response.answer == "A grounded answer [2][1]."
+    assert response.citations == pipeline_result.citations
+    assert response.sources == pipeline_result.sources
+    assert response.sources[0].metadata == {
+        "relative_path": "docker/first.md"
     }
+    assert response.model == "synthetic-model"
+    assert response.retrieval_latency_ms == 12.5
+    assert response.context_build_latency_ms == 2.25
+    assert response.generation_latency_ms == 30.75
+    assert response.end_to_end_latency_ms == 45.5
 
 
 def test_query_allows_empty_citations_sources_and_metadata() -> None:
@@ -142,19 +113,15 @@ def test_query_allows_empty_citations_sources_and_metadata() -> None:
 
     response = service.query("Question without evidence")
 
-    assert response.model_dump() == {
-        "query": "Question without evidence",
-        "answer": "I do not have enough evidence.",
-        "citations": [],
-        "sources": [],
-        "model": "synthetic-model",
-        "metrics": {
-            "retrieval_latency_ms": None,
-            "context_build_latency_ms": None,
-            "generation_latency_ms": None,
-            "end_to_end_latency_ms": None,
-        },
-    }
+    assert response.query == "Question without evidence"
+    assert response.answer == "I do not have enough evidence."
+    assert response.citations == []
+    assert response.sources == []
+    assert response.model == "synthetic-model"
+    assert response.retrieval_latency_ms is None
+    assert response.context_build_latency_ms is None
+    assert response.generation_latency_ms is None
+    assert response.end_to_end_latency_ms is None
 
 
 def test_query_propagates_pipeline_exception_unchanged() -> None:
