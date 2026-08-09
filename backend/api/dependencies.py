@@ -1,4 +1,6 @@
 from __future__ import annotations
+import logging
+import time
 
 from functools import lru_cache
 
@@ -14,15 +16,17 @@ from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.services.rag_service import RAGService
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
+logger = logging.getLogger(__name__)
 @lru_cache(maxsize=1)
 def get_rag_service() -> RAGService:
     settings = get_settings()
 
-    print("Initializing RAG service...")
-    print(f"Qdrant URL: {settings.qdrant_url}")
-    print(f"Ollama URL: {settings.ollama_url}")
-    print(f"Chunks path: {settings.chunks_path}")
+    start_time = time.perf_counter()
+
+    logger.info("Initializing RAG service")
+    logger.info("Qdrant URL: %s", settings.qdrant_url)
+    logger.info("Ollama URL: %s", settings.ollama_url)
+    logger.info("Chunks path: %s", settings.chunks_path)
 
     serializer = ChunkSerializer()
     chunks = serializer.load_jsonl(settings.chunks_path)
@@ -71,6 +75,17 @@ def get_rag_service() -> RAGService:
         top_k=settings.retrieval_top_k,
     )
 
-    return RAGService(
+    service = RAGService(
         pipeline=pipeline,
     )
+    
+    initialization_latency_ms = (
+        time.perf_counter() - start_time
+    ) * 1000
+
+    logger.info(
+        "RAG service initialized successfully initialization_latency_ms=%.2f",
+        initialization_latency_ms,
+    )
+
+    return service

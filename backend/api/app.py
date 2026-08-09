@@ -8,12 +8,18 @@ from backend.api.dependencies import get_rag_service
 from backend.api.routes.query import router as query_router
 from backend.api.schemas.health import DependencyStatus, ReadinessResponse
 from backend.core.config import get_settings
+from backend.core.logging import configure_logging
+from backend.api.middleware.request_id import RequestIDMiddleware
+
+configure_logging()
 
 
 app = FastAPI(
     title="Enterprise AI Engineering Knowledge Platform",
     version="1.0.0",
 )
+
+app.add_middleware(RequestIDMiddleware)
 
 
 @app.get("/health", tags=["health"])
