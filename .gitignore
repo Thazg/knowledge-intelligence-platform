@@ -22,11 +22,19 @@ data/raw/
 data/temp/
 data/interim/
 data/processed/
+data/qdrant-core-backup/
 *.jsonl
 !backend/evaluation/datasets/retrieval_cases.jsonl
+!benchmarks/retrieval/cases.jsonl
+!benchmarks/retrieval/query_rewrites.jsonl
+!benchmarks/generation/cases_v1.jsonl
 *.parquet
 *.npy
 *.npz
+
+# Generated repository inventories
+project_directories.txt
+project_files.txt
 
 # Qdrant persistent storage
 qdrant_storage/
