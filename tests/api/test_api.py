@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import httpx
+import pytest
 
 from fastapi.testclient import TestClient
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -60,6 +61,15 @@ class FakeQdrantFailureService:
 class FakeOllamaFailureService:
     def query(self, query: str) -> QueryResponse:
         raise httpx.ConnectError("Ollama unavailable")
+
+
+@pytest.fixture(autouse=True)
+def use_fake_rag_service() -> None:
+    app.dependency_overrides[get_rag_service] = lambda: FakeRAGService()
+
+    yield
+
+    app.dependency_overrides.clear()
 
 
 def test_health_returns_ok() -> None:
