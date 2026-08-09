@@ -1,11 +1,7 @@
-import json
 from pathlib import Path
 
 from backend.chunking.serializer import ChunkSerializer
-from backend.evaluation.retrieval_evaluator import (
-    EvaluationCase,
-    RetrievalEvaluator,
-)
+from backend.evaluation.retrieval_evaluator import RetrievalEvaluator
 from backend.retrieval.bm25_retriever import BM25Retriever
 from backend.evaluation.dataset_loader import (
     load_evaluation_cases,
