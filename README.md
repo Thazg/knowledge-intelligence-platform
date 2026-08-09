@@ -72,3 +72,23 @@ python scripts/inspect_documents.py
 python scripts/tokenize_documents.py
 python scripts/test_fixed_token_chunker.py
 ```
+
+## Development and CI Checks
+
+Use CPython 3.13. Runtime dependencies are installed from
+`requirements.txt`; the development requirements include those runtime
+dependencies plus pytest and Ruff.
+
+```bash
+python -m pip install -r requirements-dev.txt
+ruff check .
+pytest tests/ -q
+docker compose config --quiet
+docker compose build api
+```
+
+These Docker commands use the repository-root `docker-compose.yml`. The
+default lint and test checks do not start Qdrant, Ollama, Prometheus, or
+Grafana, and do not require a local corpus, downloaded ML models, network
+access, or benchmark execution. The Qdrant-only
+`docker/docker-compose.yml` remains a local infrastructure helper.
