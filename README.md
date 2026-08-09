@@ -68,7 +68,7 @@ knowledge-intelligence-platform/
 python scripts/fetch_documents.py
 python scripts/discover_documents.py
 python scripts/extract_metadata.py
-python scripts/test_serializer.py
+python scripts/inspect_documents.py
 python scripts/tokenize_documents.py
 python scripts/test_fixed_token_chunker.py
 ```
