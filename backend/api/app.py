@@ -10,6 +10,8 @@ from backend.api.schemas.health import DependencyStatus, ReadinessResponse
 from backend.core.config import get_settings
 from backend.core.logging import configure_logging
 from backend.api.middleware.request_id import RequestIDMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from fastapi import Response
 
 configure_logging()
 
@@ -27,7 +29,13 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
     }
-
+    
+@app.get("/metrics", tags=["metrics"])
+def metrics() -> Response:
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 @app.get(
     "/ready",

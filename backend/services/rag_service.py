@@ -9,7 +9,13 @@ from backend.api.schemas.query import (
     SourceResponse,
 )
 from backend.generation.rag_pipeline import RAGPipeline
-
+from backend.core.metrics import (
+    RAG_END_TO_END_DURATION_SECONDS,
+    RAG_GENERATION_DURATION_SECONDS,
+    RAG_QUERIES_TOTAL,
+    RAG_QUERY_ERRORS_TOTAL,
+    RAG_RETRIEVAL_DURATION_SECONDS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +27,53 @@ class RAGService:
     def query(self, query: str) -> QueryResponse:
         logger.info("RAG query started")
 
-        result = self.pipeline.run(query)
+        try:
+            result = self.pipeline.run(query)
+        except Exception as exc:
+            RAG_QUERIES_TOTAL.labels(
+                status="error",
+            ).inc()
+
+            RAG_QUERY_ERRORS_TOTAL.labels(
+                error_type=type(exc).__name__,
+            ).inc()
+
+            logger.exception("RAG query failed")
+
+            raise
 
         metadata = result.metadata
+
+        retrieval_latency_ms = metadata.get(
+            "retrieval_latency_ms",
+            0.0,
+        )
+
+        generation_latency_ms = metadata.get(
+            "generation_stage_latency_ms",
+            0.0,
+        )
+
+        end_to_end_latency_ms = metadata.get(
+            "end_to_end_latency_ms",
+            0.0,
+        )
+
+        RAG_QUERIES_TOTAL.labels(
+            status="success",
+        ).inc()
+
+        RAG_RETRIEVAL_DURATION_SECONDS.observe(
+            retrieval_latency_ms / 1000
+        )
+
+        RAG_GENERATION_DURATION_SECONDS.observe(
+            generation_latency_ms / 1000
+        )
+
+        RAG_END_TO_END_DURATION_SECONDS.observe(
+            end_to_end_latency_ms / 1000
+        )
 
         logger.info(
             (
@@ -36,10 +86,10 @@ class RAGService:
                 "context_sources=%s "
                 "cited_sources=%s"
             ),
-            metadata.get("retrieval_latency_ms", 0.0),
+            retrieval_latency_ms,
             metadata.get("context_build_latency_ms", 0.0),
-            metadata.get("generation_stage_latency_ms", 0.0),
-            metadata.get("end_to_end_latency_ms", 0.0),
+            generation_latency_ms,
+            end_to_end_latency_ms,
             metadata.get("retrieved_results"),
             metadata.get("context_sources"),
             metadata.get("cited_sources"),

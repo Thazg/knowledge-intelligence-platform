@@ -8,6 +8,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from backend.core.metrics import (
+    HTTP_REQUEST_DURATION_SECONDS,
+    HTTP_REQUESTS_TOTAL,
+)
 from backend.core.request_context import request_id_context
 
 
@@ -42,9 +46,11 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
             response = await call_next(request)
 
-            latency_ms = (
+            duration_seconds = (
                 time.perf_counter() - start_time
-            ) * 1000
+            )
+
+            latency_ms = duration_seconds * 1000
 
             logger.info(
                 (
@@ -57,14 +63,40 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
                 latency_ms,
             )
 
-            response.headers[REQUEST_ID_HEADER] = request_id
+            HTTP_REQUESTS_TOTAL.labels(
+                method=request.method,
+                path=request.url.path,
+                status_code=str(response.status_code),
+            ).inc()
+
+            HTTP_REQUEST_DURATION_SECONDS.labels(
+                method=request.method,
+                path=request.url.path,
+            ).observe(duration_seconds)
+
+            response.headers[
+                REQUEST_ID_HEADER
+            ] = request_id
 
             return response
 
         except Exception:
-            latency_ms = (
+            duration_seconds = (
                 time.perf_counter() - start_time
-            ) * 1000
+            )
+
+            latency_ms = duration_seconds * 1000
+
+            HTTP_REQUESTS_TOTAL.labels(
+                method=request.method,
+                path=request.url.path,
+                status_code="500",
+            ).inc()
+
+            HTTP_REQUEST_DURATION_SECONDS.labels(
+                method=request.method,
+                path=request.url.path,
+            ).observe(duration_seconds)
 
             logger.exception(
                 (
