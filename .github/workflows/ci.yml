@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  quality:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +27,13 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -q
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
       - name: Validate Docker Compose
         run: docker compose config --quiet
