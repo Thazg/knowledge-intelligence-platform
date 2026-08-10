@@ -32,7 +32,10 @@ services:
     volumes:
       - ./data/processed:/app/data/processed:ro
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     restart: unless-stopped
 
   prometheus:
@@ -81,6 +84,17 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "ollama",
+          "list",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
 volumes:
