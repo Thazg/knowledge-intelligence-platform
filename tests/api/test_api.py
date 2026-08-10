@@ -58,7 +58,7 @@ class FakeOllamaFailureService:
 
 
 @pytest.fixture(autouse=True)
-def use_fake_rag_service() -> None:
+def use_fake_rag_service():
     app.dependency_overrides[get_rag_service] = lambda: FakeRAGService()
 
     yield
@@ -72,6 +72,104 @@ def test_health_returns_ok() -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
+    }
+
+
+def test_ready_returns_200_when_dependencies_are_ready(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url.endswith("/api/tags"):
+            return FakeResponse(
+                {
+                    "models": [
+                        {
+                            "name": "qwen3:4b-instruct",
+                        }
+                    ]
+                }
+            )
+
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ready",
+        "dependencies": {
+            "rag_service": "ready",
+            "qdrant": "ready",
+            "ollama": "ready",
+        },
+    }
+
+
+def test_ready_returns_503_when_generation_model_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url.endswith("/api/tags"):
+            return FakeResponse(
+                {
+                    "models": [],
+                }
+            )
+
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "dependencies": {
+            "rag_service": "ready",
+            "qdrant": "ready",
+            "ollama": "unavailable",
+        },
     }
 
 

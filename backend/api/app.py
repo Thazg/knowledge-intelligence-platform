@@ -69,6 +69,18 @@ def readiness():
             timeout=2.0,
         )
         response.raise_for_status()
+
+        payload = response.json()
+        models = payload.get("models", [])
+
+        available_models = {
+            model.get("name")
+            for model in models
+        }
+
+        if settings.generation_model not in available_models:
+            ollama_status = "unavailable"
+
     except Exception:
         ollama_status = "unavailable"
 
