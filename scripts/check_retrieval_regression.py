@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -52,35 +53,89 @@ GATED_METRICS = (
 )
 
 
-def load_baseline() -> tuple[
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the retrieval regression gate against a benchmark baseline."
+        )
+    )
+
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=DATASET_PATH,
+        help="Path to retrieval benchmark cases JSONL.",
+    )
+
+    parser.add_argument(
+        "--chunks",
+        type=Path,
+        default=CHUNKS_PATH,
+        help="Path to chunks JSONL used by BM25.",
+    )
+
+    parser.add_argument(
+        "--collection",
+        default=COLLECTION_NAME,
+        help="Qdrant collection used by dense retrieval.",
+    )
+
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=BASELINE_PATH,
+        help=(
+            "Path to either the fast CI baseline JSON "
+            "or the full benchmark manifest JSON."
+        ),
+    )
+
+    return parser.parse_args()
+
+
+def load_baseline(
+    baseline_path: Path = BASELINE_PATH,
+) -> tuple[
     dict[str, float],
     float,
 ]:
-    with BASELINE_PATH.open(
+    with baseline_path.open(
         "r",
         encoding="utf-8",
     ) as file:
         payload = json.load(file)
 
-    metrics = payload["metrics"]
+    if "metrics" in payload:
+        metrics = payload["metrics"]
+        tolerance = float(
+            payload["regression_tolerance"]
+        )
+    elif "baseline" in payload:
+        metrics = payload["baseline"]
+        tolerance = float(
+            payload["regression"]["tolerance"]
+        )
+    else:
+        raise ValueError(
+            "Unsupported retrieval baseline format."
+        )
 
     baseline = {
         metric: float(metrics[metric])
         for metric in GATED_METRICS
     }
 
-    tolerance = float(
-        payload["regression_tolerance"]
-    )
-
     return baseline, tolerance
 
 
-def build_retriever() -> HybridRetriever:
+def build_retriever(
+    chunks_path: Path = CHUNKS_PATH,
+    collection_name: str = COLLECTION_NAME,
+) -> HybridRetriever:
     serializer = ChunkSerializer()
 
     chunks = serializer.load_jsonl(
-        CHUNKS_PATH,
+        chunks_path,
     )
 
     embedder = LocalEmbedder(
@@ -88,7 +143,7 @@ def build_retriever() -> HybridRetriever:
     )
 
     vector_store = QdrantVectorStore(
-        collection_name=COLLECTION_NAME,
+        collection_name=collection_name,
         vector_size=embedder.dimension,
     )
 
@@ -110,9 +165,13 @@ def build_retriever() -> HybridRetriever:
     )
 
 
-def evaluate_current() -> RetrievalMetrics:
+def evaluate_current(
+    dataset_path: Path = DATASET_PATH,
+    chunks_path: Path = CHUNKS_PATH,
+    collection_name: str = COLLECTION_NAME,
+) -> RetrievalMetrics:
     cases = load_evaluation_cases(
-        DATASET_PATH,
+        dataset_path,
     )
 
     if not cases:
@@ -120,7 +179,10 @@ def evaluate_current() -> RetrievalMetrics:
             "No active evaluation cases found."
         )
 
-    retriever = build_retriever()
+    retriever = build_retriever(
+        chunks_path=chunks_path,
+        collection_name=collection_name,
+    )
 
     evaluator = RetrievalEvaluator(
         retriever=retriever,
@@ -186,9 +248,17 @@ def check_regression(
 
 
 def main() -> None:
-    baseline, tolerance = load_baseline()
+    args = parse_args()
 
-    current = evaluate_current()
+    baseline, tolerance = load_baseline(
+        args.baseline,
+    )
+
+    current = evaluate_current(
+        dataset_path=args.dataset,
+        chunks_path=args.chunks,
+        collection_name=args.collection,
+    )
 
     passed = check_regression(
         current=current,

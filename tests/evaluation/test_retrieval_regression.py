@@ -1,5 +1,11 @@
+import json
+from pathlib import Path
+
 from backend.evaluation.metrics import RetrievalMetrics
-from scripts.check_retrieval_regression import check_regression
+from scripts.check_retrieval_regression import (
+    check_regression,
+    load_baseline,
+)
 
 
 def make_metrics(
@@ -81,3 +87,50 @@ def test_check_regression_fails_when_metric_drops_too_far() -> None:
         baseline=BASELINE,
         tolerance=0.02,
     )
+
+def test_load_baseline_reads_ci_format(
+    tmp_path: Path,
+) -> None:
+    baseline_path = tmp_path / "baseline.json"
+
+    payload = {
+        "metrics": BASELINE,
+        "regression_tolerance": 0.02,
+    }
+
+    baseline_path.write_text(
+        json.dumps(payload),
+        encoding="utf-8",
+    )
+
+    baseline, tolerance = load_baseline(
+        baseline_path,
+    )
+
+    assert baseline == BASELINE
+    assert tolerance == 0.02
+
+
+def test_load_baseline_reads_full_manifest_format(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+
+    payload = {
+        "baseline": BASELINE,
+        "regression": {
+            "tolerance": 0.02,
+        },
+    }
+
+    manifest_path.write_text(
+        json.dumps(payload),
+        encoding="utf-8",
+    )
+
+    baseline, tolerance = load_baseline(
+        manifest_path,
+    )
+
+    assert baseline == BASELINE
+    assert tolerance == 0.02
