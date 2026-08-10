@@ -18,7 +18,7 @@ services:
       - "8000:8000"
     environment:
       QDRANT_URL: http://qdrant:6333
-      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_URL: http://ollama:11434
       CHUNKS_PATH: /app/data/processed/chunks_fixed.jsonl
       QDRANT_COLLECTION: enterprise_knowledge_fixed_bge_small
       EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
@@ -67,8 +67,26 @@ services:
 
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: enterprise-rag-ollama
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:
     external: true
     name: docker_qdrant_storage
   grafana_storage:
+
+  ollama_models:
