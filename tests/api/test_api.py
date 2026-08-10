@@ -1,37 +1,34 @@
 from __future__ import annotations
 
 import httpx
+import pytest
 
 from fastapi.testclient import TestClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 
 from backend.api.app import app
 from backend.api.dependencies import get_rag_service
-from backend.api.schemas.query import (
-    CitationResponse,
-    MetricsResponse,
-    QueryResponse,
-    SourceResponse,
-)
+from backend.generation.models import Citation, SourceReference
+from backend.services.models import RAGServiceResult
 
 
 client = TestClient(app)
 
 
 class FakeRAGService:
-    def query(self, query: str) -> QueryResponse:
-        return QueryResponse(
+    def query(self, query: str) -> RAGServiceResult:
+        return RAGServiceResult(
             query=query,
             answer="A Kubernetes Deployment manages replicated Pods [1].",
             citations=[
-                CitationResponse(
+                Citation(
                     citation_id="1",
                     document_id="doc-1",
                     chunk_id="chunk-1",
                 ),
             ],
             sources=[
-                SourceResponse(
+                SourceReference(
                     citation_id="1",
                     document_id="doc-1",
                     chunk_id="chunk-1",
@@ -41,25 +38,32 @@ class FakeRAGService:
                 ),
             ],
             model="fake-model",
-            metrics=MetricsResponse(
-                retrieval_latency_ms=10.0,
-                context_build_latency_ms=1.0,
-                generation_latency_ms=20.0,
-                end_to_end_latency_ms=31.0,
-            ),
+            retrieval_latency_ms=10.0,
+            context_build_latency_ms=1.0,
+            generation_latency_ms=20.0,
+            end_to_end_latency_ms=31.0,
         )
 
 
 class FakeQdrantFailureService:
-    def query(self, query: str) -> QueryResponse:
+    def query(self, query: str) -> RAGServiceResult:
         raise ResponseHandlingException(
             httpx.ConnectError("Qdrant unavailable")
         )
 
 
 class FakeOllamaFailureService:
-    def query(self, query: str) -> QueryResponse:
+    def query(self, query: str) -> RAGServiceResult:
         raise httpx.ConnectError("Ollama unavailable")
+
+
+@pytest.fixture(autouse=True)
+def use_fake_rag_service() -> None:
+    app.dependency_overrides[get_rag_service] = lambda: FakeRAGService()
+
+    yield
+
+    app.dependency_overrides.clear()
 
 
 def test_health_returns_ok() -> None:

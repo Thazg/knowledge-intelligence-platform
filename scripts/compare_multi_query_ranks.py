@@ -7,7 +7,6 @@ from backend.evaluation.retrieval_evaluator import (
     EvaluationCase,
     RetrievalEvaluator,
 )
-from backend.query_rewriting.query_rewriter import QueryRewriter
 from backend.retrieval.bm25_retriever import BM25Retriever
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever

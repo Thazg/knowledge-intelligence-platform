@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from backend.embedding.embedder import LocalEmbedder
 from backend.query_rewriting import QueryRewriter
 from backend.retrieval.bm25_retriever import BM25Retriever

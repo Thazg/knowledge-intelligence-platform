@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from qdrant_client.http.exceptions import ResponseHandlingException
 
 from backend.api.dependencies import get_rag_service
+from backend.api.query_mapper import to_query_response
 from backend.api.schemas.query import QueryRequest, QueryResponse
 from backend.services.rag_service import RAGService
 
@@ -25,7 +26,8 @@ def query_rag(
     service: RAGService = Depends(get_rag_service),
 ) -> QueryResponse:
     try:
-        return service.query(request.query)
+        result = service.query(request.query)
+        return to_query_response(result)
 
     except ResponseHandlingException as exc:
         raise HTTPException(

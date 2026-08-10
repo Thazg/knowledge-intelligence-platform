@@ -1,11 +1,7 @@
-import json
 from pathlib import Path
 
 from backend.embedding.embedder import LocalEmbedder
-from backend.evaluation.retrieval_evaluator import (
-    EvaluationCase,
-    RetrievalEvaluator,
-)
+from backend.evaluation.retrieval_evaluator import RetrievalEvaluator
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 from backend.evaluation.dataset_loader import (
@@ -16,8 +12,6 @@ from backend.evaluation.metrics import (
     calculate_metrics_by_category,
     print_metrics,
 )
-from collections import Counter
-
 DATASET_PATH = Path(
     "benchmarks/retrieval/cases.jsonl"
 )
