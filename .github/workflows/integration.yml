@@ -1,0 +1,46 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Wait for Qdrant
+        run: |
+          for i in {1..30}; do
+            if curl --fail http://localhost:6333/readyz; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Qdrant did not become ready in time."
+          exit 1
+
+      - name: Run integration tests
+        run: pytest tests/integration -q -m integration
