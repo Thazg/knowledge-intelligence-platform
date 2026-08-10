@@ -109,6 +109,11 @@ def test_ready_returns_200_when_dependencies_are_ready(
         return FakeResponse()
 
     monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        lambda: FakeRAGService(),
+    )
+
+    monkeypatch.setattr(
         "backend.api.app.httpx.get",
         fake_get,
     )
@@ -154,6 +159,11 @@ def test_ready_returns_503_when_generation_model_is_missing(
             )
 
         return FakeResponse()
+
+    monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        lambda: FakeRAGService(),
+    )
 
     monkeypatch.setattr(
         "backend.api.app.httpx.get",
