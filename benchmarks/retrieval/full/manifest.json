@@ -25,9 +25,9 @@
     },
     "benchmark_cases": {
       "path": "benchmarks/retrieval/cases.jsonl",
-      "size_bytes": 36040,
+      "size_bytes": 35940,
       "cases": 100,
-      "sha256": "34A5BD7273C643A9E83D9BBC85AAB40E13439FE8ABF82BA594B3423169CC9B97"
+      "sha256": "B1CBE4D44AC24A2B3494DD70DC3ABF1B8346A2289242CC2F48A7EDA8994798E3"
     }
   },
   "retriever": {
