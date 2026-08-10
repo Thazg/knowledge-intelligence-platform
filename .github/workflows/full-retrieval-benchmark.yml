@@ -2,9 +2,6 @@ name: Full Retrieval Benchmark
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - ci/full-retrieval-benchmark
 
 permissions:
   contents: read
