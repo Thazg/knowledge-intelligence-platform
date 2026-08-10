@@ -1,0 +1,63 @@
+{
+  "benchmark_version": "retrieval_full_v1",
+  "release_tag": "retrieval-benchmark-v1",
+  "qdrant": {
+    "version": "1.19.0",
+    "docker_image": "qdrant/qdrant:v1.19.0",
+    "collection": "enterprise_knowledge_fixed_bge_small",
+    "points": 36199,
+    "vector_size": 384
+  },
+  "embedding": {
+    "model": "BAAI/bge-small-en-v1.5"
+  },
+  "artifacts": {
+    "qdrant_snapshot": {
+      "asset_name": "enterprise_knowledge_full_bge_small_v1.snapshot",
+      "size_bytes": 162267648,
+      "sha256": "C729AED452F06A92A78833ECA963B8B7C2CB336E8EFE382AD3BCC6DA7524EDED"
+    },
+    "bm25_corpus": {
+      "asset_name": "enterprise_knowledge_chunks_fixed_v1.jsonl",
+      "size_bytes": 59361075,
+      "chunks": 36199,
+      "sha256": "574E06F89E9EB1B709E015D92A40DC646754004B78FBEDAE0BB77FAD4379B57A"
+    },
+    "benchmark_cases": {
+      "path": "benchmarks/retrieval/cases.jsonl",
+      "size_bytes": 35940,
+      "cases": 100,
+      "sha256": "B1CBE4D44AC24A2B3494DD70DC3ABF1B8346A2289242CC2F48A7EDA8994798E3"
+    }
+  },
+  "retriever": {
+    "type": "weighted_rrf",
+    "dense_weight": 0.7,
+    "bm25_weight": 0.3,
+    "rrf_k": 60,
+    "top_k": 10
+  },
+  "regression": {
+    "tolerance": 0.02,
+    "gated_metrics": [
+      "hit_at_1",
+      "hit_at_10",
+      "recall_at_10",
+      "ndcg_at_10",
+      "mrr"
+    ]
+  },
+  "baseline": {
+    "hit_at_1": 0.62,
+    "hit_at_3": 0.81,
+    "hit_at_5": 0.87,
+    "hit_at_10": 0.93,
+    "recall_at_3": 0.6408,
+    "recall_at_5": 0.7308,
+    "recall_at_10": 0.8392,
+    "ndcg_at_3": 0.601,
+    "ndcg_at_5": 0.6402,
+    "ndcg_at_10": 0.6788,
+    "mrr": 0.7247
+  }
+}
