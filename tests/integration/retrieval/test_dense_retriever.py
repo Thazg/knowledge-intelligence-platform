@@ -2,10 +2,20 @@ import numpy as np
 import pytest
 
 from backend.chunking.models import Chunk
+from backend.retrieval.dense_retriever import DenseRetriever
 
 pytestmark = pytest.mark.integration
 
-def test_qdrant_store_upsert_and_search(qdrant_store):
+
+class FakeEmbedder:
+    def embed_query(self, query: str) -> np.ndarray:
+        return np.array(
+            [1.0, 0.0, 0.0],
+            dtype=np.float32,
+        )
+
+
+def test_dense_retriever_returns_expected_qdrant_result(qdrant_store):
     chunks = [
         Chunk(
             chunk_id="chunk-kubernetes",
@@ -51,31 +61,27 @@ def test_qdrant_store_upsert_and_search(qdrant_store):
         dtype=np.float32,
     )
 
-    inserted = qdrant_store.upsert_chunks(
+    qdrant_store.upsert_chunks(
         chunks=chunks,
         embeddings=embeddings,
     )
 
-    assert inserted == 3
-
-    query_embedding = np.array(
-        [1.0, 0.0, 0.0],
-        dtype=np.float32,
+    retriever = DenseRetriever(
+        embedder=FakeEmbedder(),
+        vector_store=qdrant_store,
     )
 
-    results = qdrant_store.search(
-        query_embedding=query_embedding,
-        limit=3,
+    results = retriever.retrieve(
+        query="How do Kubernetes Deployments work?",
+        top_k=3,
     )
 
     assert len(results) == 3
 
     top_result = results[0]
 
-    assert top_result.payload["chunk_id"] == "chunk-kubernetes"
-    assert top_result.payload["document_id"] == "doc-kubernetes"
-    assert (
-        top_result.payload["content"]
-        == "Kubernetes Deployments manage replicated Pods."
-    )
-    assert top_result.payload["source"] == "kubernetes"
+    assert top_result.rank == 1
+    assert top_result.chunk_id == "chunk-kubernetes"
+    assert top_result.document_id == "doc-kubernetes"
+    assert top_result.source == "kubernetes"
+    assert top_result.title == "Deployments"
