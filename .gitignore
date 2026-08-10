@@ -28,6 +28,8 @@ data/qdrant-core-backup/
 !benchmarks/retrieval/cases.jsonl
 !benchmarks/retrieval/query_rewrites.jsonl
 !benchmarks/generation/cases_v1.jsonl
+!benchmarks/retrieval/ci/cases.jsonl
+!benchmarks/retrieval/ci/chunks.jsonl
 *.parquet
 *.npy
 *.npz
