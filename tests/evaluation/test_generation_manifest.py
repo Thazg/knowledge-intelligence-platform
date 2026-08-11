@@ -156,7 +156,12 @@ def test_generation_manifest_freezes_runtime_and_policy() -> None:
 
     assert manifest["generator"] == {
         "provider": "ollama",
+        "ollama_version": "0.32.5",
         "model": "qwen3:4b-instruct",
+        "model_digest": (
+            "0edcdef34593eac1aa2be9c7d06c432d"
+            "cf81945adca5eca2f27662c18f168ba0"
+        ),
         "temperature": 0.0,
         "num_predict": 384,
     }
