@@ -299,61 +299,44 @@ jobs:
 
       - name: Download frozen retrieval assets
         shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $baseUrl = `
-            "${{ github.server_url }}/${{ github.repository }}/releases/download/$env:RELEASE_TAG"
-
-          $snapshotUrl = `
-            "$baseUrl/$env:SNAPSHOT_NAME"
-
-          $corpusUrl = `
-            "$baseUrl/$env:CORPUS_NAME"
-
-          $snapshotPath = Join-Path `
-            ".benchmark-assets" `
-            $env:SNAPSHOT_NAME
-
-          $corpusPath = Join-Path `
-            ".benchmark-assets" `
-            $env:CORPUS_NAME
-
-          Write-Host "Downloading frozen Qdrant snapshot..."
-          Write-Host "URL: $snapshotUrl"
-
-          curl.exe `
-            --location `
-            --fail `
-            --show-error `
-            --retry 5 `
-            --retry-delay 3 `
-            --retry-all-errors `
-            --output $snapshotPath `
-            $snapshotUrl
+          Write-Host "GitHub CLI:"
+          gh --version
 
           if ($LASTEXITCODE -ne 0) {
-              throw `
-                "Failed to download frozen Qdrant snapshot."
+              throw "GitHub CLI is not available."
           }
 
-          Write-Host "Downloading frozen BM25 corpus..."
-          Write-Host "URL: $corpusUrl"
+          Write-Host "Checking release: $env:RELEASE_TAG"
 
-          curl.exe `
-            --location `
-            --fail `
-            --show-error `
-            --retry 5 `
-            --retry-delay 3 `
-            --retry-all-errors `
-            --output $corpusPath `
-            $corpusUrl
+          gh release view `
+            $env:RELEASE_TAG `
+            --repo "${{ github.repository }}"
 
           if ($LASTEXITCODE -ne 0) {
-              throw `
-                "Failed to download frozen BM25 corpus."
+              throw "Frozen retrieval release was not found."
+          }
+
+          Write-Host "Downloading frozen retrieval assets..."
+
+          gh release download `
+            $env:RELEASE_TAG `
+            --repo "${{ github.repository }}" `
+            --pattern $env:SNAPSHOT_NAME `
+            --pattern $env:CORPUS_NAME `
+            --dir ".benchmark-assets" `
+            --clobber
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Failed to download frozen retrieval assets."
           }
 
           Write-Host "Frozen retrieval assets downloaded."
+
+          Get-ChildItem ".benchmark-assets" |
+            Select-Object Name, Length
 
       - name: Verify frozen retrieval assets
         shell: powershell
