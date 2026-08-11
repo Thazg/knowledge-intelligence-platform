@@ -3,6 +3,8 @@ name: Generation Regression
 on:
   workflow_dispatch:
 
+  # Temporary validation trigger.
+  # Remove before merging to main.
   push:
     branches:
       - feature/generation-regression
@@ -13,8 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  self-hosted-preflight:
-    name: Self-hosted Windows preflight
+  generation-regression:
+    name: Generation regression
 
     runs-on:
       - self-hosted
@@ -22,43 +24,375 @@ jobs:
       - X64
       - generation
 
-    timeout-minutes: 10
+    timeout-minutes: 30
+
+    env:
+      QDRANT_CONTAINER: enterprise-kip-generation-qdrant
+      QDRANT_URL: http://localhost:6335
+      QDRANT_COLLECTION: enterprise_knowledge_fixed_bge_small
+
+      SNAPSHOT_NAME: enterprise_knowledge_full_bge_small_v1.snapshot
+      SNAPSHOT_SIZE: "162267648"
+      SNAPSHOT_SHA256: C729AED452F06A92A78833ECA963B8B7C2CB336E8EFE382AD3BCC6DA7524EDED
+
+      CORPUS_NAME: enterprise_knowledge_chunks_fixed_v1.jsonl
+      CORPUS_SIZE: "59361075"
+      CORPUS_SHA256: 574E06F89E9EB1B709E015D92A40DC646754004B78FBEDAE0BB77FAD4379B57A
+      CORPUS_CHUNK_COUNT: "36199"
+
+      RELEASE_TAG: retrieval-benchmark-v1
+
+      RESULTS_PATH: .benchmark-results\generation-results.jsonl
+
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show runner information
-        shell: powershell
-        run: |
-          Write-Host "Computer: $env:COMPUTERNAME"
-          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
-          Write-Host "Runner OS: $env:RUNNER_OS"
-          Write-Host "PowerShell version:"
-          $PSVersionTable.PSVersion
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
 
-      - name: Verify Python
+      - name: Install dependencies
         shell: powershell
         run: |
-          python --version
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Verify generation benchmark manifest
+        shell: powershell
+        run: |
+          pytest tests\evaluation\test_generation_manifest.py -q
 
       - name: Verify Docker
         shell: powershell
         run: |
           docker version
 
-      - name: Verify Ollama
+      - name: Verify generation runtime provenance
         shell: powershell
         run: |
           ollama --version
           ollama list
 
-      - name: Verify Ollama API
+          python scripts\check_generation_runtime_provenance.py
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Generation runtime provenance check failed."
+          }
+
+      - name: Prepare benchmark directories
         shell: powershell
         run: |
-          $response = Invoke-RestMethod `
-            http://localhost:11434/api/tags
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            ".benchmark-assets" |
+            Out-Null
 
-          $response.models |
-            Select-Object name, digest, size |
-            ConvertTo-Json -Depth 5
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            ".benchmark-results" |
+            Out-Null
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            "data\processed" |
+            Out-Null
+
+      - name: Download frozen retrieval assets
+        shell: powershell
+        run: |
+          $baseUrl = `
+            "${{ github.server_url }}/${{ github.repository }}/releases/download/$env:RELEASE_TAG"
+
+          $snapshotUrl = "$baseUrl/$env:SNAPSHOT_NAME"
+          $corpusUrl = "$baseUrl/$env:CORPUS_NAME"
+
+          $snapshotPath = Join-Path `
+            ".benchmark-assets" `
+            $env:SNAPSHOT_NAME
+
+          $corpusPath = Join-Path `
+            ".benchmark-assets" `
+            $env:CORPUS_NAME
+
+          Write-Host "Downloading Qdrant snapshot..."
+          Invoke-WebRequest `
+            -Uri $snapshotUrl `
+            -OutFile $snapshotPath
+
+          Write-Host "Downloading BM25 corpus..."
+          Invoke-WebRequest `
+            -Uri $corpusUrl `
+            -OutFile $corpusPath
+
+      - name: Verify frozen retrieval assets
+        shell: powershell
+        run: |
+          $snapshotPath = Join-Path `
+            ".benchmark-assets" `
+            $env:SNAPSHOT_NAME
+
+          $corpusPath = Join-Path `
+            ".benchmark-assets" `
+            $env:CORPUS_NAME
+
+          $snapshot = Get-Item $snapshotPath
+          $corpus = Get-Item $corpusPath
+
+          Write-Host "Snapshot size: $($snapshot.Length)"
+          Write-Host "Corpus size:   $($corpus.Length)"
+
+          if ($snapshot.Length -ne [int64]$env:SNAPSHOT_SIZE) {
+              throw `
+                "Snapshot size mismatch: $($snapshot.Length)"
+          }
+
+          if ($corpus.Length -ne [int64]$env:CORPUS_SIZE) {
+              throw `
+                "Corpus size mismatch: $($corpus.Length)"
+          }
+
+          $snapshotHash = (
+            Get-FileHash `
+              $snapshotPath `
+              -Algorithm SHA256
+          ).Hash.ToUpper()
+
+          $corpusHash = (
+            Get-FileHash `
+              $corpusPath `
+              -Algorithm SHA256
+          ).Hash.ToUpper()
+
+          Write-Host "Snapshot SHA256: $snapshotHash"
+          Write-Host "Corpus SHA256:   $corpusHash"
+
+          if (
+            $snapshotHash -ne `
+              $env:SNAPSHOT_SHA256.ToUpper()
+          ) {
+              throw "Snapshot SHA256 mismatch."
+          }
+
+          if (
+            $corpusHash -ne `
+              $env:CORPUS_SHA256.ToUpper()
+          ) {
+              throw "Corpus SHA256 mismatch."
+          }
+
+          $chunkCount = (
+            [System.IO.File]::ReadLines(
+              (Resolve-Path $corpusPath)
+            ) |
+            Measure-Object
+          ).Count
+
+          Write-Host "Corpus chunks: $chunkCount"
+
+          if (
+            $chunkCount -ne `
+              [int]$env:CORPUS_CHUNK_COUNT
+          ) {
+              throw `
+                "Corpus chunk count mismatch: $chunkCount"
+          }
+
+      - name: Install frozen BM25 corpus
+        shell: powershell
+        run: |
+          $source = Join-Path `
+            ".benchmark-assets" `
+            $env:CORPUS_NAME
+
+          Copy-Item `
+            $source `
+            "data\processed\chunks_fixed.jsonl" `
+            -Force
+
+          Write-Host `
+            "Frozen corpus installed at data\processed\chunks_fixed.jsonl"
+
+      - name: Start isolated Qdrant
+        shell: powershell
+        run: |
+          docker rm `
+            -f `
+            $env:QDRANT_CONTAINER `
+            2>$null
+
+          docker pull qdrant/qdrant:v1.19.0
+
+          docker run `
+            -d `
+            --name $env:QDRANT_CONTAINER `
+            -p 6335:6333 `
+            qdrant/qdrant:v1.19.0
+
+      - name: Wait for isolated Qdrant
+        shell: powershell
+        run: |
+          $ready = $false
+
+          for ($attempt = 1; $attempt -le 30; $attempt++) {
+              try {
+                  $response = Invoke-WebRequest `
+                    -Uri "$env:QDRANT_URL/healthz" `
+                    -UseBasicParsing `
+                    -TimeoutSec 5
+
+                  if ($response.StatusCode -eq 200) {
+                      $ready = $true
+                      break
+                  }
+              }
+              catch {
+                  Write-Host `
+                    "Qdrant not ready yet ($attempt/30)."
+              }
+
+              Start-Sleep -Seconds 2
+          }
+
+          if (-not $ready) {
+              docker logs $env:QDRANT_CONTAINER
+              throw "Qdrant did not become ready."
+          }
+
+          Write-Host "Qdrant is ready."
+
+      - name: Restore frozen Qdrant snapshot
+        shell: powershell
+        run: |
+          $snapshotPath = (
+            Resolve-Path (
+              Join-Path `
+                ".benchmark-assets" `
+                $env:SNAPSHOT_NAME
+            )
+          ).Path
+
+          $url = `
+            "$env:QDRANT_URL/collections/$env:QDRANT_COLLECTION/snapshots/upload?priority=snapshot&wait=true"
+
+          curl.exe `
+            --fail `
+            --silent `
+            --show-error `
+            -X POST `
+            $url `
+            -F "snapshot=@$snapshotPath"
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Qdrant snapshot restore failed."
+          }
+
+      - name: Verify restored Qdrant collection
+        shell: powershell
+        run: |
+          $collectionUrl = `
+            "$env:QDRANT_URL/collections/$env:QDRANT_COLLECTION"
+
+          $info = Invoke-RestMethod `
+            -Uri $collectionUrl
+
+          Write-Host `
+            "Collection status: $($info.result.status)"
+
+          Write-Host `
+            "Reported points: $($info.result.points_count)"
+
+          $countUrl = `
+            "$collectionUrl/points/count"
+
+          $count = Invoke-RestMethod `
+            -Method Post `
+            -Uri $countUrl `
+            -ContentType "application/json" `
+            -Body '{"exact":true}'
+
+          $exactCount = $count.result.count
+
+          Write-Host "Exact point count: $exactCount"
+
+          if (
+            $exactCount -ne `
+              [int]$env:CORPUS_CHUNK_COUNT
+          ) {
+              throw `
+                "Qdrant point count mismatch: $exactCount"
+          }
+
+      - name: Run generation benchmark
+        shell: powershell
+        run: |
+          python -u `
+            scripts\evaluate_generation_v1.py `
+            --qdrant-url $env:QDRANT_URL `
+            --output $env:RESULTS_PATH
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Generation benchmark runner failed."
+          }
+
+      - name: Check generation regression
+        shell: powershell
+        run: |
+          python `
+            scripts\check_generation_regression.py `
+            --results $env:RESULTS_PATH
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Generation regression gate failed."
+          }
+
+      - name: Verify result record count
+        shell: powershell
+        run: |
+          $count = (
+            Get-Content $env:RESULTS_PATH
+          ).Count
+
+          Write-Host "Generation result records: $count"
+
+          if ($count -ne 12) {
+              throw `
+                "Expected 12 generation records, got $count."
+          }
+
+      - name: Upload generation benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generation-regression-${{ github.run_id }}
+          path: .benchmark-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Show Qdrant logs on failure
+        if: failure()
+        shell: powershell
+        run: |
+          docker logs $env:QDRANT_CONTAINER
+
+      - name: Cleanup isolated Qdrant
+        if: always()
+        shell: powershell
+        run: |
+          docker rm `
+            -f `
+            $env:QDRANT_CONTAINER `
+            2>$null
+
+          Remove-Item `
+            ".benchmark-assets" `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue
