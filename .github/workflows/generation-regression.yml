@@ -293,6 +293,76 @@ jobs:
             ".benchmark-assets/${CORPUS_ASSET}" \
             data/processed/chunks_fixed.jsonl
 
-      - name: Phase 1 complete
+            - name: Show runner resources
+        shell: bash
+        run: |
+          echo "Disk:"
+          df -h
+
+          echo
+          echo "Memory:"
+          free -h
+
+          echo
+          echo "CPU:"
+          nproc
+
+      - name: Install pinned Ollama
+        shell: bash
+        run: |
+          curl -fsSL https://ollama.com/install.sh \
+            | OLLAMA_VERSION=0.32.5 sh
+
+          ollama --version
+
+      - name: Start Ollama
+        shell: bash
+        run: |
+          nohup ollama serve \
+            > /tmp/ollama.log \
+            2>&1 &
+
+          echo $! > /tmp/ollama.pid
+
+      - name: Wait for Ollama
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            if curl --fail --silent \
+              http://localhost:11434/api/tags \
+              > /dev/null; then
+              echo "Ollama is ready."
+              exit 0
+            fi
+
+            echo "Waiting for Ollama..."
+            sleep 2
+          done
+
+          echo "Ollama did not become ready."
+
+          echo
+          echo "Ollama log:"
+          cat /tmp/ollama.log || true
+
+          exit 1
+
+      - name: Pull generation model
+        shell: bash
+        run: |
+          ollama pull qwen3:4b-instruct
+
+      - name: Show installed Ollama models
+        shell: bash
+        run: |
+          ollama list
+
+      - name: Verify generation runtime provenance
+        shell: bash
+        run: |
+          python scripts/check_generation_runtime_provenance.py
+
+      - name: Phase 2 complete
         run: |
           echo "Frozen retrieval environment restored."
+          echo "Pinned generation runtime verified."
