@@ -317,19 +317,43 @@ jobs:
             ".benchmark-assets" `
             $env:CORPUS_NAME
 
-          Write-Host `
-            "Downloading frozen Qdrant snapshot..."
+          Write-Host "Downloading frozen Qdrant snapshot..."
+          Write-Host "URL: $snapshotUrl"
 
-          Invoke-WebRequest `
-            -Uri $snapshotUrl `
-            -OutFile $snapshotPath
+          curl.exe `
+            --location `
+            --fail `
+            --show-error `
+            --retry 5 `
+            --retry-delay 3 `
+            --retry-all-errors `
+            --output $snapshotPath `
+            $snapshotUrl
 
-          Write-Host `
-            "Downloading frozen BM25 corpus..."
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Failed to download frozen Qdrant snapshot."
+          }
 
-          Invoke-WebRequest `
-            -Uri $corpusUrl `
-            -OutFile $corpusPath
+          Write-Host "Downloading frozen BM25 corpus..."
+          Write-Host "URL: $corpusUrl"
+
+          curl.exe `
+            --location `
+            --fail `
+            --show-error `
+            --retry 5 `
+            --retry-delay 3 `
+            --retry-all-errors `
+            --output $corpusPath `
+            $corpusUrl
+
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Failed to download frozen BM25 corpus."
+          }
+
+          Write-Host "Frozen retrieval assets downloaded."
 
       - name: Verify frozen retrieval assets
         shell: powershell
