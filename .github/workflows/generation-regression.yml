@@ -284,7 +284,7 @@ jobs:
               )
           PY
 
-            - name: Install frozen BM25 corpus
+      - name: Install frozen BM25 corpus
         shell: bash
         run: |
           mkdir -p data/processed
