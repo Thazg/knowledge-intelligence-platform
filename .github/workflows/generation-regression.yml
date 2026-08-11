@@ -3,14 +3,6 @@ name: Generation Regression
 on:
   workflow_dispatch:
 
-  # Temporary validation trigger.
-  # Remove before merging this workflow to main.
-  push:
-    branches:
-      - feature/generation-regression
-    paths:
-      - ".github/workflows/generation-regression.yml"
-
 permissions:
   contents: read
 
