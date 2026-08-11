@@ -43,3 +43,22 @@ def test_parse_args_accepts_custom_generation_output(
     args = parse_args()
 
     assert args.output == output_path
+
+def test_parse_args_accepts_custom_qdrant_url(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "evaluate_generation_v1.py",
+            "--output",
+            "results.jsonl",
+            "--qdrant-url",
+            "http://localhost:6335",
+        ],
+    )
+
+    args = parse_args()
+
+    assert args.qdrant_url == "http://localhost:6335"

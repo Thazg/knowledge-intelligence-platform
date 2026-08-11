@@ -21,6 +21,12 @@ DEFAULT_OUTPUT_PATH = Path("benchmarks/generation/results_v3.jsonl")
 
 CHUNKS_PATH = Path("data/processed/chunks_fixed.jsonl")
 
+DEFAULT_OUTPUT_PATH = Path(
+    "benchmarks/generation/results_v3.jsonl"
+)
+
+DEFAULT_QDRANT_URL = "http://localhost:6333"
+
 QDRANT_COLLECTION = "enterprise_knowledge_fixed_bge_small"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 GENERATION_MODEL = "qwen3:4b-instruct"
@@ -51,7 +57,9 @@ def load_cases(path: Path) -> list[dict]:
     return cases
 
 
-def build_pipeline() -> RAGPipeline:
+def build_pipeline(
+    qdrant_url: str = DEFAULT_QDRANT_URL,
+) -> RAGPipeline:
     print("Loading chunks...")
 
     serializer = ChunkSerializer()
@@ -70,6 +78,7 @@ def build_pipeline() -> RAGPipeline:
     vector_store = QdrantVectorStore(
         collection_name=QDRANT_COLLECTION,
         vector_size=embedder.dimension,
+        url=qdrant_url,
     )
 
     print("Building retrievers...")
@@ -172,6 +181,7 @@ def build_result_record(
 
 def main(
     output_path: Path = DEFAULT_OUTPUT_PATH,
+    qdrant_url: str = DEFAULT_QDRANT_URL,
 ) -> None:
     
     output_path.parent.mkdir(
@@ -184,7 +194,9 @@ def main(
     print()
     print(f"Loaded {len(cases)} generation benchmark cases.")
 
-    pipeline = build_pipeline()
+    pipeline = build_pipeline(
+        qdrant_url=qdrant_url,
+    )
 
     output_path.parent.mkdir(
         parents=True,
@@ -311,7 +323,7 @@ def main(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run generation benchmark v1."
+        description="Run generation benchmark v1.",
     )
 
     parser.add_argument(
@@ -319,8 +331,17 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OUTPUT_PATH,
         help=(
-            "Path for benchmark JSONL results. "
-            "Defaults to the historical results_v3 path."
+            "Path to the generation benchmark "
+            "results JSONL file."
+        ),
+    )
+
+    parser.add_argument(
+        "--qdrant-url",
+        default=DEFAULT_QDRANT_URL,
+        help=(
+            "Qdrant base URL. "
+            "Defaults to http://localhost:6333."
         ),
     )
 
@@ -328,4 +349,7 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(output_path=args.output)
+    main(
+        output_path=args.output,
+        qdrant_url=args.qdrant_url,
+    )
