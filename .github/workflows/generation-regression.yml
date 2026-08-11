@@ -3,8 +3,6 @@ name: Generation Regression
 on:
   workflow_dispatch:
 
-  # Temporary trigger while validating the workflow
-  # on feature/generation-regression.
   push:
     branches:
       - feature/generation-regression
@@ -31,30 +29,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Show runner information
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Computer: $env:COMPUTERNAME"
           Write-Host "Workspace: $env:GITHUB_WORKSPACE"
           Write-Host "Runner OS: $env:RUNNER_OS"
+          Write-Host "PowerShell version:"
+          $PSVersionTable.PSVersion
 
       - name: Verify Python
-        shell: pwsh
+        shell: powershell
         run: |
           python --version
 
       - name: Verify Docker
-        shell: pwsh
+        shell: powershell
         run: |
           docker version
 
       - name: Verify Ollama
-        shell: pwsh
+        shell: powershell
         run: |
           ollama --version
           ollama list
 
       - name: Verify Ollama API
-        shell: pwsh
+        shell: powershell
         run: |
           $response = Invoke-RestMethod `
             http://localhost:11434/api/tags
