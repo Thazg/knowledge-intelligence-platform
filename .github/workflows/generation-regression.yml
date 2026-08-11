@@ -3,9 +3,8 @@ name: Generation Regression
 on:
   workflow_dispatch:
 
-  # Temporary trigger for validating this workflow
-  # on feature/generation-regression.
-  # Remove before merging to main.
+  # Temporary validation trigger.
+  # Remove before merging this workflow to main.
   push:
     branches:
       - feature/generation-regression
@@ -14,6 +13,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: generation-regression-self-hosted
+  cancel-in-progress: false
 
 jobs:
   generation-regression:
@@ -25,7 +28,7 @@ jobs:
       - X64
       - generation
 
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     env:
       QDRANT_CONTAINER: enterprise-kip-generation-qdrant
@@ -44,6 +47,7 @@ jobs:
       RELEASE_TAG: retrieval-benchmark-v1
 
       RESULTS_PATH: .benchmark-results\generation-results.jsonl
+      EXPECTED_CASE_COUNT: "12"
 
       PYTHONUNBUFFERED: "1"
 
@@ -52,16 +56,51 @@ jobs:
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
     steps:
-      # ------------------------------------------------------------
+      # ============================================================
       # Repository
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ------------------------------------------------------------
+      # ============================================================
+      # Short benchmark paths
+      # ============================================================
+
+      - name: Configure benchmark paths
+        shell: powershell
+        run: |
+          $venvRoot = "D:\gv"
+          $venvDir = Join-Path $venvRoot $env:GITHUB_RUN_ID
+          $venvPython = Join-Path `
+            $venvDir `
+            "Scripts\python.exe"
+
+          Write-Host "Virtualenv root: $venvRoot"
+          Write-Host "Virtualenv:      $venvDir"
+          Write-Host "Python:          $venvPython"
+
+          "VENV_ROOT=$venvRoot" |
+            Out-File `
+              -FilePath $env:GITHUB_ENV `
+              -Encoding utf8 `
+              -Append
+
+          "VENV_DIR=$venvDir" |
+            Out-File `
+              -FilePath $env:GITHUB_ENV `
+              -Encoding utf8 `
+              -Append
+
+          "VENV_PYTHON=$venvPython" |
+            Out-File `
+              -FilePath $env:GITHUB_ENV `
+              -Encoding utf8 `
+              -Append
+
+      # ============================================================
       # Python
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Verify host Python 3.13
         shell: powershell
@@ -69,19 +108,48 @@ jobs:
           python --version
           where.exe python
 
-          $version = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+          $version = python -c `
+            "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
 
           Write-Host "Detected Python version: $version"
 
           if ($version -ne "3.13") {
-              throw "Python 3.13 is required. Found: $version"
+              throw `
+                "Python 3.13 is required. Found: $version"
           }
 
       - name: Create benchmark virtual environment
         shell: powershell
         run: |
+          Write-Host "VENV_ROOT:   $env:VENV_ROOT"
+          Write-Host "VENV_DIR:    $env:VENV_DIR"
+          Write-Host "VENV_PYTHON: $env:VENV_PYTHON"
+
+          if (
+              [string]::IsNullOrWhiteSpace(
+                  $env:VENV_DIR
+              )
+          ) {
+              throw "VENV_DIR was not configured."
+          }
+
+          if (
+              [string]::IsNullOrWhiteSpace(
+                  $env:VENV_PYTHON
+              )
+          ) {
+              throw "VENV_PYTHON was not configured."
+          }
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            $env:VENV_ROOT |
+            Out-Null
+
           if (Test-Path $env:VENV_DIR) {
-              Write-Host "Removing previous virtual environment..."
+              Write-Host `
+                "Removing previous virtual environment..."
 
               Remove-Item `
                 $env:VENV_DIR `
@@ -89,26 +157,48 @@ jobs:
                 -Force
           }
 
-          Write-Host "Creating virtual environment at $env:VENV_DIR"
+          Write-Host `
+            "Creating benchmark virtual environment..."
 
           python -m venv $env:VENV_DIR
 
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Failed to create benchmark virtual environment."
+          }
+
           & $env:VENV_PYTHON --version
+
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Benchmark virtual environment Python is unavailable."
+          }
 
       - name: Install dependencies
         shell: powershell
         run: |
           & $env:VENV_PYTHON `
             -m pip install `
-            --upgrade pip
+            --upgrade pip `
+            --no-cache-dir
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upgrade pip."
+          }
 
           & $env:VENV_PYTHON `
             -m pip install `
+            --no-cache-dir `
             -r requirements-dev.txt
 
-      # ------------------------------------------------------------
-      # Benchmark manifest
-      # ------------------------------------------------------------
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Failed to install benchmark dependencies."
+          }
+
+      # ============================================================
+      # Generation benchmark manifest
+      # ============================================================
 
       - name: Verify generation benchmark manifest
         shell: powershell
@@ -118,9 +208,14 @@ jobs:
             tests\evaluation\test_generation_manifest.py `
             -q
 
-      # ------------------------------------------------------------
+          if ($LASTEXITCODE -ne 0) {
+              throw `
+                "Generation benchmark manifest verification failed."
+          }
+
+      # ============================================================
       # Docker
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Verify Docker
         shell: powershell
@@ -128,33 +223,58 @@ jobs:
           docker version
 
           if ($LASTEXITCODE -ne 0) {
-              throw "Docker is not available."
+              throw `
+                "Docker is not available. Ensure Docker Desktop is running."
           }
 
-      # ------------------------------------------------------------
-      # Ollama provenance
-      # ------------------------------------------------------------
+      # ============================================================
+      # Ollama runtime provenance
+      # ============================================================
 
       - name: Verify generation runtime provenance
         shell: powershell
         run: |
           ollama --version
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Ollama CLI is not available."
+          }
+
           ollama list
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Unable to list Ollama models."
+          }
 
           & $env:VENV_PYTHON `
             scripts\check_generation_runtime_provenance.py
 
           if ($LASTEXITCODE -ne 0) {
-              throw "Generation runtime provenance check failed."
+              throw `
+                "Generation runtime provenance check failed."
           }
 
-      # ------------------------------------------------------------
+      # ============================================================
       # Benchmark directories
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Prepare benchmark directories
         shell: powershell
         run: |
+          if (Test-Path ".benchmark-assets") {
+              Remove-Item `
+                ".benchmark-assets" `
+                -Recurse `
+                -Force
+          }
+
+          if (Test-Path ".benchmark-results") {
+              Remove-Item `
+                ".benchmark-results" `
+                -Recurse `
+                -Force
+          }
+
           New-Item `
             -ItemType Directory `
             -Force `
@@ -173,9 +293,9 @@ jobs:
             "data\processed" |
             Out-Null
 
-      # ------------------------------------------------------------
+      # ============================================================
       # Frozen retrieval assets
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Download frozen retrieval assets
         shell: powershell
@@ -197,13 +317,15 @@ jobs:
             ".benchmark-assets" `
             $env:CORPUS_NAME
 
-          Write-Host "Downloading Qdrant snapshot..."
+          Write-Host `
+            "Downloading frozen Qdrant snapshot..."
 
           Invoke-WebRequest `
             -Uri $snapshotUrl `
             -OutFile $snapshotPath
 
-          Write-Host "Downloading frozen BM25 corpus..."
+          Write-Host `
+            "Downloading frozen BM25 corpus..."
 
           Invoke-WebRequest `
             -Uri $corpusUrl `
@@ -223,21 +345,26 @@ jobs:
           $snapshot = Get-Item $snapshotPath
           $corpus = Get-Item $corpusPath
 
-          Write-Host "Snapshot size: $($snapshot.Length)"
-          Write-Host "Corpus size:   $($corpus.Length)"
+          Write-Host `
+            "Snapshot size: $($snapshot.Length)"
+
+          Write-Host `
+            "Corpus size:   $($corpus.Length)"
 
           if (
               $snapshot.Length -ne
               [int64]$env:SNAPSHOT_SIZE
           ) {
-              throw "Snapshot size mismatch."
+              throw `
+                "Snapshot size mismatch: $($snapshot.Length)"
           }
 
           if (
               $corpus.Length -ne
               [int64]$env:CORPUS_SIZE
           ) {
-              throw "Corpus size mismatch."
+              throw `
+                "Corpus size mismatch: $($corpus.Length)"
           }
 
           $snapshotHash = (
@@ -252,21 +379,26 @@ jobs:
                 -Algorithm SHA256
           ).Hash.ToUpper()
 
-          Write-Host "Snapshot SHA256: $snapshotHash"
-          Write-Host "Corpus SHA256:   $corpusHash"
+          Write-Host `
+            "Snapshot SHA256: $snapshotHash"
+
+          Write-Host `
+            "Corpus SHA256:   $corpusHash"
 
           if (
               $snapshotHash -ne
               $env:SNAPSHOT_SHA256.ToUpper()
           ) {
-              throw "Snapshot SHA256 mismatch."
+              throw `
+                "Snapshot SHA256 mismatch."
           }
 
           if (
               $corpusHash -ne
               $env:CORPUS_SHA256.ToUpper()
           ) {
-              throw "Corpus SHA256 mismatch."
+              throw `
+                "Corpus SHA256 mismatch."
           }
 
           $resolvedCorpus = (
@@ -280,13 +412,15 @@ jobs:
               Measure-Object
           ).Count
 
-          Write-Host "Corpus chunks: $chunkCount"
+          Write-Host `
+            "Frozen corpus chunk count: $chunkCount"
 
           if (
               $chunkCount -ne
               [int]$env:CORPUS_CHUNK_COUNT
           ) {
-              throw "Corpus chunk count mismatch: $chunkCount"
+              throw `
+                "Corpus chunk count mismatch: $chunkCount"
           }
 
       - name: Install frozen BM25 corpus
@@ -296,30 +430,32 @@ jobs:
             ".benchmark-assets" `
             $env:CORPUS_NAME
 
+          $destination = `
+            "data\processed\chunks_fixed.jsonl"
+
           Copy-Item `
             $source `
-            "data\processed\chunks_fixed.jsonl" `
+            $destination `
             -Force
 
           Write-Host `
-            "Frozen corpus installed at data\processed\chunks_fixed.jsonl"
+            "Frozen corpus installed at $destination"
 
-      # ------------------------------------------------------------
+      # ============================================================
       # Isolated Qdrant
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Remove previous benchmark Qdrant
         shell: powershell
         run: |
           $existing = docker ps `
             -a `
-            --filter "name=^/$env:QDRANT_CONTAINER$" `
-            --format "{{.Names}}"
+            --format "{{.Names}}" |
+            Where-Object {
+                $_ -eq $env:QDRANT_CONTAINER
+            }
 
-          if (
-              $existing -eq
-              $env:QDRANT_CONTAINER
-          ) {
+          if ($existing) {
               Write-Host `
                 "Removing previous benchmark Qdrant container..."
 
@@ -328,7 +464,8 @@ jobs:
                 $env:QDRANT_CONTAINER
 
               if ($LASTEXITCODE -ne 0) {
-                  throw "Failed to remove previous Qdrant container."
+                  throw `
+                    "Failed to remove previous benchmark Qdrant container."
               }
           }
           else {
@@ -339,11 +476,18 @@ jobs:
       - name: Start isolated Qdrant
         shell: powershell
         run: |
+          Write-Host `
+            "Pulling pinned Qdrant image..."
+
           docker pull qdrant/qdrant:v1.19.0
 
           if ($LASTEXITCODE -ne 0) {
-              throw "Failed to pull Qdrant image."
+              throw `
+                "Failed to pull pinned Qdrant image."
           }
+
+          Write-Host `
+            "Starting isolated Qdrant on localhost:6335..."
 
           docker run `
             -d `
@@ -352,7 +496,8 @@ jobs:
             qdrant/qdrant:v1.19.0
 
           if ($LASTEXITCODE -ne 0) {
-              throw "Failed to start isolated Qdrant."
+              throw `
+                "Failed to start isolated Qdrant."
           }
 
       - name: Wait for isolated Qdrant
@@ -391,15 +536,19 @@ jobs:
           }
 
           if (-not $ready) {
-              docker logs $env:QDRANT_CONTAINER
+              Write-Host `
+                "Qdrant failed health check."
+
+              docker logs `
+                $env:QDRANT_CONTAINER
 
               throw `
                 "Qdrant did not become ready."
           }
 
-      # ------------------------------------------------------------
-      # Qdrant snapshot restore
-      # ------------------------------------------------------------
+      # ============================================================
+      # Frozen Qdrant restore
+      # ============================================================
 
       - name: Restore frozen Qdrant snapshot
         shell: powershell
@@ -416,7 +565,7 @@ jobs:
             "$env:QDRANT_URL/collections/$env:QDRANT_COLLECTION/snapshots/upload?priority=snapshot&wait=true"
 
           Write-Host `
-            "Restoring Qdrant snapshot..."
+            "Restoring frozen Qdrant snapshot..."
 
           curl.exe `
             --fail `
@@ -469,13 +618,16 @@ jobs:
                 "Qdrant point count mismatch: $exactCount"
           }
 
-      # ------------------------------------------------------------
+      # ============================================================
       # Generation benchmark
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Run generation benchmark
         shell: powershell
         run: |
+          Write-Host `
+            "Running generation benchmark against $env:QDRANT_URL"
+
           & $env:VENV_PYTHON `
             -u `
             scripts\evaluate_generation_v1.py `
@@ -487,9 +639,9 @@ jobs:
                 "Generation benchmark runner failed."
           }
 
-      # ------------------------------------------------------------
-      # Regression gate
-      # ------------------------------------------------------------
+      # ============================================================
+      # Deterministic regression gate
+      # ============================================================
 
       - name: Check generation regression
         shell: powershell
@@ -506,6 +658,11 @@ jobs:
       - name: Verify result record count
         shell: powershell
         run: |
+          if (-not (Test-Path $env:RESULTS_PATH)) {
+              throw `
+                "Generation results file was not created."
+          }
+
           $count = (
               Get-Content `
                 $env:RESULTS_PATH
@@ -514,14 +671,17 @@ jobs:
           Write-Host `
             "Generation result records: $count"
 
-          if ($count -ne 12) {
+          if (
+              $count -ne
+              [int]$env:EXPECTED_CASE_COUNT
+          ) {
               throw `
-                "Expected 12 generation records, got $count."
+                "Expected $env:EXPECTED_CASE_COUNT generation records, got $count."
           }
 
-      # ------------------------------------------------------------
-      # Artifacts / diagnostics
-      # ------------------------------------------------------------
+      # ============================================================
+      # Artifacts and diagnostics
+      # ============================================================
 
       - name: Upload generation benchmark results
         if: always()
@@ -538,36 +698,41 @@ jobs:
         run: |
           $existing = docker ps `
             -a `
-            --filter "name=^/$env:QDRANT_CONTAINER$" `
-            --format "{{.Names}}"
+            --format "{{.Names}}" |
+            Where-Object {
+                $_ -eq $env:QDRANT_CONTAINER
+            }
 
-          if (
-              $existing -eq
-              $env:QDRANT_CONTAINER
-          ) {
+          if ($existing) {
               docker logs `
                 $env:QDRANT_CONTAINER
           }
+          else {
+              Write-Host `
+                "Benchmark Qdrant container does not exist."
+          }
 
-      # ------------------------------------------------------------
+      # ============================================================
       # Cleanup
-      # ------------------------------------------------------------
+      # ============================================================
 
       - name: Cleanup benchmark environment
         if: always()
         shell: powershell
         run: |
+          Write-Host `
+            "Cleaning generation benchmark environment..."
+
           $existing = docker ps `
             -a `
-            --filter "name=^/$env:QDRANT_CONTAINER$" `
-            --format "{{.Names}}"
+            --format "{{.Names}}" |
+            Where-Object {
+                $_ -eq $env:QDRANT_CONTAINER
+            }
 
-          if (
-              $existing -eq
-              $env:QDRANT_CONTAINER
-          ) {
+          if ($existing) {
               Write-Host `
-                "Removing isolated Qdrant..."
+                "Removing isolated Qdrant container..."
 
               docker rm `
                 -f `
@@ -584,4 +749,38 @@ jobs:
             -ErrorAction SilentlyContinue
 
           Write-Host `
-            "Cleanup complete."
+            "Removing benchmark results from runner workspace..."
+
+          Remove-Item `
+            ".benchmark-results" `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue
+
+          Write-Host `
+            "Removing installed frozen corpus..."
+
+          Remove-Item `
+            "data\processed\chunks_fixed.jsonl" `
+            -Force `
+            -ErrorAction SilentlyContinue
+
+          if (
+              -not [string]::IsNullOrWhiteSpace(
+                  $env:VENV_DIR
+              )
+          ) {
+              if (Test-Path $env:VENV_DIR) {
+                  Write-Host `
+                    "Removing benchmark virtual environment..."
+
+                  Remove-Item `
+                    $env:VENV_DIR `
+                    -Recurse `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+              }
+          }
+
+          Write-Host `
+            "Generation benchmark cleanup complete."
