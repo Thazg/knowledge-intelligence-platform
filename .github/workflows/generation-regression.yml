@@ -80,29 +80,29 @@ jobs:
       - name: Create benchmark virtual environment
         shell: powershell
         run: |
-          if (Test-Path ".venv") {
+          if (Test-Path $env:VENV_DIR) {
               Write-Host "Removing previous virtual environment..."
 
               Remove-Item `
-                ".venv" `
+                $env:VENV_DIR `
                 -Recurse `
                 -Force
           }
 
-          Write-Host "Creating virtual environment..."
+          Write-Host "Creating virtual environment at $env:VENV_DIR"
 
-          python -m venv .venv
+          python -m venv $env:VENV_DIR
 
-          .\.venv\Scripts\python.exe --version
+          & $env:VENV_PYTHON --version
 
       - name: Install dependencies
         shell: powershell
         run: |
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             -m pip install `
             --upgrade pip
 
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             -m pip install `
             -r requirements-dev.txt
 
@@ -113,7 +113,7 @@ jobs:
       - name: Verify generation benchmark manifest
         shell: powershell
         run: |
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             -m pytest `
             tests\evaluation\test_generation_manifest.py `
             -q
@@ -141,7 +141,7 @@ jobs:
           ollama --version
           ollama list
 
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             scripts\check_generation_runtime_provenance.py
 
           if ($LASTEXITCODE -ne 0) {
@@ -476,7 +476,7 @@ jobs:
       - name: Run generation benchmark
         shell: powershell
         run: |
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             -u `
             scripts\evaluate_generation_v1.py `
             --qdrant-url $env:QDRANT_URL `
@@ -494,7 +494,7 @@ jobs:
       - name: Check generation regression
         shell: powershell
         run: |
-          .\.venv\Scripts\python.exe `
+          & $env:VENV_PYTHON `
             scripts\check_generation_regression.py `
             --results $env:RESULTS_PATH
 
