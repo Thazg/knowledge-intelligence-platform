@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import time
 from pathlib import Path
@@ -16,9 +17,15 @@ from backend.vector_store.qdrant_store import QdrantVectorStore
 
 
 CASES_PATH = Path("benchmarks/generation/cases_v1.jsonl")
-OUTPUT_PATH = Path("benchmarks/generation/results_v3.jsonl")
+DEFAULT_OUTPUT_PATH = Path("benchmarks/generation/results_v3.jsonl")
 
 CHUNKS_PATH = Path("data/processed/chunks_fixed.jsonl")
+
+DEFAULT_OUTPUT_PATH = Path(
+    "benchmarks/generation/results_v3.jsonl"
+)
+
+DEFAULT_QDRANT_URL = "http://localhost:6333"
 
 QDRANT_COLLECTION = "enterprise_knowledge_fixed_bge_small"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
@@ -50,7 +57,9 @@ def load_cases(path: Path) -> list[dict]:
     return cases
 
 
-def build_pipeline() -> RAGPipeline:
+def build_pipeline(
+    qdrant_url: str = DEFAULT_QDRANT_URL,
+) -> RAGPipeline:
     print("Loading chunks...")
 
     serializer = ChunkSerializer()
@@ -69,6 +78,7 @@ def build_pipeline() -> RAGPipeline:
     vector_store = QdrantVectorStore(
         collection_name=QDRANT_COLLECTION,
         vector_size=embedder.dimension,
+        url=qdrant_url,
     )
 
     print("Building retrievers...")
@@ -169,21 +179,32 @@ def build_result_record(
     }
 
 
-def main() -> None:
+def main(
+    output_path: Path = DEFAULT_OUTPUT_PATH,
+    qdrant_url: str = DEFAULT_QDRANT_URL,
+) -> None:
+    
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+    
     cases = load_cases(CASES_PATH)
     
     print()
     print(f"Loaded {len(cases)} generation benchmark cases.")
 
-    pipeline = build_pipeline()
+    pipeline = build_pipeline(
+        qdrant_url=qdrant_url,
+    )
 
-    OUTPUT_PATH.parent.mkdir(
+    output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
     # Start a fresh benchmark output.
-    OUTPUT_PATH.write_text(
+    output_path.write_text(
         "",
         encoding="utf-8",
     )
@@ -213,7 +234,7 @@ def main() -> None:
                 result=result,
             )
 
-            with OUTPUT_PATH.open(
+            with output_path.open(
                 "a",
                 encoding="utf-8",
             ) as file:
@@ -270,7 +291,7 @@ def main() -> None:
                 "message": str(exc),
             }
 
-            with OUTPUT_PATH.open(
+            with output_path.open(
                 "a",
                 encoding="utf-8",
             ) as file:
@@ -298,8 +319,37 @@ def main() -> None:
     print("=" * 60)
     print(f"Cases: {len(cases)}")
     print(f"Total time: {total_seconds / 60:.2f} min")
-    print(f"Results: {OUTPUT_PATH}")
+    print(f"Results: {output_path}")
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run generation benchmark v1.",
+    )
+
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT_PATH,
+        help=(
+            "Path to the generation benchmark "
+            "results JSONL file."
+        ),
+    )
+
+    parser.add_argument(
+        "--qdrant-url",
+        default=DEFAULT_QDRANT_URL,
+        help=(
+            "Qdrant base URL. "
+            "Defaults to http://localhost:6333."
+        ),
+    )
+
+    return parser.parse_args()
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(
+        output_path=args.output,
+        qdrant_url=args.qdrant_url,
+    )
