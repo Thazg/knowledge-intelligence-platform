@@ -362,8 +362,25 @@ jobs:
         run: |
           python scripts/check_generation_runtime_provenance.py
 
-      - name: Phase 2 complete
+      - name: Run generation benchmark
         shell: bash
         run: |
-          echo "Frozen retrieval environment restored."
-          echo "Pinned generation runtime verified."
+          python scripts/evaluate_generation_v1.py \
+            --output .benchmark-results/generation-results.jsonl
+
+      - name: Check generation regression
+        shell: bash
+        run: |
+          python scripts/check_generation_regression.py \
+            --results .benchmark-results/generation-results.jsonl
+
+      - name: Upload generation benchmark artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: generation-regression-${{ github.run_id }}
+          path: |
+            .benchmark-results/generation-results.jsonl
+            /tmp/ollama.log
+          if-no-files-found: warn
+          retention-days: 14
