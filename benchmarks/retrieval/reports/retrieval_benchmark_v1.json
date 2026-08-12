@@ -13,7 +13,9 @@
       "3": "highly_relevant",
       "2": "relevant",
       "1": "partially_relevant"
-    }
+    },
+    "scope": "retrieval_quality_only",
+    "latency_report": "benchmarks/retrieval/reports/retrieval_latency_v1.json"
   },
   "retrievers": {
     "dense": {
@@ -72,72 +74,181 @@
       "mrr": 0.7137
     },
     "reranked_hybrid": {
-    "base_retriever": "weighted_rrf",
-    "reranker_model": "cross-encoder/ms-marco-MiniLM-L12-v2",
-    "candidate_multiplier": 4,
-    "candidate_pool_at_top_k_10": 40,
-    "batch_size": 16,
-    "hit_at_1": 0.53,
-    "hit_at_3": 0.72,
-    "hit_at_5": 0.8,
-    "hit_at_10": 0.92,
-    "recall_at_3": 0.5792,
-    "recall_at_5": 0.6642,
-    "recall_at_10": 0.7858,
-    "ndcg_at_3": 0.5489,
-    "ndcg_at_5": 0.5851,
-    "ndcg_at_10": 0.6266,
-    "mrr": 0.6461
-  }
+      "base_retriever": "weighted_rrf",
+      "reranker_model": "mixedbread-ai/mxbai-rerank-base-v2",
+      "candidate_multiplier": 2,
+      "candidate_pool_at_top_k_10": 20,
+      "batch_size": 16,
+      "max_chunks_per_document": 1,
+      "passage_representation": "title + source + path + content",
+      "hit_at_1": 0.67,
+      "hit_at_3": 0.81,
+      "hit_at_5": 0.87,
+      "hit_at_10": 0.97,
+      "recall_at_3": 0.6675,
+      "recall_at_5": 0.7558,
+      "recall_at_10": 0.8758,
+      "ndcg_at_3": 0.6414,
+      "ndcg_at_5": 0.68,
+      "ndcg_at_10": 0.7276,
+      "mrr": 0.7564
+    }
   },
   "category_mrr": {
     "ambiguous": {
-    "dense": 0.4183,
-    "bm25": 0.2681,
-    "weighted_rrf": 0.4592,
-    "multi_query": 0.5319,
-    "reranked_hybrid": 0.5005
-  },
-  "cross_tool": {
-    "dense": 0.5671,
-    "bm25": 0.6308,
-    "weighted_rrf": 0.6181,
-    "multi_query": 0.5972,
-    "reranked_hybrid": 0.5226
-  },
-  "lexical": {
-    "dense": 0.7363,
-    "bm25": 0.666,
-    "weighted_rrf": 0.8792,
-    "multi_query": 0.8517,
-    "reranked_hybrid": 0.7747
-  },
-  "semantic": {
-    "dense": 0.7083,
-    "bm25": 0.7,
-    "weighted_rrf": 0.8088,
-    "multi_query": 0.8,
-    "reranked_hybrid": 0.6153
-  },
-  "version_specific": {
-    "dense": 0.8917,
-    "bm25": 0.7767,
-    "weighted_rrf": 0.8583,
-    "multi_query": 0.7875,
-    "reranked_hybrid": 0.8175
-  }
-  },
-  "decision": {
-    "default_retriever": "weighted_rrf",
-    "advanced_strategy": "multi_query",
-    "selective_reranking": {
-      "enabled_globally": false,
-      "candidate_strategy": "reranked_hybrid",
-      "promising_categories": [
-        "ambiguous",
-        "cross_tool"
-      ]
+      "dense": 0.4183,
+      "bm25": 0.2681,
+      "weighted_rrf": 0.4592,
+      "multi_query": 0.5319,
+      "reranked_hybrid": 0.6097
     },
-    "reason": "Weighted RRF achieved the highest overall MRR and Hit@1. Multi-Query improved retrieval coverage, while Cross-Encoder reranking improved ambiguous and cross-tool queries but reduced overall ranking quality."
+    "cross_tool": {
+      "dense": 0.5671,
+      "bm25": 0.6308,
+      "weighted_rrf": 0.6181,
+      "multi_query": 0.5972,
+      "reranked_hybrid": 0.6073
+    },
+    "lexical": {
+      "dense": 0.7363,
+      "bm25": 0.666,
+      "weighted_rrf": 0.8792,
+      "multi_query": 0.8517,
+      "reranked_hybrid": 0.9292
+    },
+    "semantic": {
+      "dense": 0.7083,
+      "bm25": 0.7,
+      "weighted_rrf": 0.8088,
+      "multi_query": 0.8,
+      "reranked_hybrid": 0.8142
+    },
+    "version_specific": {
+      "dense": 0.8917,
+      "bm25": 0.7767,
+      "weighted_rrf": 0.8583,
+      "multi_query": 0.7875,
+      "reranked_hybrid": 0.8217
+    }
+  },
+  "reranker_model_benchmark": {
+    "protocol": {
+      "cases": 100,
+      "base_retriever": "weighted_rrf",
+      "dense_weight": 0.7,
+      "bm25_weight": 0.3,
+      "rrf_k": 60,
+      "top_k": 10,
+      "reranker_candidate_multiplier": 4,
+      "candidate_pool": 40,
+      "max_chunks_per_document": 1,
+      "batch_size": 16,
+      "passage_representation": "title + source + path + content"
+    },
+    "models": {
+      "cross-encoder/ms-marco-MiniLM-L6-v2": {
+        "hit_at_1": 0.56,
+        "hit_at_5": 0.78,
+        "hit_at_10": 0.84,
+        "recall_at_10": 0.7367,
+        "ndcg_at_10": 0.6124,
+        "mrr": 0.6488
+      },
+      "cross-encoder/ms-marco-MiniLM-L12-v2": {
+        "hit_at_1": 0.53,
+        "hit_at_5": 0.8,
+        "hit_at_10": 0.92,
+        "recall_at_10": 0.7858,
+        "ndcg_at_10": 0.6268,
+        "mrr": 0.6461
+      },
+      "mixedbread-ai/mxbai-rerank-base-v1": {
+        "hit_at_1": 0.54,
+        "hit_at_5": 0.88,
+        "hit_at_10": 0.91,
+        "recall_at_10": 0.8042,
+        "ndcg_at_10": 0.6558,
+        "mrr": 0.6792
+      },
+      "BAAI/bge-reranker-v2-m3": {
+        "hit_at_1": 0.56,
+        "hit_at_5": 0.86,
+        "hit_at_10": 0.92,
+        "recall_at_10": 0.7875,
+        "ndcg_at_10": 0.6527,
+        "mrr": 0.6693
+      },
+      "mixedbread-ai/mxbai-rerank-base-v2": {
+        "hit_at_1": 0.66,
+        "hit_at_5": 0.88,
+        "hit_at_10": 0.95,
+        "recall_at_10": 0.8525,
+        "ndcg_at_10": 0.7156,
+        "mrr": 0.7475
+      }
+    },
+    "winner": "mixedbread-ai/mxbai-rerank-base-v2",
+    "finding": "Mixedbread v2 was the only evaluated reranker that improved the overall Weighted RRF baseline under the fixed 40-candidate model-comparison protocol."
+  },
+  "candidate_pool_ablation": {
+    "model": "mixedbread-ai/mxbai-rerank-base-v2",
+    "top_k": 10,
+    "configurations": {
+      "pool_40": {
+        "candidate_multiplier": 4,
+        "candidate_pool": 40,
+        "hit_at_1": 0.66,
+        "hit_at_3": 0.79,
+        "hit_at_5": 0.88,
+        "hit_at_10": 0.95,
+        "recall_at_10": 0.8525,
+        "ndcg_at_10": 0.7156,
+        "mrr": 0.7475
+      },
+      "pool_20": {
+        "candidate_multiplier": 2,
+        "candidate_pool": 20,
+        "hit_at_1": 0.67,
+        "hit_at_3": 0.81,
+        "hit_at_5": 0.87,
+        "hit_at_10": 0.97,
+        "recall_at_10": 0.8758,
+        "ndcg_at_10": 0.7276,
+        "mrr": 0.7564
+      }
+    },
+    "winner": "pool_20",
+    "finding": "Reducing the candidate pool from 40 to 20 improved the major overall retrieval-quality metrics, indicating that more reranking candidates did not automatically improve ranking quality."
+  },
+  "quality_conclusion": {
+    "strongest_non_reranked_baseline": "weighted_rrf",
+    "best_overall_quality_strategy": "reranked_hybrid",
+    "best_reranker_model": "mixedbread-ai/mxbai-rerank-base-v2",
+    "best_reranker_candidate_multiplier": 2,
+    "best_reranker_candidate_pool_at_top_k_10": 20,
+    "best_strategy_by_category": {
+      "ambiguous": {
+        "strategy": "reranked_hybrid",
+        "mrr": 0.6097
+      },
+      "cross_tool": {
+        "strategy": "bm25",
+        "mrr": 0.6308
+      },
+      "lexical": {
+        "strategy": "reranked_hybrid",
+        "mrr": 0.9292
+      },
+      "semantic": {
+        "strategy": "reranked_hybrid",
+        "mrr": 0.8142
+      },
+      "version_specific": {
+        "strategy": "dense",
+        "mrr": 0.8917
+      }
+    },
+    "production_decision_reference": "benchmarks/retrieval/reports/retrieval_latency_v1.json",
+    "reason": "Weighted RRF is the strongest non-reranked global baseline. Mixedbread v2 with a 20-candidate pool achieves the highest measured offline retrieval quality. Production deployment is decided separately using the latency benchmark."
   }
-}   
+}

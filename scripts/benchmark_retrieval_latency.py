@@ -77,7 +77,7 @@ EMBEDDING_MODEL = (
 )
 
 RERANKER_MODEL = (
-    "cross-encoder/ms-marco-MiniLM-L12-v2"
+    "mixedbread-ai/mxbai-rerank-base-v2"
 )
 
 TOP_K = 10
@@ -388,7 +388,7 @@ def main() -> None:
         RerankedRetriever(
             base_retriever=weighted_rrf,
             reranker=cross_encoder,
-            candidate_multiplier=4,
+            candidate_multiplier=2,
         )
     )
 
@@ -455,7 +455,7 @@ def main() -> None:
                 "candidate_multiplier": 5,
             },
             "reranked_hybrid": {
-                "candidate_multiplier": 4,
+                "candidate_multiplier": 2,
             },
         },
         "latency_ms": {
