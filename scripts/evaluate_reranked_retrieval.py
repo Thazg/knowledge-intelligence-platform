@@ -58,7 +58,7 @@ EMBEDDING_MODEL = (
 )
 
 RERANKER_MODEL = (
-    "cross-encoder/ms-marco-MiniLM-L12-v2"
+    "mixedbread-ai/mxbai-rerank-base-v2"
 )
 
 
@@ -122,7 +122,7 @@ def main() -> None:
         RerankedRetriever(
             base_retriever=hybrid_retriever,
             reranker=reranker,
-            candidate_multiplier=4,
+            candidate_multiplier=2,
         )
     )
 
