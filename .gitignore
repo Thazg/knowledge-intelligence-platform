@@ -61,3 +61,6 @@ models/
 # OS
 .DS_Store
 Thumbs.db
+
+# Canonical E2E benchmark input
+!benchmarks/e2e/cases_v1.jsonl
