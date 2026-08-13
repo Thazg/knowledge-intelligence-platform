@@ -295,3 +295,39 @@ def test_query_returns_503_when_ollama_is_unavailable() -> None:
     assert response.json() == {
         "detail": "A required backend service is unavailable.",
     }
+
+def test_query_rejects_whitespace_only_query() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "   ",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_request_id_header_is_echoed() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "What is Kubernetes?",
+        },
+        headers={
+            "X-Request-ID": "e2e-test-001",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == "e2e-test-001"
+
+def test_query_strips_surrounding_whitespace() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "  What is Kubernetes?  ",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["query"] == "What is Kubernetes?"

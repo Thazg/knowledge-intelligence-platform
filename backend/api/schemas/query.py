@@ -1,12 +1,22 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints
+
+
+QueryText = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+    ),
+]
 
 
 class QueryRequest(BaseModel):
-    query: str = Field(
+    query: QueryText = Field(
         ...,
-        min_length=1,
         description="User question to answer using the RAG pipeline.",
     )
 
