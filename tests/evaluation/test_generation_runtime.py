@@ -145,3 +145,77 @@ def test_fetch_ollama_tags(
             }
         ]
     }
+
+def test_run_ollama_version_command_accepts_custom_command(
+    monkeypatch,
+) -> None:
+    class FakeCompletedProcess:
+        stdout = "ollama version is 0.32.5\n"
+
+    def fake_run(*args, **kwargs):
+        assert args[0] == [
+            "docker",
+            "exec",
+            "enterprise-rag-ollama",
+            "ollama",
+            "--version",
+        ]
+        assert kwargs["capture_output"] is True
+        assert kwargs["text"] is True
+        assert kwargs["check"] is True
+
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(
+        "backend.evaluation.generation_runtime.subprocess.run",
+        fake_run,
+    )
+
+    output = run_ollama_version_command(
+        command=[
+            "docker",
+            "exec",
+            "enterprise-rag-ollama",
+            "ollama",
+            "--version",
+        ]
+    )
+
+    assert output == "ollama version is 0.32.5\n"
+
+
+def test_fetch_ollama_tags_accepts_custom_base_url(
+    monkeypatch,
+) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {
+                "models": [
+                    {
+                        "name": "qwen3:4b-instruct",
+                        "digest": "model-digest",
+                    }
+                ]
+            }
+
+    def fake_get(*args, **kwargs):
+        assert args[0] == (
+            "http://localhost:11435/api/tags"
+        )
+        assert kwargs["timeout"] == 10.0
+
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "backend.evaluation.generation_runtime.httpx.get",
+        fake_get,
+    )
+
+    payload = fetch_ollama_tags(
+        base_url="http://localhost:11435",
+    )
+
+    assert payload["models"][0]["digest"] == "model-digest"

@@ -46,9 +46,12 @@ def collect_generation_runtime(
         ),
     }
     
-def run_ollama_version_command() -> str:
+def run_ollama_version_command(
+    command: list[str] | None = None,
+) -> str:
     completed = subprocess.run(
-        [
+        command
+        or [
             "ollama",
             "--version",
         ],
@@ -59,9 +62,11 @@ def run_ollama_version_command() -> str:
 
     return completed.stdout
 
-def fetch_ollama_tags() -> dict:
+def fetch_ollama_tags(
+    base_url: str = "http://localhost:11434",
+) -> dict:
     response = httpx.get(
-        "http://localhost:11434/api/tags",
+        f"{base_url.rstrip('/')}/api/tags",
         timeout=10.0,
     )
 
