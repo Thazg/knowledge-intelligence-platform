@@ -1,0 +1,758 @@
+{
+  "experiment": {
+    "name": "combined_signal_audit_v1",
+    "cases": 43,
+    "positive_class": "high_quality",
+    "negative_class": "standard",
+    "coverage_cases_excluded": 2
+  },
+  "configuration": {
+    "retrieval_k": 50,
+    "disagreement": {
+      "metric": "document_overlap_at_10",
+      "maximum_overlap": 2
+    },
+    "rules": {
+      "rule_a": "multi_technology AND explicit_constraint",
+      "rule_b": "multi_technology AND retrieval_disagreement",
+      "rule_c": "explicit_constraint AND retrieval_disagreement",
+      "rule_d": "(multi_technology OR explicit_constraint) AND retrieval_disagreement"
+    }
+  },
+  "metrics": {
+    "rule_a": {
+      "cases": 43,
+      "true_positive": 4,
+      "false_positive": 5,
+      "true_negative": 29,
+      "false_negative": 5,
+      "precision": 0.4444444444444444,
+      "recall": 0.4444444444444444,
+      "false_positive_rate": 0.14705882352941177,
+      "activation_rate": 0.20930232558139536
+    },
+    "rule_b": {
+      "cases": 43,
+      "true_positive": 5,
+      "false_positive": 3,
+      "true_negative": 31,
+      "false_negative": 4,
+      "precision": 0.625,
+      "recall": 0.5555555555555556,
+      "false_positive_rate": 0.08823529411764706,
+      "activation_rate": 0.18604651162790697
+    },
+    "rule_c": {
+      "cases": 43,
+      "true_positive": 5,
+      "false_positive": 3,
+      "true_negative": 31,
+      "false_negative": 4,
+      "precision": 0.625,
+      "recall": 0.5555555555555556,
+      "false_positive_rate": 0.08823529411764706,
+      "activation_rate": 0.18604651162790697
+    },
+    "rule_d": {
+      "cases": 43,
+      "true_positive": 6,
+      "false_positive": 3,
+      "true_negative": 31,
+      "false_negative": 3,
+      "precision": 0.6666666666666666,
+      "recall": 0.6666666666666666,
+      "false_positive_rate": 0.08823529411764706,
+      "activation_rate": 0.20930232558139536
+    }
+  },
+  "cases": [
+    {
+      "case_id": "route_dev_001",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_002",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_003",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 5,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_004",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 7,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_005",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 6,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_006",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_007",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 8,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_008",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 1,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_009",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": true,
+        "overlap_at_10": 5,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_010",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": true,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_011",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 6,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_012",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_013",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 7,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_014",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 0,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_015",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 6,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_016",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 1,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_017",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_018",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 5,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_019",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_021",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_022",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_023",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 6,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_024",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_026",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_027",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_028",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 5,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_029",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_030",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 0,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_031",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_032",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_033",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": false,
+        "overlap_at_10": 4,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_034",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 0,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_035",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_036",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_037",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_038",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_039",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_040",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 0,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_041",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 1,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_042",
+      "preferred_strategy": "standard",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": false,
+        "overlap_at_10": 3,
+        "retrieval_disagreement": false
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": false,
+        "rule_d": false
+      }
+    },
+    {
+      "case_id": "route_dev_043",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": false,
+        "explicit_constraint": true,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": false,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_044",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": true,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": true,
+        "rule_b": true,
+        "rule_c": true,
+        "rule_d": true
+      }
+    },
+    {
+      "case_id": "route_dev_045",
+      "preferred_strategy": "high_quality",
+      "features": {
+        "multi_technology": true,
+        "explicit_constraint": false,
+        "overlap_at_10": 2,
+        "retrieval_disagreement": true
+      },
+      "rules": {
+        "rule_a": false,
+        "rule_b": true,
+        "rule_c": false,
+        "rule_d": true
+      }
+    }
+  ]
+}

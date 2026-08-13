@@ -375,6 +375,11 @@ def main() -> None:
         query_rewriter=frozen_rewriter,
         rrf_k=60,
         candidate_multiplier=5,
+        query_weights=[
+            1.0,
+            0.7,
+            0.7,
+        ],
     )
 
     cross_encoder = (
@@ -453,6 +458,11 @@ def main() -> None:
             },
             "multi_query": {
                 "candidate_multiplier": 5,
+                "query_weights": [
+                    1.0,
+                    0.7,
+                    0.7,
+                ],
             },
             "reranked_hybrid": {
                 "candidate_multiplier": 2,

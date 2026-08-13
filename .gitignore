@@ -34,9 +34,17 @@ data/qdrant-core-backup/
 *.npy
 *.npz
 
+# Canonical adaptive-routing benchmark artifacts
+!benchmarks/retrieval/routing/development_cases.jsonl
+!benchmarks/retrieval/routing/reviewed_candidates_v1.jsonl
+!benchmarks/retrieval/routing/ground_truth_v1.jsonl
+!benchmarks/retrieval/routing/query_rewrites_v1.jsonl
+!benchmarks/retrieval/routing/preferred_strategy_v1.jsonl
+
 # Generated repository inventories
 project_directories.txt
 project_files.txt
+project_tree.txt
 
 # Qdrant persistent storage
 qdrant_storage/
