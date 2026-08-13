@@ -38,6 +38,8 @@ data/qdrant-core-backup/
 !benchmarks/retrieval/routing/development_cases.jsonl
 !benchmarks/retrieval/routing/reviewed_candidates_v1.jsonl
 !benchmarks/retrieval/routing/ground_truth_v1.jsonl
+!benchmarks/retrieval/routing/query_rewrites_v1.jsonl
+!benchmarks/retrieval/routing/preferred_strategy_v1.jsonl
 
 # Generated repository inventories
 project_directories.txt

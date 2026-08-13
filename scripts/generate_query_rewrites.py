@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 
@@ -11,19 +12,60 @@ from backend.query_rewriting.query_rewriter import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-DATASET_PATH = (
+DEFAULT_DATASET_PATH = (
     PROJECT_ROOT
     / "benchmarks"
     / "retrieval"
     / "cases.jsonl"
 )
 
-OUTPUT_PATH = (
+DEFAULT_OUTPUT_PATH = (
     PROJECT_ROOT
     / "benchmarks"
     / "retrieval"
     / "query_rewrites.jsonl"
 )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate frozen query rewrites "
+            "for retrieval evaluation cases."
+        )
+    )
+
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=DEFAULT_DATASET_PATH,
+        help="Evaluation dataset JSONL path.",
+    )
+
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT_PATH,
+        help="Output frozen rewrites JSONL path.",
+    )
+
+    parser.add_argument(
+        "--all-statuses",
+        action="store_true",
+        help=(
+            "Load cases regardless of status. "
+            "Required for frozen routing datasets."
+        ),
+    )
+
+    return parser.parse_args()
+
+
+def resolve_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+
+    return PROJECT_ROOT / path
 
 
 def load_existing_rewrites(
@@ -57,24 +99,87 @@ def load_existing_rewrites(
 
             case_id = record["case_id"]
 
+            if case_id in records:
+                raise ValueError(
+                    f"Duplicate case_id in rewrite file: "
+                    f"{case_id}"
+                )
+
             records[case_id] = record
 
     return records
 
 
+def validate_rewrites(
+    original_query: str,
+    rewrites: list[str],
+    expected_count: int,
+) -> None:
+    if len(rewrites) != expected_count:
+        raise ValueError(
+            f"Expected {expected_count} rewrites, "
+            f"received {len(rewrites)}."
+        )
+
+    normalized_original = (
+        original_query.strip().casefold()
+    )
+
+    normalized_rewrites = [
+        rewrite.strip().casefold()
+        for rewrite in rewrites
+    ]
+
+    if any(
+        not rewrite.strip()
+        for rewrite in rewrites
+    ):
+        raise ValueError(
+            "Rewrite must not be empty."
+        )
+
+    if normalized_original in normalized_rewrites:
+        raise ValueError(
+            "Rewrite must differ from original query."
+        )
+
+    if (
+        len(set(normalized_rewrites))
+        != len(normalized_rewrites)
+    ):
+        raise ValueError(
+            "Duplicate rewrites generated."
+        )
+
+
 def main() -> None:
+    args = parse_args()
+
+    dataset_path = resolve_path(
+        args.dataset
+    )
+
+    output_path = resolve_path(
+        args.output
+    )
+
     cases = load_evaluation_cases(
-        DATASET_PATH,
-        active_only=True,
+        dataset_path,
+        active_only=not args.all_statuses,
     )
 
     if not cases:
         raise ValueError(
-            "No active evaluation cases found."
+            "No evaluation cases found."
         )
 
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     existing_rewrites = load_existing_rewrites(
-        OUTPUT_PATH
+        output_path
     )
 
     cases_to_generate = [
@@ -90,9 +195,14 @@ def main() -> None:
     ]
 
     print("=" * 80)
-    print("GENERATING MISSING FROZEN QUERY REWRITES")
+    print(
+        "GENERATING MISSING FROZEN QUERY REWRITES"
+    )
     print("=" * 80)
-    print(f"Active cases     : {len(cases)}")
+
+    print(f"Dataset          : {dataset_path}")
+    print(f"Output           : {output_path}")
+    print(f"Cases            : {len(cases)}")
     print(
         f"Existing rewrites: "
         f"{len(existing_rewrites)}"
@@ -126,6 +236,12 @@ def main() -> None:
 
         rewrites = queries[1:]
 
+        validate_rewrites(
+            original_query=case.query,
+            rewrites=rewrites,
+            expected_count=2,
+        )
+
         record = {
             "case_id": case.case_id,
             "original_query": case.query,
@@ -157,8 +273,7 @@ def main() -> None:
             record["case_id"]
         ] = record
 
-
-    with OUTPUT_PATH.open(
+    with output_path.open(
         "w",
         encoding="utf-8",
     ) as output_file:
@@ -185,7 +300,7 @@ def main() -> None:
     )
     print(
         f"Output        : "
-        f"{OUTPUT_PATH}"
+        f"{output_path}"
     )
 
 
