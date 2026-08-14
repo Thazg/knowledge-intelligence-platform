@@ -527,6 +527,8 @@ def main(
             "Starting E2E HTTP benchmark..."
         )
         print()
+        
+        completed_cases = 0
 
         for index, case in enumerate(
             cases,
@@ -554,6 +556,8 @@ def main(
                 output_path,
                 record,
             )
+            
+            completed_cases += 1
 
             if "error" in record:
                 print(
@@ -561,6 +565,15 @@ def main(
                     f"{record['error']} | "
                     f"{record['message']}"
                 )
+
+                print()
+                print(
+                    "Aborting benchmark after "
+                    "runtime/transport failure to "
+                    "avoid contaminating later cases."
+                )
+
+                break
             else:
                 print(
                     "     HTTP round-trip: "
@@ -579,8 +592,6 @@ def main(
                     f"{len(record['citations'])}"
                 )
 
-            print()
-
     total_seconds = (
         time.perf_counter()
         - benchmark_start
@@ -590,7 +601,8 @@ def main(
     print("E2E HTTP BENCHMARK COMPLETE")
     print("=" * 64)
     print(
-        f"Cases: {len(cases)}"
+        f"Completed cases: "
+        f"{completed_cases}/{len(cases)}"
     )
     print(
         "Total time: "
