@@ -1,0 +1,315 @@
+{
+  "report_version": "e2e_semantic_v1",
+  "benchmark_version": "e2e_v1",
+  "methodology": {
+    "review_type": "human_semantic_review",
+    "score_scale": {
+      "0": "fail",
+      "1": "partial",
+      "2": "pass",
+      "null": "not_applicable"
+    },
+    "verdicts": [
+      "pass",
+      "partial",
+      "fail"
+    ],
+    "external_knowledge_allowed": false,
+    "evidence_basis": "exact retrieved chunks from the canonical E2E HTTP run"
+  },
+  "provenance": {
+    "manifest_path": "benchmarks/e2e/v1/manifest.json",
+    "manifest_sha256": "2190EDA38BB4E849E2A4FF84B97EF07436455861FC93F10D9D716377D2D194FE",
+    "cases_path": "benchmarks/e2e/cases_v1.jsonl",
+    "cases_git_blob_sha256": "0D0B42B52E4DFD0317909ED6E6941FA8B3C07D5B9999F72B1E3D55AFAEBA81E4",
+    "results_path": "benchmarks/e2e/results_v1.jsonl",
+    "results_sha256": "5A8721341BED4A03A886996BC5A2F3BDEE0A5753691674980D1BF95A8B52F1A2",
+    "corpus_path": "data/processed/chunks_fixed.jsonl",
+    "corpus_sha256": "574E06F89E9EB1B709E015D92A40DC646754004B78FBEDAE0BB77FAD4379B57A",
+    "review_packet_path": "benchmarks/e2e/review/human_review_packet_v1.md",
+    "review_packet_sha256": "19785C3843939EA56177303595605DBB16875FFC2D1D3342FB8BF8D8BB76FEEF",
+    "human_scores_path": "benchmarks/e2e/review/human_scores_v1.jsonl",
+    "human_scores_sha256": "899F303FE91E8F06B9BB6D01D6B2400C724BE26203B65EABFB29CE3F68863461",
+    "structural_report_path": "benchmarks/e2e/reports/e2e_structural_v1.json",
+    "structural_report_sha256": "9D490C93CCFCA75592519659692FD6E1B9F8C2DECE0AF30C9C5CE84F41E9A3EC"
+  },
+  "validation": {
+    "case_count": 18,
+    "pass_count": 12,
+    "partial_count": 5,
+    "fail_count": 1,
+    "blocker_case_ids": [
+      "e2e-009"
+    ]
+  },
+  "overall": {
+    "case_count": 18,
+    "pass_count": 12,
+    "partial_count": 5,
+    "fail_count": 1,
+    "pass_rate": 0.6667,
+    "pass_or_partial_rate": 0.9444,
+    "partial_case_ids": [
+      "e2e-001",
+      "e2e-005",
+      "e2e-007",
+      "e2e-008",
+      "e2e-013"
+    ],
+    "fail_case_ids": [
+      "e2e-009"
+    ],
+    "blocker_case_ids": [
+      "e2e-009"
+    ]
+  },
+  "semantic_gate": {
+    "pass": false,
+    "fail_case_ids": [
+      "e2e-009"
+    ],
+    "blocker_case_ids": [
+      "e2e-009"
+    ],
+    "reason": "Semantic gate failed because the reviewed benchmark contains at least one FAIL verdict or blocking semantic finding."
+  },
+  "by_category": {
+    "ambiguous": {
+      "case_count": 3,
+      "pass_count": 0,
+      "partial_count": 2,
+      "fail_count": 1,
+      "pass_rate": 0.0,
+      "pass_or_partial_rate": 0.6667,
+      "blocker_case_ids": [
+        "e2e-009"
+      ]
+    },
+    "cross_tool": {
+      "case_count": 3,
+      "pass_count": 2,
+      "partial_count": 1,
+      "fail_count": 0,
+      "pass_rate": 0.6667,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "insufficient": {
+      "case_count": 3,
+      "pass_count": 3,
+      "partial_count": 0,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "lexical": {
+      "case_count": 3,
+      "pass_count": 2,
+      "partial_count": 1,
+      "fail_count": 0,
+      "pass_rate": 0.6667,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "semantic": {
+      "case_count": 3,
+      "pass_count": 2,
+      "partial_count": 1,
+      "fail_count": 0,
+      "pass_rate": 0.6667,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "version_specific": {
+      "case_count": 3,
+      "pass_count": 3,
+      "partial_count": 0,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    }
+  },
+  "by_expected_behavior": {
+    "answer_with_evidence": {
+      "case_count": 12,
+      "pass_count": 9,
+      "partial_count": 3,
+      "fail_count": 0,
+      "pass_rate": 0.75,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "insufficient_evidence": {
+      "case_count": 3,
+      "pass_count": 3,
+      "partial_count": 0,
+      "fail_count": 0,
+      "pass_rate": 1.0,
+      "pass_or_partial_rate": 1.0,
+      "blocker_case_ids": []
+    },
+    "qualified_answer": {
+      "case_count": 3,
+      "pass_count": 0,
+      "partial_count": 2,
+      "fail_count": 1,
+      "pass_rate": 0.0,
+      "pass_or_partial_rate": 0.6667,
+      "blocker_case_ids": [
+        "e2e-009"
+      ]
+    }
+  },
+  "dimensions": {
+    "correctness": {
+      "applicable_case_count": 18,
+      "score_0_count": 0,
+      "score_1_count": 5,
+      "score_2_count": 13,
+      "mean_score": 1.7222
+    },
+    "faithfulness": {
+      "applicable_case_count": 18,
+      "score_0_count": 0,
+      "score_1_count": 5,
+      "score_2_count": 13,
+      "mean_score": 1.7222
+    },
+    "citation_correctness": {
+      "applicable_case_count": 18,
+      "score_0_count": 0,
+      "score_1_count": 5,
+      "score_2_count": 13,
+      "mean_score": 1.7222
+    },
+    "citation_completeness": {
+      "applicable_case_count": 18,
+      "score_0_count": 0,
+      "score_1_count": 1,
+      "score_2_count": 17,
+      "mean_score": 1.9444
+    },
+    "evidence_sufficiency": {
+      "applicable_case_count": 18,
+      "score_0_count": 1,
+      "score_1_count": 3,
+      "score_2_count": 14,
+      "mean_score": 1.7222
+    },
+    "ambiguity_handling": {
+      "applicable_case_count": 3,
+      "score_0_count": 1,
+      "score_1_count": 2,
+      "score_2_count": 0,
+      "mean_score": 0.6667
+    },
+    "multi_source_synthesis": {
+      "applicable_case_count": 3,
+      "score_0_count": 0,
+      "score_1_count": 1,
+      "score_2_count": 2,
+      "mean_score": 1.6667
+    },
+    "abstention": {
+      "applicable_case_count": 3,
+      "score_0_count": 0,
+      "score_1_count": 0,
+      "score_2_count": 3,
+      "mean_score": 2
+    }
+  },
+  "case_verdicts": {
+    "e2e-001": {
+      "verdict": "partial",
+      "blocker": false,
+      "notes": "The core explanation is correct, but the answer incorrectly says a failed startup probe restarts the container only after the startup phase is complete. The evidence says a failed startup probe causes the kubelet to kill the container and apply its restart policy."
+    },
+    "e2e-002": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Clearly distinguishes thread-scoped checkpoint persistence from cross-thread long-term memory, with the major claims supported by the retrieved LangGraph evidence."
+    },
+    "e2e-003": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Explains the role of payload indexes in filtered search and query-planning decisions without a material unsupported claim."
+    },
+    "e2e-004": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly explains COPY --from as copying artifacts from another build stage into the current stage and supports the explanation with Docker multi-stage-build evidence."
+    },
+    "e2e-005": {
+      "verdict": "partial",
+      "blocker": false,
+      "notes": "The envFrom explanation is correct, but the claim that this enables dynamic configuration updates without restarts is not supported by the retrieved evidence and overstates the behavior."
+    },
+    "e2e-006": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly describes generate() as model-driven token generation followed by decoding, consistent with the retrieved Transformers documentation."
+    },
+    "e2e-007": {
+      "verdict": "partial",
+      "blocker": false,
+      "notes": "The LangGraph-specific persistence advice is technically supported, but the generic query does not establish that the application uses LangGraph or what state lifetime is required. The answer should explicitly qualify its recommendation by those assumptions."
+    },
+    "e2e-008": {
+      "verdict": "partial",
+      "blocker": false,
+      "notes": "The answer is too prescriptive for an underspecified performance question. Most importantly, it presents static embeddings as a vector-search speed optimization even though the retrieved evidence explicitly says retrieval itself is not faster; static embeddings speed up vector creation."
+    },
+    "e2e-009": {
+      "verdict": "fail",
+      "blocker": true,
+      "notes": "The generic API question is answered as though it were specifically a LangGraph workflow. LangGraph task and heartbeat mechanisms are generalized into universal API guidance without stating that assumption. This violates the required qualified-answer behavior."
+    },
+    "e2e-010": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Accurately distinguishes the legacy docker-compose command and implementation from the current docker compose CLI using retrieved Docker documentation."
+    },
+    "e2e-011": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly states the current FastAPI recommendation to build a custom image instead of using the deprecated tiangolo/uvicorn-gunicorn-fastapi base image."
+    },
+    "e2e-012": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Directly and correctly answers that current FastAPI guidance prefers the lifespan parameter over startup and shutdown event handlers."
+    },
+    "e2e-013": {
+      "verdict": "partial",
+      "blocker": false,
+      "notes": "The high-level separation of LangGraph state management and Qdrant retrieval is reasonable, but the answer makes stronger claims such as Qdrant being used solely for retrieval and attributes broad persistence behavior to a limited cited source. The synthesis needs stronger direct persistence evidence and more careful qualification."
+    },
+    "e2e-014": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Cleanly separates Transformers model-serving responsibilities from Kubernetes Service networking, discovery, and exposure responsibilities using evidence from both tool areas."
+    },
+    "e2e-015": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly separates FastAPI's HTTP/API-layer responsibilities from Qdrant's vector storage, indexing, and retrieval responsibilities."
+    },
+    "e2e-016": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly refuses to derive exact CPU and memory limits for 500 RPS because the retrieved Kubernetes documentation provides resource configuration concepts but no throughput-to-resource model."
+    },
+    "e2e-017": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly refuses to claim an HNSW configuration that guarantees a hardware-specific p95 latency target. The retrieved sources provide optimization guidance but not a laptop-specific guarantee."
+    },
+    "e2e-018": {
+      "verdict": "pass",
+      "blocker": false,
+      "notes": "Correctly refuses to identify a base image guaranteed to have no known vulnerabilities today because the static retrieved documentation cannot establish that current guarantee."
+    }
+  }
+}
