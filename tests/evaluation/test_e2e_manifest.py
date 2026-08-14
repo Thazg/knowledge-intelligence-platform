@@ -213,3 +213,45 @@ def test_e2e_manifest_freezes_execution_protocol() -> None:
         protocol["http_round_trip_latency"]
         == "measured_client_side_separately"
     )
+
+
+def test_e2e_manifest_freezes_runner_and_runtime_environment() -> None:
+    manifest = _load_manifest()
+
+    runner = manifest["benchmark_runner"]
+
+    assert (
+        runner["source_path"]
+        == "scripts/evaluate_e2e_v1.py"
+    )
+
+    assert (
+        runner["source_sha256"]
+        == _sha256(
+            _git_blob(runner["source_path"])
+        )
+    )
+
+    assert (
+        runner["fail_fast_on_runtime_failure"]
+        is True
+    )
+
+    runtime = manifest["runtime_environment"]
+
+    assert runtime["host_total_ram_gib"] == 15.77
+    assert runtime["wsl2_memory_config"] == "10GB"
+
+    assert (
+        runtime[
+            "docker_total_memory_gib_observed"
+        ]
+        == 9.712
+    )
+
+    protocol = manifest["execution_protocol"]
+
+    assert (
+        protocol["fail_fast_on_runtime_failure"]
+        is True
+    )

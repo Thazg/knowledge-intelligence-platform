@@ -112,6 +112,18 @@
     "concurrency": 1,
     "http_client_timeout_seconds": 150.0,
     "measurement_mode": "steady_state",
-    "http_round_trip_latency": "measured_client_side_separately"
+    "http_round_trip_latency": "measured_client_side_separately",
+    "fail_fast_on_runtime_failure": true
+  },
+  "benchmark_runner": {
+    "source_path": "scripts/evaluate_e2e_v1.py",
+    "source_sha256": "AA6B640EC62245392712A36EEDFF70202F8BA23E1E54D54F849AE07252324E2A",
+    "git_commit": "ab542e858e9b75657f7aeb5c717b5b78e05ac800",
+    "fail_fast_on_runtime_failure": true
+  },
+  "runtime_environment": {
+    "host_total_ram_gib": 15.77,
+    "wsl2_memory_config": "10GB",
+    "docker_total_memory_gib_observed": 9.712
   }
 }
