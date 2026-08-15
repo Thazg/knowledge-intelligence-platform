@@ -14,7 +14,7 @@ from backend.core.errors import (
 )
 from backend.generation.models import Citation, SourceReference
 from backend.services.models import RAGServiceResult
-
+from backend.core.config import get_settings
 
 client = TestClient(app)
 
@@ -483,3 +483,128 @@ def test_query_rejects_oversized_query_after_whitespace_stripping() -> None:
     )
 
     assert response.status_code == 422
+
+def test_ready_returns_503_when_qdrant_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = get_settings()
+
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url == settings.qdrant_url:
+            raise RuntimeError("qdrant unavailable")
+
+        if url == f"{settings.ollama_url}/api/tags":
+            return FakeResponse(
+                {
+                    "models": [
+                        {
+                            "name": settings.generation_model,
+                        }
+                    ]
+                }
+            )
+
+        raise AssertionError(
+            f"Unexpected readiness URL: {url}"
+        )
+
+    monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "dependencies": {
+            "rag_service": "ready",
+            "qdrant": "unavailable",
+            "ollama": "ready",
+        },
+    }
+
+def test_ready_returns_503_when_rag_service_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = get_settings()
+
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fail_rag_service() -> None:
+        raise RuntimeError("RAG initialization failed")
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url == settings.qdrant_url:
+            return FakeResponse()
+
+        if url == f"{settings.ollama_url}/api/tags":
+            return FakeResponse(
+                {
+                    "models": [
+                        {
+                            "name": settings.generation_model,
+                        }
+                    ]
+                }
+            )
+
+        raise AssertionError(
+            f"Unexpected readiness URL: {url}"
+        )
+
+    monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        fail_rag_service,
+    )
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "dependencies": {
+            "rag_service": "unavailable",
+            "qdrant": "ready",
+            "ollama": "ready",
+        },
+    }
