@@ -9,7 +9,11 @@ import httpx
 from backend.generation.generator import LLMGenerator
 from backend.generation.models import Citation, GenerationContext, GenerationResult
 from backend.generation.prompt_builder import PromptBuilder
-
+from backend.core.errors import (
+    DependencyResponseError,
+    DependencyTimeoutError,
+    DependencyUnavailableError,
+)
 
 class OllamaGenerator(LLMGenerator):
     def __init__(
@@ -51,15 +55,31 @@ class OllamaGenerator(LLMGenerator):
 
         start = time.perf_counter()
 
-        with httpx.Client(
-            timeout=self.timeout_seconds,
-        ) as client:
-            response = client.post(
-                f"{self.base_url}/api/chat",
-                json=payload,
-            )
+        try:
+            with httpx.Client(
+                timeout=self.timeout_seconds,
+            ) as client:
+                response = client.post(
+                    f"{self.base_url}/api/chat",
+                    json=payload,
+                )
 
-            response.raise_for_status()
+                response.raise_for_status()
+
+        except httpx.ConnectError as exc:
+            raise DependencyUnavailableError(
+                "ollama"
+            ) from exc
+
+        except httpx.TimeoutException as exc:
+            raise DependencyTimeoutError(
+                "ollama"
+            ) from exc
+
+        except httpx.HTTPStatusError as exc:
+            raise DependencyResponseError(
+                "ollama"
+            ) from exc
 
         latency_ms = (
             time.perf_counter() - start
