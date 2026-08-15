@@ -1,6 +1,6 @@
 services:
   qdrant:
-    image: qdrant/qdrant:v1.19.0
+    image: qdrant/qdrant@sha256:057ee3a8da769fe7310dd3537b4dc7583bf87a95ce8ac43c0af5a46bc580d1fc
     container_name: enterprise-rag-qdrant
     ports:
       - "6333:6333"
@@ -23,12 +23,14 @@ services:
       QDRANT_COLLECTION: enterprise_knowledge_fixed_bge_small
       EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
       GENERATION_MODEL: qwen3:4b-instruct
+      GENERATION_TIMEOUT_SECONDS: "120"
       DENSE_WEIGHT: "0.7"
       BM25_WEIGHT: "0.3"
       RRF_K: "60"
       RETRIEVAL_TOP_K: "10"
       MAX_CONTEXT_TOKENS: "4000"
       MAX_CONTEXT_SOURCES: "6"
+      MAX_CONCURRENT_GENERATIONS: "1"
     volumes:
       - ./data/processed:/app/data/processed:ro
     depends_on:
@@ -39,7 +41,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus@sha256:508729e0e2d18e11fd742a5a5ca70e557b940a93948c3c95fd0123a6fd538b69
     container_name: enterprise-rag-prometheus
     ports:
       - "9090:9090"
@@ -50,7 +52,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43
     container_name: enterprise-rag-grafana
 
     ports:
@@ -71,7 +73,7 @@ services:
     restart: unless-stopped
 
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama@sha256:b88c73ace3e115f8ec53dc8761ae1c0aabfa675406e3681786b98757ce050f42
     container_name: enterprise-rag-ollama
     ports:
       - "11435:11434"

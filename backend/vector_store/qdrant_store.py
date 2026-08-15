@@ -3,9 +3,9 @@ import uuid
 import numpy as np
 from numpy.typing import NDArray
 from qdrant_client import QdrantClient, models
-
 from backend.chunking.models import Chunk
-
+from qdrant_client.http.exceptions import ResponseHandlingException
+from backend.core.errors import DependencyUnavailableError
 
 class QdrantVectorStore:
 
@@ -159,12 +159,18 @@ class QdrantVectorStore:
                 f"!= {self.vector_size}."
             )
 
-        response = self.client.query_points(
-            collection_name=self.collection_name,
-            query=query_embedding.tolist(),
-            limit=limit,
-            with_payload=True,
-            with_vectors=False,
-        )
+        try:
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=query_embedding.tolist(),
+                limit=limit,
+                with_payload=True,
+                with_vectors=False,
+            )
+
+        except ResponseHandlingException as exc:
+            raise DependencyUnavailableError(
+                "qdrant"
+            ) from exc
 
         return response.points

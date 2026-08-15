@@ -3,7 +3,9 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from typing import Self
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +30,10 @@ class Settings(BaseSettings):
 
     # Generation
     generation_model: str = "qwen3:4b-instruct"
+    generation_timeout_seconds: float = Field(
+        default=120.0,
+        gt=0,
+    )
 
     # Retrieval
     dense_weight: float = Field(default=0.7, ge=0.0)
@@ -39,6 +45,22 @@ class Settings(BaseSettings):
     max_context_tokens: int = Field(default=4000, gt=0)
     max_context_sources: int = Field(default=6, gt=0)
 
+    max_concurrent_generations: int = Field(
+        default=1,
+        gt=0,
+    )
+
+    @model_validator(mode="after")
+    def validate_retrieval_weights(self) -> Self:
+        if (
+            self.dense_weight == 0.0
+            and self.bm25_weight == 0.0
+        ):
+            raise ValueError(
+                "retrieval weights cannot both be zero"
+            )
+
+        return self
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

@@ -1,0 +1,116 @@
+from __future__ import annotations
+
+import pytest
+
+from pydantic import ValidationError
+
+from backend.core.config import Settings
+
+
+def test_generation_timeout_defaults_to_120_seconds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(
+        "GENERATION_TIMEOUT_SECONDS",
+        raising=False,
+    )
+
+    settings = Settings(
+        _env_file=None,
+    )
+
+    assert settings.generation_timeout_seconds == 120.0
+
+
+def test_generation_timeout_can_be_loaded_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "GENERATION_TIMEOUT_SECONDS",
+        "45",
+    )
+
+    settings = Settings(
+        _env_file=None,
+    )
+
+    assert settings.generation_timeout_seconds == 45.0
+
+
+@pytest.mark.parametrize(
+    "timeout_seconds",
+    [
+        0.0,
+        -1.0,
+    ],
+)
+def test_generation_timeout_must_be_positive(
+    timeout_seconds: float,
+) -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            generation_timeout_seconds=timeout_seconds,
+        )
+
+def test_retrieval_weights_cannot_both_be_zero() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="retrieval weights cannot both be zero",
+    ):
+        Settings(
+            _env_file=None,
+            dense_weight=0.0,
+            bm25_weight=0.0,
+        )
+
+
+def test_retrieval_weights_can_disable_dense() -> None:
+    settings = Settings(
+        _env_file=None,
+        dense_weight=0.0,
+        bm25_weight=1.0,
+    )
+
+    assert settings.dense_weight == 0.0
+    assert settings.bm25_weight == 1.0
+
+
+def test_retrieval_weights_can_disable_bm25() -> None:
+    settings = Settings(
+        _env_file=None,
+        dense_weight=1.0,
+        bm25_weight=0.0,
+    )
+
+    assert settings.dense_weight == 1.0
+    assert settings.bm25_weight == 0.0
+
+def test_max_concurrent_generations_defaults_to_one() -> None:
+    settings = Settings(
+        _env_file=None,
+    )
+
+    assert (
+        settings.max_concurrent_generations
+        == 1
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        0,
+        -1,
+    ],
+)
+def test_max_concurrent_generations_must_be_positive(
+    value: int,
+) -> None:
+    with pytest.raises(
+        ValidationError,
+    ):
+        Settings(
+            _env_file=None,
+            max_concurrent_generations=value,
+        )

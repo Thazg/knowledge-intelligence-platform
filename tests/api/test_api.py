@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-import httpx
 import pytest
 
 from fastapi.testclient import TestClient
-from qdrant_client.http.exceptions import ResponseHandlingException
 
 from backend.api.app import app
 from backend.api.dependencies import get_rag_service
+from backend.core.errors import (
+    DependencyResponseError,
+    DependencyTimeoutError,
+    DependencyUnavailableError,
+    DependencyBusyError,
+)
 from backend.generation.models import Citation, SourceReference
 from backend.services.models import RAGServiceResult
-
+from backend.core.config import get_settings
 
 client = TestClient(app)
 
@@ -19,7 +23,10 @@ class FakeRAGService:
     def query(self, query: str) -> RAGServiceResult:
         return RAGServiceResult(
             query=query,
-            answer="A Kubernetes Deployment manages replicated Pods [1].",
+            answer=(
+                "A Kubernetes Deployment manages "
+                "replicated Pods [1]."
+            ),
             citations=[
                 Citation(
                     citation_id="1",
@@ -47,19 +54,45 @@ class FakeRAGService:
 
 class FakeQdrantFailureService:
     def query(self, query: str) -> RAGServiceResult:
-        raise ResponseHandlingException(
-            httpx.ConnectError("Qdrant unavailable")
+        raise DependencyUnavailableError(
+            "qdrant"
         )
 
 
 class FakeOllamaFailureService:
     def query(self, query: str) -> RAGServiceResult:
-        raise httpx.ConnectError("Ollama unavailable")
+        raise DependencyUnavailableError(
+            "ollama"
+        )
 
+
+class FakeOllamaHTTPFailureService:
+    def query(self, query: str) -> RAGServiceResult:
+        raise DependencyResponseError(
+            "ollama"
+        )
+
+
+class FakeOllamaTimeoutService:
+    def query(self, query: str) -> RAGServiceResult:
+        raise DependencyTimeoutError(
+            "ollama"
+        )
+
+class FakeOllamaBusyService:
+    def query(
+        self,
+        query: str,
+    ) -> RAGServiceResult:
+        raise DependencyBusyError(
+            "ollama"
+        )
 
 @pytest.fixture(autouse=True)
 def use_fake_rag_service():
-    app.dependency_overrides[get_rag_service] = lambda: FakeRAGService()
+    app.dependency_overrides[get_rag_service] = (
+        lambda: FakeRAGService()
+    )
 
     yield
 
@@ -101,8 +134,8 @@ def test_ready_returns_200_when_dependencies_are_ready(
                     "models": [
                         {
                             "name": "qwen3:4b-instruct",
-                        }
-                    ]
+                        },
+                    ],
                 }
             )
 
@@ -203,27 +236,36 @@ def test_query_rejects_missing_query() -> None:
     assert response.status_code == 422
 
 
-def test_query_returns_rag_response() -> None:
-    app.dependency_overrides[get_rag_service] = lambda: FakeRAGService()
+def test_query_rejects_whitespace_only_query() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "   ",
+        },
+    )
 
-    try:
-        response = client.post(
-            "/v1/query",
-            json={
-                "query": "What is a Kubernetes Deployment?",
-            },
-        )
-    finally:
-        app.dependency_overrides.clear()
+    assert response.status_code == 422
+
+
+def test_query_returns_rag_response() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "What is a Kubernetes Deployment?",
+        },
+    )
 
     assert response.status_code == 200
 
     body = response.json()
 
-    assert body["query"] == "What is a Kubernetes Deployment?"
+    assert body["query"] == (
+        "What is a Kubernetes Deployment?"
+    )
 
     assert body["answer"] == (
-        "A Kubernetes Deployment manages replicated Pods [1]."
+        "A Kubernetes Deployment manages "
+        "replicated Pods [1]."
     )
 
     assert body["model"] == "fake-model"
@@ -293,5 +335,276 @@ def test_query_returns_503_when_ollama_is_unavailable() -> None:
 
     assert response.status_code == 503
     assert response.json() == {
-        "detail": "A required backend service is unavailable.",
+        "detail": (
+            "A required backend service is unavailable."
+        ),
+    }
+
+
+def test_query_returns_503_when_backend_returns_http_error() -> None:
+    app.dependency_overrides[get_rag_service] = (
+        lambda: FakeOllamaHTTPFailureService()
+    )
+
+    try:
+        response = client.post(
+            "/v1/query",
+            json={
+                "query": (
+                    "How do Kubernetes Deployments work?"
+                ),
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": (
+            "A required backend service returned an error."
+        ),
+    }
+
+
+def test_query_returns_503_when_backend_times_out() -> None:
+    app.dependency_overrides[get_rag_service] = (
+        lambda: FakeOllamaTimeoutService()
+    )
+
+    try:
+        response = client.post(
+            "/v1/query",
+            json={
+                "query": (
+                    "How do Kubernetes Deployments work?"
+                ),
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": (
+            "A required backend service timed out."
+        ),
+    }
+
+
+def test_request_id_header_is_echoed() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "What is Kubernetes?",
+        },
+        headers={
+            "X-Request-ID": "e2e-test-001",
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        response.headers["X-Request-ID"]
+        == "e2e-test-001"
+    )
+
+def test_query_strips_surrounding_whitespace() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "  What is Kubernetes?  ",
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        response.json()["query"]
+        == "What is Kubernetes?"
+    )
+
+def test_query_returns_503_when_generation_is_busy() -> None:
+    app.dependency_overrides[
+        get_rag_service
+    ] = lambda: FakeOllamaBusyService()
+
+    try:
+        response = client.post(
+            "/v1/query",
+            json={
+                "query": (
+                    "How do Kubernetes Deployments work?"
+                )
+            },
+        )
+
+        assert response.status_code == 503
+        assert response.json() == {
+            "detail": (
+                "A required backend service is busy."
+            )
+        }
+
+    finally:
+        app.dependency_overrides[
+            get_rag_service
+        ] = lambda: FakeRAGService()
+
+def test_query_accepts_maximum_length_query() -> None:
+    query = "a" * 1024
+
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": query,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["query"] == query
+
+def test_query_rejects_query_exceeding_maximum_length() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "a" * 1025,
+        },
+    )
+
+    assert response.status_code == 422
+
+def test_query_rejects_oversized_query_after_whitespace_stripping() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": f"  {'a' * 1025}  ",
+        },
+    )
+
+    assert response.status_code == 422
+
+def test_ready_returns_503_when_qdrant_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = get_settings()
+
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url == settings.qdrant_url:
+            raise RuntimeError("qdrant unavailable")
+
+        if url == f"{settings.ollama_url}/api/tags":
+            return FakeResponse(
+                {
+                    "models": [
+                        {
+                            "name": settings.generation_model,
+                        }
+                    ]
+                }
+            )
+
+        raise AssertionError(
+            f"Unexpected readiness URL: {url}"
+        )
+
+    monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "dependencies": {
+            "rag_service": "ready",
+            "qdrant": "unavailable",
+            "ollama": "ready",
+        },
+    }
+
+def test_ready_returns_503_when_rag_service_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = get_settings()
+
+    class FakeResponse:
+        def __init__(
+            self,
+            payload: dict | None = None,
+        ) -> None:
+            self._payload = payload or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fail_rag_service() -> None:
+        raise RuntimeError("RAG initialization failed")
+
+    def fake_get(
+        url: str,
+        timeout: float,
+    ) -> FakeResponse:
+        if url == settings.qdrant_url:
+            return FakeResponse()
+
+        if url == f"{settings.ollama_url}/api/tags":
+            return FakeResponse(
+                {
+                    "models": [
+                        {
+                            "name": settings.generation_model,
+                        }
+                    ]
+                }
+            )
+
+        raise AssertionError(
+            f"Unexpected readiness URL: {url}"
+        )
+
+    monkeypatch.setattr(
+        "backend.api.app.get_rag_service",
+        fail_rag_service,
+    )
+    monkeypatch.setattr(
+        "backend.api.app.httpx.get",
+        fake_get,
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "dependencies": {
+            "rag_service": "unavailable",
+            "qdrant": "ready",
+            "ollama": "ready",
+        },
     }

@@ -1,0 +1,129 @@
+{
+  "benchmark_version": "e2e_v1",
+  "cases": {
+    "path": "benchmarks/e2e/cases_v1.jsonl",
+    "cases": 18,
+    "sha256": "0D0B42B52E4DFD0317909ED6E6941FA8B3C07D5B9999F72B1E3D55AFAEBA81E4"
+  },
+  "source_control": {
+    "git_commit": "a6fc43893e72c1b1550b2ab04de2288afae27a05",
+    "tracked_worktree_clean": true
+  },
+  "retrieval_dependency": {
+    "manifest_path": "benchmarks/retrieval/full/manifest.json",
+    "benchmark_version": "retrieval_full_v1",
+    "sha256": "D33C74297FD3C90F780B2CD3B74EEE57830E5949CE9CAE782DF754A4121CDED3"
+  },
+  "deployment": {
+    "mode": "docker_compose",
+    "compose_path": "docker-compose.yml",
+    "compose_sha256": "CCF1C33124E98D400B3F301DD3D9A6D838455F2913243105C0BC2B585EA75D5F",
+    "docker_compose_version": "5.3.1",
+    "api_image": {
+      "image_id": "sha256:5558fca2e1fd2d8887dac2e4090d79116e125c9310c25db4f8b7158961f41886",
+      "config_image": "enterprise-ai-engineering-knowledge-platform-api",
+      "created": "2026-08-13T15:52:36.612372293Z"
+    },
+    "qdrant_image": {
+      "image_id": "sha256:057ee3a8da769fe7310dd3537b4dc7583bf87a95ce8ac43c0af5a46bc580d1fc",
+      "config_image": "qdrant/qdrant:v1.19.0"
+    },
+    "ollama_image": {
+      "image_id": "sha256:b88c73ace3e115f8ec53dc8761ae1c0aabfa675406e3681786b98757ce050f42",
+      "config_image": "ollama/ollama:latest"
+    }
+  },
+  "api": {
+    "base_url": "http://localhost:8000",
+    "endpoint": "/v1/query",
+    "health_endpoint": "/health",
+    "readiness_endpoint": "/ready",
+    "title": "Enterprise AI Engineering Knowledge Platform",
+    "app_version": "1.0.0",
+    "request_id_header": "X-Request-ID"
+  },
+  "corpus": {
+    "runtime_chunks_path": "/app/data/processed/chunks_fixed.jsonl",
+    "canonical_repository_path": "data/processed/chunks_fixed.jsonl"
+  },
+  "retriever": {
+    "type": "weighted_rrf",
+    "dense_weight": 0.7,
+    "bm25_weight": 0.3,
+    "rrf_k": 60,
+    "top_k": 10,
+    "candidate_multiplier": 5,
+    "max_chunks_per_document": 1,
+    "source_path": "backend/retrieval/hybrid_retriever.py",
+    "source_sha256": "86FC78E2CEB5F5967EF0D9D395E36B0E308909D70381644223620880CD165AB1"
+  },
+  "embedding": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "dimension": 384
+  },
+  "vector_store": {
+    "provider": "qdrant",
+    "runtime_url": "http://qdrant:6333",
+    "collection": "enterprise_knowledge_fixed_bge_small",
+    "image": "qdrant/qdrant:v1.19.0",
+    "image_id": "sha256:057ee3a8da769fe7310dd3537b4dc7583bf87a95ce8ac43c0af5a46bc580d1fc",
+    "points_count": 36199,
+    "vector_size": 384,
+    "distance": "Cosine",
+    "observed_runtime": {
+      "status": "green",
+      "segments_count": 6,
+      "indexed_vectors_count": 0
+    }
+  },
+  "context": {
+    "max_sources": 6,
+    "max_context_tokens": 4000
+  },
+  "generator": {
+    "provider": "ollama",
+    "runtime_url": "http://ollama:11434",
+    "ollama_version": "0.32.6",
+    "model": "qwen3:4b-instruct",
+    "model_digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+    "format": "gguf",
+    "parameter_size": "4.0B",
+    "quantization_level": "Q4_K_M",
+    "temperature": 0.0,
+    "num_predict": 384,
+    "timeout_seconds": 120.0,
+    "source_path": "backend/generation/providers/ollama_generator.py",
+    "source_sha256": "D30A004AC9572B43D4A2C622C12C1F0C9CAED438B6756648FE01B8C4E4E6B6BE"
+  },
+  "prompt": {
+    "version": "v3",
+    "source_path": "backend/generation/prompt_builder.py",
+    "fingerprint_strategy": "canonical_prompt_ast_v1",
+    "sha256": "2AF02AE87A96AE5C7883359B108B8C04454D3AF753A68FB65E24399547C07B0D"
+  },
+  "execution_protocol": {
+    "transport": "http",
+    "measured_endpoint": "http://localhost:8000/v1/query",
+    "readiness_required": true,
+    "warmup_requests": 1,
+    "warmup_query": "What is Qdrant?",
+    "measured_requests_per_case": 1,
+    "case_order": "cases_file_order",
+    "concurrency": 1,
+    "http_client_timeout_seconds": 150.0,
+    "measurement_mode": "steady_state",
+    "http_round_trip_latency": "measured_client_side_separately",
+    "fail_fast_on_runtime_failure": true
+  },
+  "benchmark_runner": {
+    "source_path": "scripts/evaluate_e2e_v1.py",
+    "source_sha256": "AA6B640EC62245392712A36EEDFF70202F8BA23E1E54D54F849AE07252324E2A",
+    "git_commit": "ab542e858e9b75657f7aeb5c717b5b78e05ac800",
+    "fail_fast_on_runtime_failure": true
+  },
+  "runtime_environment": {
+    "host_total_ram_gib": 15.77,
+    "wsl2_memory_config": "10GB",
+    "docker_total_memory_gib_observed": 9.712
+  }
+}
