@@ -52,3 +52,36 @@ def test_generation_timeout_must_be_positive(
             _env_file=None,
             generation_timeout_seconds=timeout_seconds,
         )
+
+def test_retrieval_weights_cannot_both_be_zero() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="retrieval weights cannot both be zero",
+    ):
+        Settings(
+            _env_file=None,
+            dense_weight=0.0,
+            bm25_weight=0.0,
+        )
+
+
+def test_retrieval_weights_can_disable_dense() -> None:
+    settings = Settings(
+        _env_file=None,
+        dense_weight=0.0,
+        bm25_weight=1.0,
+    )
+
+    assert settings.dense_weight == 0.0
+    assert settings.bm25_weight == 1.0
+
+
+def test_retrieval_weights_can_disable_bm25() -> None:
+    settings = Settings(
+        _env_file=None,
+        dense_weight=1.0,
+        bm25_weight=0.0,
+    )
+
+    assert settings.dense_weight == 1.0
+    assert settings.bm25_weight == 0.0
