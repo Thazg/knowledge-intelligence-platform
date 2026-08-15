@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     # Generation
     generation_model: str = "qwen3:4b-instruct"
+    generation_timeout_seconds: float = Field(
+        default=120.0,
+        gt=0,
+    )
 
     # Retrieval
     dense_weight: float = Field(default=0.7, ge=0.0)

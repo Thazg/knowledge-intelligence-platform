@@ -66,6 +66,7 @@ def get_rag_service() -> RAGService:
     generator = OllamaGenerator(
         model=settings.generation_model,
         base_url=settings.ollama_url,
+        timeout_seconds=settings.generation_timeout_seconds,
     )
 
     pipeline = RAGPipeline(
