@@ -46,3 +46,9 @@ def query_rag(
             status_code=503,
             detail="A required backend service timed out.",
         ) from exc
+ 
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="A required backend service returned an error.",
+        ) from exc

@@ -296,6 +296,26 @@ def test_query_returns_503_when_ollama_is_unavailable() -> None:
         "detail": "A required backend service is unavailable.",
     }
 
+def test_query_returns_503_when_backend_returns_http_error() -> None:
+    app.dependency_overrides[get_rag_service] = (
+        lambda: FakeOllamaHTTPFailureService()
+    )
+
+    try:
+        response = client.post(
+            "/v1/query",
+            json={
+                "query": "How do Kubernetes Deployments work?",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "A required backend service returned an error.",
+    }
+
 def test_query_rejects_whitespace_only_query() -> None:
     response = client.post(
         "/v1/query",
@@ -331,3 +351,21 @@ def test_query_strips_surrounding_whitespace() -> None:
 
     assert response.status_code == 200
     assert response.json()["query"] == "What is Kubernetes?"
+    
+class FakeOllamaHTTPFailureService:
+    def query(self, query: str) -> RAGServiceResult:
+        request = httpx.Request(
+            "POST",
+            "http://ollama:11434/api/chat",
+        )
+
+        response = httpx.Response(
+            status_code=500,
+            request=request,
+        )
+
+        raise httpx.HTTPStatusError(
+            "Ollama returned an upstream error",
+            request=request,
+            response=response,
+        )
