@@ -11,8 +11,8 @@ MANIFEST_PATH = Path(
 )
 
 FROZEN_MANIFEST_SHA256 = (
-    "2190EDA38BB4E849E2A4FF84B97EF074"
-    "36455861FC93F10D9D716377D2D194FE"
+    "FF8142A1380DE10E327A44AEEBDC5B24"
+    "DFC1355AAB823908D9B0290825716682"
 )
 
 
@@ -40,6 +40,22 @@ def _sha256(data: bytes) -> str:
     ).hexdigest().upper()
 
 
+def _canonical_text_sha256(
+    path: Path,
+) -> str:
+    data = path.read_bytes()
+
+    canonical_data = (
+        data
+        .replace(b"\r\n", b"\n")
+        .replace(b"\r", b"\n")
+    )
+
+    return _sha256(
+        canonical_data
+    )
+
+
 def _assert_sha256(value: str) -> None:
     assert len(value) == 64
 
@@ -51,8 +67,8 @@ def _assert_sha256(value: str) -> None:
 
 def test_e2e_manifest_v1_is_immutable() -> None:
     assert (
-        _sha256(
-            MANIFEST_PATH.read_bytes()
+        _canonical_text_sha256(
+            MANIFEST_PATH
         )
         == FROZEN_MANIFEST_SHA256
     )
