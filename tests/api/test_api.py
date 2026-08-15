@@ -409,7 +409,6 @@ def test_request_id_header_is_echoed() -> None:
         == "e2e-test-001"
     )
 
-
 def test_query_strips_surrounding_whitespace() -> None:
     response = client.post(
         "/v1/query",
@@ -451,3 +450,36 @@ def test_query_returns_503_when_generation_is_busy() -> None:
         app.dependency_overrides[
             get_rag_service
         ] = lambda: FakeRAGService()
+
+def test_query_accepts_maximum_length_query() -> None:
+    query = "a" * 1024
+
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": query,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["query"] == query
+
+def test_query_rejects_query_exceeding_maximum_length() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": "a" * 1025,
+        },
+    )
+
+    assert response.status_code == 422
+
+def test_query_rejects_oversized_query_after_whitespace_stripping() -> None:
+    response = client.post(
+        "/v1/query",
+        json={
+            "query": f"  {'a' * 1025}  ",
+        },
+    )
+
+    assert response.status_code == 422
