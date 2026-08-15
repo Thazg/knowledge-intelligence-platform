@@ -10,6 +10,7 @@ from backend.core.errors import (
     DependencyResponseError,
     DependencyTimeoutError,
     DependencyUnavailableError,
+    DependencyBusyError,
 )
 from backend.generation.models import Citation, SourceReference
 from backend.services.models import RAGServiceResult
@@ -78,6 +79,14 @@ class FakeOllamaTimeoutService:
             "ollama"
         )
 
+class FakeOllamaBusyService:
+    def query(
+        self,
+        query: str,
+    ) -> RAGServiceResult:
+        raise DependencyBusyError(
+            "ollama"
+        )
 
 @pytest.fixture(autouse=True)
 def use_fake_rag_service():
@@ -415,3 +424,30 @@ def test_query_strips_surrounding_whitespace() -> None:
         response.json()["query"]
         == "What is Kubernetes?"
     )
+
+def test_query_returns_503_when_generation_is_busy() -> None:
+    app.dependency_overrides[
+        get_rag_service
+    ] = lambda: FakeOllamaBusyService()
+
+    try:
+        response = client.post(
+            "/v1/query",
+            json={
+                "query": (
+                    "How do Kubernetes Deployments work?"
+                )
+            },
+        )
+
+        assert response.status_code == 503
+        assert response.json() == {
+            "detail": (
+                "A required backend service is busy."
+            )
+        }
+
+    finally:
+        app.dependency_overrides[
+            get_rag_service
+        ] = lambda: FakeRAGService()

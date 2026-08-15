@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 import httpx
+import threading
 
 from backend.generation.generator import LLMGenerator
 from backend.generation.models import Citation, GenerationContext, GenerationResult
@@ -13,6 +14,7 @@ from backend.core.errors import (
     DependencyResponseError,
     DependencyTimeoutError,
     DependencyUnavailableError,
+    DependencyBusyError,
 )
 
 class OllamaGenerator(LLMGenerator):
@@ -21,12 +23,18 @@ class OllamaGenerator(LLMGenerator):
         model: str = "qwen3:4b-instruct",
         base_url: str = "http://localhost:11434",
         timeout_seconds: float = 120.0,
+        max_concurrent_generations: int = 1,
         prompt_builder: PromptBuilder | None = None,
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.prompt_builder = prompt_builder or PromptBuilder()
+        self._generation_slots = (
+            threading.BoundedSemaphore(
+                value=max_concurrent_generations,
+            )
+        )
 
     def generate(
         self,
@@ -55,31 +63,47 @@ class OllamaGenerator(LLMGenerator):
 
         start = time.perf_counter()
 
+        slot_acquired = (
+            self._generation_slots.acquire(
+                blocking=False,
+            )
+        )
+
+        if not slot_acquired:
+            raise DependencyBusyError(
+                "ollama"
+            )
+
         try:
-            with httpx.Client(
-                timeout=self.timeout_seconds,
-            ) as client:
-                response = client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
-                )
+            try:
+                with httpx.Client(
+                    timeout=self.timeout_seconds,
+                ) as client:
+                    response = client.post(
+                        f"{self.base_url}/api/chat",
+                        json=payload,
+                    )
+                    response.raise_for_status()
 
-                response.raise_for_status()
+            except httpx.ConnectError as exc:
+                raise DependencyUnavailableError(
+                    "ollama"
+                ) from exc
 
-        except httpx.ConnectError as exc:
-            raise DependencyUnavailableError(
-                "ollama"
-            ) from exc
+            except httpx.TimeoutException as exc:
+                raise DependencyTimeoutError(
+                    "ollama"
+                ) from exc
 
-        except httpx.TimeoutException as exc:
-            raise DependencyTimeoutError(
-                "ollama"
-            ) from exc
+            except httpx.HTTPStatusError as exc:
+                raise DependencyResponseError(
+                    "ollama"
+                ) from exc
 
-        except httpx.HTTPStatusError as exc:
-            raise DependencyResponseError(
-                "ollama"
-            ) from exc
+            # existing parsing / return logic stays here
+
+        finally:
+            self._generation_slots.release()
 
         latency_ms = (
             time.perf_counter() - start

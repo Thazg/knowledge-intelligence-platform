@@ -30,6 +30,7 @@ services:
       RETRIEVAL_TOP_K: "10"
       MAX_CONTEXT_TOKENS: "4000"
       MAX_CONTEXT_SOURCES: "6"
+      MAX_CONCURRENT_GENERATIONS: "1"
     volumes:
       - ./data/processed:/app/data/processed:ro
     depends_on:

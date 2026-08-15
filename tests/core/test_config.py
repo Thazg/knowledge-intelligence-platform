@@ -85,3 +85,32 @@ def test_retrieval_weights_can_disable_bm25() -> None:
 
     assert settings.dense_weight == 1.0
     assert settings.bm25_weight == 0.0
+
+def test_max_concurrent_generations_defaults_to_one() -> None:
+    settings = Settings(
+        _env_file=None,
+    )
+
+    assert (
+        settings.max_concurrent_generations
+        == 1
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        0,
+        -1,
+    ],
+)
+def test_max_concurrent_generations_must_be_positive(
+    value: int,
+) -> None:
+    with pytest.raises(
+        ValidationError,
+    ):
+        Settings(
+            _env_file=None,
+            max_concurrent_generations=value,
+        )

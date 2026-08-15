@@ -6,6 +6,7 @@ from backend.api.dependencies import get_rag_service
 from backend.api.query_mapper import to_query_response
 from backend.api.schemas.query import QueryRequest, QueryResponse
 from backend.core.errors import (
+    DependencyBusyError,
     DependencyResponseError,
     DependencyTimeoutError,
     DependencyUnavailableError,
@@ -41,6 +42,12 @@ def query_rag(
         raise HTTPException(
             status_code=503,
             detail=detail,
+        ) from exc
+
+    except DependencyBusyError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="A required backend service is busy.",
         ) from exc
 
     except DependencyTimeoutError as exc:

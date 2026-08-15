@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     max_context_tokens: int = Field(default=4000, gt=0)
     max_context_sources: int = Field(default=6, gt=0)
 
+    max_concurrent_generations: int = Field(
+        default=1,
+        gt=0,
+    )
+
     @model_validator(mode="after")
     def validate_retrieval_weights(self) -> Self:
         if (

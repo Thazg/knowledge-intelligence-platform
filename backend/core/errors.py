@@ -33,3 +33,13 @@ class DependencyResponseError(DependencyError):
             dependency=dependency,
             message=f"{dependency} returned an error",
         )
+
+class DependencyBusyError(DependencyError):
+    def __init__(
+        self,
+        dependency: str,
+    ) -> None:
+        super().__init__(
+            dependency=dependency,
+            message=f"{dependency} is busy",
+        )
