@@ -1,0 +1,256 @@
+{
+  "schema_version": "1.0",
+  "report": "load_performance_v1",
+  "status": "complete",
+  "runtime": {
+    "api_processes": 1,
+    "effective_concurrent_generations": 1,
+    "generation_timeout_seconds": 120,
+    "generation_model": "qwen3:4b-instruct",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "qdrant_collection": "enterprise_knowledge_fixed_bge_small",
+    "retrieval": {
+      "strategy": "weighted_rrf",
+      "dense_weight": 0.7,
+      "bm25_weight": 0.3,
+      "rrf_k": 60,
+      "top_k": 10
+    },
+    "context": {
+      "max_sources": 6,
+      "max_context_tokens": 4000
+    },
+    "representative_query": "What is a Kubernetes Deployment?"
+  },
+  "warm_steady_state": {
+    "concurrency": 1,
+    "requests": 10,
+    "successes": 10,
+    "busy": 0,
+    "success_rate": 1.0,
+    "successful_throughput_rps": 0.3038,
+    "client_latency_ms": {
+      "mean": 3291.43,
+      "p50": 3290.64,
+      "p95": 3311.34,
+      "p99": 3314.77
+    },
+    "server_latency_ms": {
+      "retrieval_mean": 77.44,
+      "context_build_mean": 0.07,
+      "generation_mean": 3209.54,
+      "end_to_end_mean": 3287.05,
+      "end_to_end_p95": 3306.94
+    }
+  },
+  "burst": [
+    {
+      "concurrency": 2,
+      "successes": 1,
+      "busy": 1,
+      "busy_rate": 0.5,
+      "success_e2e_ms": 3780.0,
+      "busy_latency_ms": 336.0
+    },
+    {
+      "concurrency": 5,
+      "successes": 1,
+      "busy": 4,
+      "busy_rate": 0.8,
+      "success_e2e_ms": 3571.0,
+      "busy_latency_ms": 631.83
+    },
+    {
+      "concurrency": 10,
+      "successes": 1,
+      "busy": 9,
+      "busy_rate": 0.9,
+      "success_e2e_ms": 3863.0,
+      "busy_latency_ms": 1280.39
+    }
+  ],
+  "closed_loop_zero_backoff_stress": {
+    "duration_seconds": 30,
+    "concurrency": 2,
+    "total_requests": 317,
+    "successes": 9,
+    "busy": 308,
+    "success_rate": 0.028,
+    "busy_rate": 0.972,
+    "successful_throughput_rps": 0.2926,
+    "request_id_mismatches": 0
+  },
+  "periodic": {
+    "observed_no_rejection_through_rps": 0.25,
+    "rejection_transition_interval_rps": [
+      0.25,
+      0.3
+    ],
+    "points": [
+      {
+        "target_rps": 0.2,
+        "requests": 12,
+        "successes": 12,
+        "busy": 0,
+        "success_rate": 1.0
+      },
+      {
+        "target_rps": 0.25,
+        "requests": 15,
+        "successes": 15,
+        "busy": 0,
+        "success_rate": 1.0
+      },
+      {
+        "target_rps": 0.3,
+        "requests": 18,
+        "successes": 9,
+        "busy": 9,
+        "success_rate": 0.5
+      },
+      {
+        "target_rps": 0.35,
+        "requests": 22,
+        "successes": 11,
+        "busy": 11,
+        "success_rate": 0.5,
+        "diagnostic": "phase_locked_success_busy_alternation",
+        "scheduler_launch_lag_p95_ms": 18.59
+      },
+      {
+        "target_rps": 0.5,
+        "requests": 30,
+        "successes": 15,
+        "busy": 15,
+        "success_rate": 0.5
+      }
+    ]
+  },
+  "poisson": {
+    "duration_seconds_per_run": 120,
+    "seeds": [
+      20260816,
+      20260817,
+      20260818
+    ],
+    "runs": [
+      {
+        "target_rps": 0.2,
+        "seed": 20260816,
+        "arrivals": 20,
+        "successes": 13,
+        "busy": 7
+      },
+      {
+        "target_rps": 0.2,
+        "seed": 20260817,
+        "arrivals": 20,
+        "successes": 14,
+        "busy": 6
+      },
+      {
+        "target_rps": 0.2,
+        "seed": 20260818,
+        "arrivals": 23,
+        "successes": 15,
+        "busy": 8
+      },
+      {
+        "target_rps": 0.25,
+        "seed": 20260816,
+        "arrivals": 26,
+        "successes": 9,
+        "busy": 17
+      },
+      {
+        "target_rps": 0.25,
+        "seed": 20260817,
+        "arrivals": 32,
+        "successes": 17,
+        "busy": 15
+      },
+      {
+        "target_rps": 0.25,
+        "seed": 20260818,
+        "arrivals": 32,
+        "successes": 17,
+        "busy": 15
+      },
+      {
+        "target_rps": 0.3,
+        "seed": 20260816,
+        "arrivals": 36,
+        "successes": 13,
+        "busy": 23
+      },
+      {
+        "target_rps": 0.3,
+        "seed": 20260817,
+        "arrivals": 38,
+        "successes": 19,
+        "busy": 19
+      },
+      {
+        "target_rps": 0.3,
+        "seed": 20260818,
+        "arrivals": 42,
+        "successes": 19,
+        "busy": 23
+      }
+    ],
+    "pooled": [
+      {
+        "target_rps": 0.2,
+        "arrivals": 63,
+        "successes": 42,
+        "busy": 21,
+        "success_rate": 0.6667,
+        "busy_rate": 0.3333
+      },
+      {
+        "target_rps": 0.25,
+        "arrivals": 90,
+        "successes": 43,
+        "busy": 47,
+        "success_rate": 0.4778,
+        "busy_rate": 0.5222
+      },
+      {
+        "target_rps": 0.3,
+        "arrivals": 116,
+        "successes": 51,
+        "busy": 65,
+        "success_rate": 0.4397,
+        "busy_rate": 0.5603
+      }
+    ]
+  },
+  "observability": {
+    "api_restart_count": 0,
+    "ready": true,
+    "prometheus": {
+      "http_post_query_200": 107,
+      "http_post_query_503": 86,
+      "rag_queries_success": 107,
+      "rag_queries_error": 86,
+      "dependency_busy_error": 86,
+      "retrieval_histogram_count": 107,
+      "generation_histogram_count": 107,
+      "end_to_end_histogram_count": 107
+    },
+    "finding": "HTTP metrics capture all query traffic, while retrieval, generation, and end-to-end RAG stage histograms reflect successful queries only."
+  },
+  "post_run_resource_snapshot": {
+    "note": "Post-run snapshot only; not peak-load resource usage.",
+    "api_memory": "~1.03 GiB",
+    "qdrant_memory": "~519 MiB",
+    "grafana_memory": "~182 MiB",
+    "prometheus_memory": "~28 MiB",
+    "ollama_memory": "~40 MiB"
+  },
+  "decision": {
+    "load_performance_testing_v1": "complete",
+    "add_locust_or_k6": false,
+    "canonical_conclusion": "Regular periodic traffic was served without observed admission rejection through 0.25 RPS in the measured local configuration, with rejection appearing between 0.25 and 0.30 RPS. Bursty stochastic traffic materially reduced acceptance even below that periodic region because generation capacity was limited to one slot with no queue, while overload remained controlled through 503 responses."
+  }
+}
