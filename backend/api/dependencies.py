@@ -6,13 +6,9 @@ from functools import lru_cache
 
 from backend.core.config import Settings, get_settings
 from backend.generation.context_builder import ContextBuilder
-from backend.generation.providers.ollama_generator import (
-    OllamaGenerator,
-)
+from backend.generation.generator import LLMGenerator
 from backend.generation.rag_pipeline import RAGPipeline
-from backend.retrieval.hybrid_retriever import (
-    HybridRetriever,
-)
+from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.services.rag_service import RAGService
 
 
@@ -25,15 +21,13 @@ CLOUD_BM25_VECTOR_NAME = "rank_bm25_sparse"
 def _build_local_retriever(
     settings: Settings,
 ) -> HybridRetriever:
-    # Keep the local-only dependency graph lazy so
-    # importing backend.api.dependencies does not
-    # load Torch, SentenceTransformers, or rank_bm25.
+    # Local-only imports stay lazy so cloud
+    # startup does not load Torch,
+    # SentenceTransformers, or rank_bm25.
     from backend.chunking.serializer import (
         ChunkSerializer,
     )
-    from backend.embedding.embedder import (
-        LocalEmbedder,
-    )
+    from backend.embedding.embedder import LocalEmbedder
     from backend.retrieval.bm25_retriever import (
         BM25Retriever,
     )
@@ -127,9 +121,7 @@ def _build_cloud_retriever(
         collection_name=(
             settings.qdrant_collection
         ),
-        vector_name=(
-            CLOUD_DENSE_VECTOR_NAME
-        ),
+        vector_name=CLOUD_DENSE_VECTOR_NAME,
         model_name=settings.embedding_model,
     )
 
@@ -143,9 +135,7 @@ def _build_cloud_retriever(
         collection_name=(
             settings.qdrant_collection
         ),
-        vector_name=(
-            CLOUD_BM25_VECTOR_NAME
-        ),
+        vector_name=CLOUD_BM25_VECTOR_NAME,
     )
 
     return HybridRetriever(
@@ -157,16 +147,82 @@ def _build_cloud_retriever(
     )
 
 
+def _build_retriever(
+    settings: Settings,
+) -> HybridRetriever:
+    if settings.rag_profile == "cloud":
+        return _build_cloud_retriever(
+            settings
+        )
+
+    return _build_local_retriever(
+        settings
+    )
+
+
+def _build_local_generator(
+    settings: Settings,
+) -> LLMGenerator:
+    from backend.generation.providers.ollama_generator import (
+        OllamaGenerator,
+    )
+
+    return OllamaGenerator(
+        model=settings.generation_model,
+        base_url=settings.ollama_url,
+        timeout_seconds=(
+            settings.generation_timeout_seconds
+        ),
+        max_concurrent_generations=(
+            settings.max_concurrent_generations
+        ),
+    )
+
+
+def _build_cloud_generator(
+    settings: Settings,
+) -> LLMGenerator:
+    from backend.generation.providers.groq_generator import (
+        GroqGenerator,
+    )
+
+    if settings.groq_api_key is None:
+        raise ValueError(
+            "cloud generation requires "
+            "GROQ_API_KEY"
+        )
+
+    return GroqGenerator(
+        model=settings.generation_model,
+        api_key=(
+            settings.groq_api_key
+            .get_secret_value()
+        ),
+        timeout_seconds=(
+            settings.generation_timeout_seconds
+        ),
+        max_concurrent_generations=(
+            settings.max_concurrent_generations
+        ),
+    )
+
+
+def _build_generator(
+    settings: Settings,
+) -> LLMGenerator:
+    if settings.rag_profile == "cloud":
+        return _build_cloud_generator(
+            settings
+        )
+
+    return _build_local_generator(
+        settings
+    )
+
+
 @lru_cache(maxsize=1)
 def get_rag_service() -> RAGService:
     settings = get_settings()
-
-    if settings.rag_profile != "local":
-        raise RuntimeError(
-            "cloud RAG profile is not "
-            "activated until cloud generation "
-            "wiring is available"
-        )
 
     start_time = time.perf_counter()
 
@@ -181,16 +237,18 @@ def get_rag_service() -> RAGService:
         "Qdrant URL: %s",
         settings.qdrant_url,
     )
-    logger.info(
-        "Ollama URL: %s",
-        settings.ollama_url,
-    )
-    logger.info(
-        "Chunks path: %s",
-        settings.chunks_path,
-    )
 
-    retriever = _build_local_retriever(
+    if settings.rag_profile == "local":
+        logger.info(
+            "Ollama URL: %s",
+            settings.ollama_url,
+        )
+        logger.info(
+            "Chunks path: %s",
+            settings.chunks_path,
+        )
+
+    retriever = _build_retriever(
         settings
     )
 
@@ -203,15 +261,8 @@ def get_rag_service() -> RAGService:
         ),
     )
 
-    generator = OllamaGenerator(
-        model=settings.generation_model,
-        base_url=settings.ollama_url,
-        timeout_seconds=(
-            settings.generation_timeout_seconds
-        ),
-        max_concurrent_generations=(
-            settings.max_concurrent_generations
-        ),
+    generator = _build_generator(
+        settings
     )
 
     pipeline = RAGPipeline(
