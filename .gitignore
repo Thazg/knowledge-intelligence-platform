@@ -64,3 +64,39 @@ Thumbs.db
 
 # Canonical E2E benchmark input
 !benchmarks/e2e/cases_v1.jsonl
+
+# Local benchmark and review artifacts
+.benchmark-results/
+
+benchmarks/e2e/review/candidate_evidence_v1.md
+benchmarks/retrieval/review/
+benchmarks/retrieval/routing/query_rewrites_v1_review.md
+benchmarks/retrieval/routing/review/
+benchmarks/retrieval/routing/review_expanded/
+benchmarks/retrieval/routing/review_expanded_new_only.md
+benchmarks/retrieval/routing/review_expanded_new_only_scored.md
+benchmarks/retrieval/routing/route_dev_013_replacement_review/
+benchmarks/retrieval/routing/route_dev_013_replacement_scored.md
+benchmarks/retrieval/routing/semantic_overlap_review.txt
+benchmarks/retrieval/routing/targeted_ground_truth_candidates.md
+benchmarks/retrieval/routing/targeted_ground_truth_candidates_v2.md
+benchmarks/retrieval/routing/targeted_ground_truth_candidates_v2_scored.md
+
+e2e_benchmark_design_bundle.txt
+e2e_retrieval_case_inventory.txt
+e2e_runtime_provenance.txt
+e2e_source_bundle.txt
+
+# Local cloud experiments and diagnostics
+scripts/evaluate_fastembed_qdrant_cloud_hybrid.py
+scripts/evaluate_qdrant_cloud_components.py
+scripts/evaluate_qdrant_cloud_retrieval.py
+scripts/find_qdrant_ground_truth.py
+scripts/ingest_qdrant_cloud_v1.py
+scripts/inspect_ci_ground_truth.py
+scripts/inspect_deployment_memory.py
+scripts/inspect_deployment_memory_v2.py
+scripts/migrate_bge_bm25_to_qdrant_cloud.py
+scripts/probe_cloud_retrieval_runtime_memory.py
+scripts/probe_fastembed_bge_memory.py
+scripts/probe_qdrant_cloud_retrieval.py
