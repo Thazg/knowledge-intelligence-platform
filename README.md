@@ -1,8 +1,8 @@
-# Enterprise Knowledge Intelligence Platform
-
 A production-minded Retrieval-Augmented Generation (RAG) platform for searching and reasoning over technical documentation across AI, ML, cloud, and software engineering ecosystems.
 
-Enterprise KIP is designed as a portfolio-quality AI engineering system rather than a notebook demo: it includes ingestion, chunking, embedding, hybrid retrieval, benchmark-driven evaluation, grounded generation with citations, API hardening, observability, Docker packaging, CI, and a public cloud deployment.
+I built Enterprise KIP as an end-to-end AI engineering system covering ingestion, chunking, embeddings, hybrid retrieval, grounded generation, evaluation, API serving, observability, CI, and cloud deployment. Retrieval and deployment decisions are backed by benchmarks rather than chosen by intuition.
+
+**v1.0.0 highlights:** Weighted RRF reached **0.7247 MRR** and **0.9300 Hit@10** on the 100-query retrieval benchmark. The cloud retrieval profile preserved **0.9300 Hit@10**, reproduced local BM25 ranking with **100/100 exact top-10 parity** in the parity canary, and runs from a **~130.5 MB** deployment image.
 
 ## Live Demo
 
