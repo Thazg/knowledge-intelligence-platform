@@ -23,6 +23,8 @@ from backend.generation.prompt_builder import PromptBuilder
 
 
 class GroqGenerator(LLMGenerator):
+    GPT_OSS_MODEL_PREFIX = "openai/gpt-oss-"
+
     def __init__(
         self,
         *,
@@ -86,26 +88,14 @@ class GroqGenerator(LLMGenerator):
             context
         )
 
-        payload = {
-            "model": self.model,
-            "stream": False,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        messages.system_prompt
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": (
-                        messages.user_prompt
-                    ),
-                },
-            ],
-            "temperature": 0.0,
-            "max_completion_tokens": 384,
-        }
+        payload = self._build_payload(
+            system_prompt=(
+                messages.system_prompt
+            ),
+            user_prompt=(
+                messages.user_prompt
+            ),
+        )
 
         headers = {
             "Authorization": (
@@ -221,6 +211,12 @@ class GroqGenerator(LLMGenerator):
 
                 answer = raw_answer.strip()
 
+                if not answer:
+                    raise ValueError(
+                        "Groq response content "
+                        "is empty."
+                    )
+
             except (
                 ValueError,
                 TypeError,
@@ -294,6 +290,41 @@ class GroqGenerator(LLMGenerator):
                 "base_url": self.base_url,
             },
         )
+
+    def _build_payload(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "stream": False,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+            "temperature": 0.0,
+            "max_completion_tokens": 1024,
+        }
+
+        if self.model.startswith(
+            self.GPT_OSS_MODEL_PREFIX
+        ):
+            payload.update(
+                {
+                    "reasoning_effort": "low",
+                    "include_reasoning": False,
+                }
+            )
+
+        return payload
 
     @staticmethod
     def _extract_citations(

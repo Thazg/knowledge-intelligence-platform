@@ -41,10 +41,11 @@ def _context() -> GenerationContext:
 
 def _generator(
     *,
+    model: str = "openai/gpt-oss-20b",
     max_concurrent_generations: int = 1,
 ) -> GroqGenerator:
     return GroqGenerator(
-        model="llama-3.3-70b-versatile",
+        model=model,
         api_key="test-secret",
         max_concurrent_generations=(
             max_concurrent_generations
@@ -52,7 +53,7 @@ def _generator(
     )
 
 
-def test_generate_sends_expected_chat_completion_request(
+def test_generate_sends_expected_gpt_oss_chat_completion_request(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, object] = {}
@@ -81,7 +82,8 @@ def test_generate_sends_expected_chat_completion_request(
                                 "Kubernetes manages "
                                 "containers [1]."
                             )
-                        }
+                        },
+                        "finish_reason": "stop",
                     }
                 ],
                 "usage": {
@@ -124,14 +126,18 @@ def test_generate_sends_expected_chat_completion_request(
         dict,
     )
     assert payload["model"] == (
-        "llama-3.3-70b-versatile"
+        "openai/gpt-oss-20b"
     )
     assert payload["stream"] is False
     assert payload["temperature"] == 0.0
     assert (
         payload["max_completion_tokens"]
-        == 384
+        == 1024
     )
+    assert payload["reasoning_effort"] == (
+        "low"
+    )
+    assert payload["include_reasoning"] is False
 
     messages = payload["messages"]
 
@@ -156,6 +162,24 @@ def test_generate_sends_expected_chat_completion_request(
     assert result.metadata[
         "provider"
     ] == "groq"
+
+
+def test_non_gpt_oss_payload_does_not_send_gpt_oss_reasoning_options() -> None:
+    generator = _generator(
+        model="qwen/qwen3.6-27b",
+    )
+
+    payload = generator._build_payload(
+        system_prompt="system",
+        user_prompt="user",
+    )
+
+    assert (
+        payload["max_completion_tokens"]
+        == 1024
+    )
+    assert "reasoning_effort" not in payload
+    assert "include_reasoning" not in payload
 
 
 def test_generate_maps_valid_citations() -> None:
@@ -357,6 +381,67 @@ def test_generate_translates_malformed_payload_to_dependency_response_error(
     assert (
         exc_info.value.dependency
         == "groq"
+    )
+
+
+def test_generate_translates_blank_content_to_dependency_response_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_post(
+        _client: httpx.Client,
+        url: str,
+        **_kwargs: object,
+    ) -> httpx.Response:
+        request = httpx.Request(
+            "POST",
+            url,
+        )
+
+        return httpx.Response(
+            status_code=200,
+            request=request,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": "",
+                            "reasoning": (
+                                "Internal reasoning."
+                            ),
+                        },
+                        "finish_reason": (
+                            "length"
+                        ),
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 100,
+                    "completion_tokens": 1024,
+                    "total_tokens": 1124,
+                },
+            },
+        )
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        fake_post,
+    )
+
+    with pytest.raises(
+        DependencyResponseError,
+    ) as exc_info:
+        _generator().generate(
+            _context()
+        )
+
+    assert (
+        exc_info.value.dependency
+        == "groq"
+    )
+    assert isinstance(
+        exc_info.value.__cause__,
+        ValueError,
     )
 
 
