@@ -401,4 +401,4 @@ Completed milestones include:
 
 ## License
 
-This repository is a portfolio and learning project. Add a formal license before redistribution or third-party reuse.
+This project is currently shared as part of my portfolio. I haven't added a formal open-source license yet, so please contact me before reusing substantial parts of the repository.
