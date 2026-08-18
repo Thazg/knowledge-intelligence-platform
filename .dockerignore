@@ -10,6 +10,8 @@ __pycache__
 .coverage
 htmlcov
 
+.benchmark-results
+
 .vscode
 .idea
 
