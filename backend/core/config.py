@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal, Self
 
-from typing import Self
-
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,33 +16,63 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    # Runtime profile
+    rag_profile: Literal["local", "cloud"] = "local"
+
     # Infrastructure
     qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: SecretStr | None = None
     ollama_url: str = "http://localhost:11434"
 
     # Data
-    chunks_path: Path = Path("data/processed/chunks_fixed.jsonl")
+    chunks_path: Path = Path(
+        "data/processed/chunks_fixed.jsonl"
+    )
+    bm25_query_artifact_path: Path | None = None
 
     # Vector store / embeddings
-    qdrant_collection: str = "enterprise_knowledge_fixed_bge_small"
-    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    qdrant_collection: str = (
+        "enterprise_knowledge_fixed_bge_small"
+    )
+    embedding_model: str = (
+        "BAAI/bge-small-en-v1.5"
+    )
 
     # Generation
     generation_model: str = "qwen3:4b-instruct"
+    groq_api_key: SecretStr | None = None
     generation_timeout_seconds: float = Field(
         default=120.0,
         gt=0,
     )
 
     # Retrieval
-    dense_weight: float = Field(default=0.7, ge=0.0)
-    bm25_weight: float = Field(default=0.3, ge=0.0)
-    rrf_k: int = Field(default=60, gt=0)
-    retrieval_top_k: int = Field(default=10, gt=0)
+    dense_weight: float = Field(
+        default=0.7,
+        ge=0.0,
+    )
+    bm25_weight: float = Field(
+        default=0.3,
+        ge=0.0,
+    )
+    rrf_k: int = Field(
+        default=60,
+        gt=0,
+    )
+    retrieval_top_k: int = Field(
+        default=10,
+        gt=0,
+    )
 
     # Context
-    max_context_tokens: int = Field(default=4000, gt=0)
-    max_context_sources: int = Field(default=6, gt=0)
+    max_context_tokens: int = Field(
+        default=4000,
+        gt=0,
+    )
+    max_context_sources: int = Field(
+        default=6,
+        gt=0,
+    )
 
     max_concurrent_generations: int = Field(
         default=1,
@@ -61,6 +90,54 @@ class Settings(BaseSettings):
             )
 
         return self
+
+    @model_validator(mode="after")
+    def validate_cloud_profile(self) -> Self:
+        if self.rag_profile != "cloud":
+            return self
+
+        missing = []
+
+        if not self._secret_is_set(
+            self.qdrant_api_key
+        ):
+            missing.append(
+                "QDRANT_API_KEY"
+            )
+
+        if self.bm25_query_artifact_path is None:
+            missing.append(
+                "BM25_QUERY_ARTIFACT_PATH"
+            )
+
+        if not self._secret_is_set(
+            self.groq_api_key
+        ):
+            missing.append(
+                "GROQ_API_KEY"
+            )
+
+        if missing:
+            joined = ", ".join(missing)
+
+            raise ValueError(
+                "cloud profile requires: "
+                f"{joined}"
+            )
+
+        return self
+
+    @staticmethod
+    def _secret_is_set(
+        value: SecretStr | None,
+    ) -> bool:
+        if value is None:
+            return False
+
+        return bool(
+            value.get_secret_value().strip()
+        )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
