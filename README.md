@@ -1,3 +1,4 @@
+# Enterprise Knowledge Intelligence Platform
 A production-minded Retrieval-Augmented Generation (RAG) platform for searching and reasoning over technical documentation across AI, ML, cloud, and software engineering ecosystems.
 
 I built Enterprise KIP as an end-to-end AI engineering system covering ingestion, chunking, embeddings, hybrid retrieval, grounded generation, evaluation, API serving, observability, CI, and cloud deployment. Retrieval and deployment decisions are backed by benchmarks rather than chosen by intuition.
