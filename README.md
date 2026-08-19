@@ -14,6 +14,18 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 > The public service runs on a free-tier deployment, so occasional platform cold starts or transport variability may occur.
 
+## Try the Live API
+
+The public demo searches a curated corpus of technical documentation, so it is designed to answer questions grounded in the indexed sources rather than general-purpose questions.
+
+You can try these examples directly from the [Swagger UI](https://enterprise-kip-api.onrender.com/docs):
+
+- **Docker:** What is Docker BuildKit and how is it used during image builds?
+- **Kubernetes:** What does `kubectl apply` do?
+- **Version-specific:** What should Kubernetes users consider when moving from KMS v1 to KMS v2?
+
+Open `POST /v1/query`, click **Try it out**, choose an example, and execute the request.
+
 ## What Makes This Project Different
 
 - **Benchmark-driven retrieval** instead of choosing a retriever by intuition.
