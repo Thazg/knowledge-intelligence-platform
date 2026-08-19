@@ -40,18 +40,16 @@ Open `POST /v1/query`, click **Try it out**, choose an example, and execute the 
 
 ```mermaid
 flowchart LR
-    U[User / API Client] --> API[FastAPI]
-
-    API --> RAG[RAG Pipeline]
-
-    RAG --> DENSE[Dense Retrieval]
-    RAG --> BM25[BM25 Retrieval]
-
-    DENSE --> RRF[Weighted RRF]
+    U["User / API Client"] --> API["FastAPI"]
+    API --> SERVICE["RAGService"]
+    SERVICE --> PIPELINE["RAGPipeline"]
+    PIPELINE --> HYBRID["HybridRetriever"]
+    HYBRID --> DENSE["Dense Retrieval"] & BM25["BM25 Retrieval"]
+    DENSE --> RRF["Weighted RRF"]
     BM25 --> RRF
-
-    RRF --> CTX[Context Builder]
-    CTX --> GEN[Grounded Generator]
+    RRF --> CTX["Context Builder"]
+    CTX --> PROMPT["Prompt Builder"]
+    PROMPT --> GEN["Grounded Generator"]
     GEN --> API
 ```
 
