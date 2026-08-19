@@ -608,3 +608,36 @@ def test_ready_returns_503_when_rag_service_is_unavailable(
             "ollama": "ready",
         },
     }
+
+def test_query_openapi_exposes_example_queries() -> None:
+    schema = app.openapi()
+
+    examples = (
+        schema["paths"]["/v1/query"]["post"]
+        ["requestBody"]["content"]["application/json"]
+        ["examples"]
+    )
+
+    assert set(examples) == {
+        "docker_buildkit",
+        "kubernetes_kubectl",
+        "kubernetes_kms",
+    }
+
+    assert examples["docker_buildkit"]["value"] == {
+        "query": (
+            "What is Docker BuildKit and how is it "
+            "used during image builds?"
+        )
+    }
+
+    assert examples["kubernetes_kubectl"]["value"] == {
+        "query": "What does kubectl apply do?"
+    }
+
+    assert examples["kubernetes_kms"]["value"] == {
+        "query": (
+            "What should Kubernetes users consider "
+            "when moving from KMS v1 to KMS v2?"
+        )
+    }
