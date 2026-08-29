@@ -3,6 +3,11 @@ from typing import Any
 
 from backend.generation.context_builder import ContextBuilder
 from backend.generation.fake_generator import FakeGenerator
+from backend.generation.models import (
+    GenerationComplete,
+    GenerationDelta,
+    PipelineStatus,
+)
 from backend.generation.rag_pipeline import RAGPipeline
 
 
@@ -110,3 +115,27 @@ def test_rag_pipeline_handles_no_retrieval_results() -> None:
     assert result.citations == []
     assert result.sources == []
     assert result.metadata["grounded"] is False
+
+
+def test_rag_pipeline_stream_preserves_stage_order() -> None:
+    pipeline = RAGPipeline(
+        retriever=FakeRetriever(),  # type: ignore[arg-type]
+        context_builder=ContextBuilder(),
+        generator=FakeGenerator(),
+    )
+
+    events = list(
+        pipeline.stream(
+            "What does a Kubernetes Deployment manage?"
+        )
+    )
+
+    assert isinstance(events[0], PipelineStatus)
+    assert events[0].status == "retrieving"
+    assert isinstance(events[1], PipelineStatus)
+    assert events[1].status == "generating"
+    assert isinstance(events[2], GenerationDelta)
+    assert isinstance(events[3], GenerationComplete)
+    assert events[3].result.metadata[
+        "retrieved_results"
+    ] == 1

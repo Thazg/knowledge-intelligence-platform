@@ -3,8 +3,14 @@ from __future__ import annotations
 import httpx
 import pytest
 import threading
+from contextlib import contextmanager
 
-from backend.generation.models import GenerationContext
+from backend.generation.models import (
+    GenerationComplete,
+    GenerationContext,
+    GenerationDelta,
+    SourceReference,
+)
 from backend.generation.providers.ollama_generator import (
     OllamaGenerator,
 )
@@ -14,6 +20,78 @@ from backend.core.errors import (
     DependencyTimeoutError,
     DependencyUnavailableError,
 )
+
+
+def test_stream_yields_native_ollama_deltas(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    generator = OllamaGenerator(
+        model="qwen3:4b-instruct",
+        base_url="http://ollama:11434",
+    )
+    context = GenerationContext(
+        query="What is Kubernetes?",
+        context_text="[1] Kubernetes documentation.",
+        sources=[
+            SourceReference(
+                citation_id="1",
+                document_id="doc-1",
+                chunk_id="chunk-1",
+            )
+        ],
+    )
+
+    @contextmanager
+    def fake_stream(
+        _client: httpx.Client,
+        method: str,
+        url: str,
+        **_kwargs: object,
+    ):
+        yield httpx.Response(
+            status_code=200,
+            request=httpx.Request(
+                method,
+                url,
+            ),
+            content=(
+                b'{"message":{"content":"Kubernetes "},'
+                b'"done":false}\n'
+                b'{"message":{"content":"uses Pods [1]."},'
+                b'"done":true,"prompt_eval_count":10,'
+                b'"eval_count":4}\n'
+            ),
+        )
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "stream",
+        fake_stream,
+    )
+
+    events = list(generator.stream(context))
+
+    assert [
+        event.text
+        for event in events
+        if isinstance(event, GenerationDelta)
+    ] == [
+        "Kubernetes ",
+        "uses Pods [1].",
+    ]
+
+    completed = next(
+        event
+        for event in events
+        if isinstance(
+            event,
+            GenerationComplete,
+        )
+    )
+    assert completed.result.answer == (
+        "Kubernetes uses Pods [1]."
+    )
+    assert completed.result.total_tokens == 14
 
 
 def test_generate_translates_connect_error_to_dependency_unavailable(
