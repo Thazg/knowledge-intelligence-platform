@@ -102,4 +102,4 @@ npm run build
 
 5. Deploy. No database, persistent volume, or `NEXT_PUBLIC_` variable is required.
 
-After deployment, replace `<VERCEL_WEB_DEMO_URL>` in the root [`README.md`](../README.md) with the assigned Vercel URL.
+Production demo: [enterprisekip.vercel.app](https://enterprisekip.vercel.app)
