@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from backend.generation.models import Citation, SourceReference
 
@@ -16,3 +17,18 @@ class RAGServiceResult:
     context_build_latency_ms: float | None = None
     generation_latency_ms: float | None = None
     end_to_end_latency_ms: float | None = None
+
+
+@dataclass(frozen=True)
+class RAGServiceStreamEvent:
+    event: Literal[
+        "status",
+        "answer_delta",
+        "done",
+    ]
+    status: Literal[
+        "retrieving",
+        "generating",
+    ] | None = None
+    delta: str | None = None
+    result: RAGServiceResult | None = None

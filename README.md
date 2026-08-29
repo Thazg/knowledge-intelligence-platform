@@ -7,12 +7,19 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 ## Live Demo
 
+- Web demo: `<VERCEL_WEB_DEMO_URL>`
 - Public API: https://enterprise-kip-api.onrender.com
 - Interactive Swagger UI: https://enterprise-kip-api.onrender.com/docs
 - Liveness: https://enterprise-kip-api.onrender.com/health
 - Readiness: https://enterprise-kip-api.onrender.com/ready
 
 > The public service runs on a free-tier deployment, so occasional platform cold starts or transport variability may occur.
+
+## Web Demo
+
+The recruiter-facing Next.js interface explains the curated corpus, provides benchmark-backed example questions, streams grounded answers, and renders the citations returned by the API. It is a documentation-corpus demo, not an open-web assistant.
+
+The Vercel deployment lives in [`web/`](web/README.md). After deployment, replace `<VERCEL_WEB_DEMO_URL>` in the **Live Demo** section above with the assigned Vercel URL. The interactive API documentation remains available at [enterprise-kip-api.onrender.com/docs](https://enterprise-kip-api.onrender.com/docs).
 
 ## Try the Live API
 
@@ -242,6 +249,7 @@ GET  /health
 GET  /ready
 GET  /metrics
 POST /v1/query
+POST /v1/query/stream
 GET  /docs
 ```
 
@@ -279,16 +287,14 @@ Cloud:  RAG service + Qdrant Cloud + Groq
 
 ## Data Sources
 
-The corpus is built from English technical documentation, including sources such as:
+The current processed corpus is built from English technical documentation from:
 
-- PyTorch
 - Hugging Face Transformers
 - LangChain
 - LangGraph
 - Kubernetes
 - Docker
 - FastAPI
-- OpenAI Cookbook
 - Qdrant
 
 The ingestion pipeline performs discovery, filtering, parsing, normalization, metadata extraction, quality filtering, and JSONL serialization before tokenization and chunking.
@@ -320,6 +326,7 @@ knowledge-intelligence-platform/
 ├── docs/
 ├── scripts/
 ├── tests/
+├── web/
 ├── docker-compose.yml
 ├── requirements.txt
 ├── requirements-cloud.txt

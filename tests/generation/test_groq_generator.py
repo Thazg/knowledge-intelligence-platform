@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from contextlib import contextmanager
 
 import httpx
 import pytest
@@ -12,7 +13,9 @@ from backend.core.errors import (
     DependencyUnavailableError,
 )
 from backend.generation.models import (
+    GenerationComplete,
     GenerationContext,
+    GenerationDelta,
     SourceReference,
 )
 from backend.generation.providers.groq_generator import (
@@ -51,6 +54,76 @@ def _generator(
             max_concurrent_generations
         ),
     )
+
+
+def test_stream_yields_native_answer_deltas_and_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    @contextmanager
+    def fake_stream(
+        _client: httpx.Client,
+        method: str,
+        url: str,
+        **kwargs: object,
+    ):
+        captured["method"] = method
+        captured["url"] = url
+        captured.update(kwargs)
+
+        yield httpx.Response(
+            status_code=200,
+            request=httpx.Request(
+                method,
+                url,
+            ),
+            content=(
+                b'data: {"choices":[{"delta":'
+                b'{"reasoning":"private"}}]}\n\n'
+                b'data: {"choices":[{"delta":'
+                b'{"content":"Kubernetes "}}]}\n\n'
+                b'data: {"choices":[{"delta":'
+                b'{"content":"manages containers [1]."}}]}\n\n'
+                b'data: [DONE]\n\n'
+            ),
+        )
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "stream",
+        fake_stream,
+    )
+
+    events = list(
+        _generator().stream(_context())
+    )
+
+    deltas = [
+        event.text
+        for event in events
+        if isinstance(event, GenerationDelta)
+    ]
+    completed = next(
+        event
+        for event in events
+        if isinstance(
+            event,
+            GenerationComplete,
+        )
+    )
+
+    assert deltas == [
+        "Kubernetes ",
+        "manages containers [1].",
+    ]
+    assert "private" not in "".join(deltas)
+    assert completed.result.answer == (
+        "Kubernetes manages containers [1]."
+    )
+    assert completed.result.citations[0].citation_id == "1"
+    assert captured["method"] == "POST"
+    assert captured["json"]["stream"] is True  # type: ignore[index]
 
 
 def test_generate_sends_expected_gpt_oss_chat_completion_request(
