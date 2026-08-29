@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 
-from backend.generation.rag_pipeline import RAGPipeline
 from backend.core.metrics import (
     RAG_END_TO_END_DURATION_SECONDS,
     RAG_GENERATION_DURATION_SECONDS,
@@ -10,7 +10,17 @@ from backend.core.metrics import (
     RAG_QUERY_ERRORS_TOTAL,
     RAG_RETRIEVAL_DURATION_SECONDS,
 )
-from backend.services.models import RAGServiceResult
+from backend.generation.models import (
+    GenerationComplete,
+    GenerationDelta,
+    GenerationResult,
+    PipelineStatus,
+)
+from backend.generation.rag_pipeline import RAGPipeline
+from backend.services.models import (
+    RAGServiceResult,
+    RAGServiceStreamEvent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +35,109 @@ class RAGService:
         try:
             result = self.pipeline.run(query)
         except Exception as exc:
-            RAG_QUERIES_TOTAL.labels(
-                status="error",
-            ).inc()
-
-            RAG_QUERY_ERRORS_TOTAL.labels(
-                error_type=type(exc).__name__,
-            ).inc()
-
-            logger.exception("RAG query failed")
-
+            self._record_failure(exc)
             raise
 
+        service_result = self._to_service_result(
+            result
+        )
+        self._record_success(result)
+
+        return service_result
+
+    def stream(
+        self,
+        query: str,
+    ) -> Iterator[RAGServiceStreamEvent]:
+        logger.info("Streaming RAG query started")
+
+        try:
+            for event in self.pipeline.stream(query):
+                if isinstance(
+                    event,
+                    PipelineStatus,
+                ):
+                    yield RAGServiceStreamEvent(
+                        event="status",
+                        status=event.status,
+                    )
+                    continue
+
+                if isinstance(
+                    event,
+                    GenerationDelta,
+                ):
+                    yield RAGServiceStreamEvent(
+                        event="answer_delta",
+                        delta=event.text,
+                    )
+                    continue
+
+                if isinstance(
+                    event,
+                    GenerationComplete,
+                ):
+                    service_result = (
+                        self._to_service_result(
+                            event.result
+                        )
+                    )
+                    self._record_success(
+                        event.result
+                    )
+                    yield RAGServiceStreamEvent(
+                        event="done",
+                        result=service_result,
+                    )
+
+        except Exception as exc:
+            self._record_failure(exc)
+            raise
+
+    @staticmethod
+    def _to_service_result(
+        result: GenerationResult,
+    ) -> RAGServiceResult:
+        metadata = result.metadata
+
+        return RAGServiceResult(
+            query=result.query,
+            answer=result.answer,
+            citations=list(result.citations),
+            sources=list(result.sources),
+            model=result.model,
+            retrieval_latency_ms=metadata.get(
+                "retrieval_latency_ms"
+            ),
+            context_build_latency_ms=metadata.get(
+                "context_build_latency_ms"
+            ),
+            generation_latency_ms=metadata.get(
+                "generation_stage_latency_ms"
+            ),
+            end_to_end_latency_ms=metadata.get(
+                "end_to_end_latency_ms"
+            ),
+        )
+
+    @staticmethod
+    def _record_failure(
+        exc: Exception,
+    ) -> None:
+        RAG_QUERIES_TOTAL.labels(
+            status="error",
+        ).inc()
+
+        RAG_QUERY_ERRORS_TOTAL.labels(
+            error_type=type(exc).__name__,
+        ).inc()
+
+        logger.exception("RAG query failed")
+
+    @staticmethod
+    def _record_success(
+        result: GenerationResult,
+    ) -> None:
         metadata = result.metadata
 
         retrieval_latency_ms = metadata.get(
@@ -88,24 +189,4 @@ class RAGService:
             metadata.get("retrieved_results"),
             metadata.get("context_sources"),
             metadata.get("cited_sources"),
-        )
-
-        return RAGServiceResult(
-            query=result.query,
-            answer=result.answer,
-            citations=list(result.citations),
-            sources=list(result.sources),
-            model=result.model,
-            retrieval_latency_ms=metadata.get(
-                "retrieval_latency_ms"
-            ),
-            context_build_latency_ms=metadata.get(
-                "context_build_latency_ms"
-            ),
-            generation_latency_ms=metadata.get(
-                "generation_stage_latency_ms"
-            ),
-            end_to_end_latency_ms=metadata.get(
-                "end_to_end_latency_ms"
-            ),
         )

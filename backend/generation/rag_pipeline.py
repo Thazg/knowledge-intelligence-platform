@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterator
 from dataclasses import replace
 from typing import Protocol
 
 from backend.generation.context_builder import ContextBuilder
 from backend.generation.generator import LLMGenerator
-from backend.generation.models import GenerationResult
+from backend.generation.models import (
+    GenerationComplete,
+    GenerationResult,
+    PipelineStatus,
+    PipelineStreamEvent,
+)
 from backend.retrieval.models import RetrievalResult
 
 
@@ -100,3 +106,99 @@ class RAGPipeline:
             result,
             metadata=metadata,
         )
+
+    def stream(
+        self,
+        query: str,
+    ) -> Iterator[PipelineStreamEvent]:
+        query = query.strip()
+
+        if not query:
+            raise ValueError("query must not be empty")
+
+        pipeline_start = time.perf_counter()
+
+        yield PipelineStatus(
+            status="retrieving",
+        )
+
+        retrieval_start = time.perf_counter()
+
+        results = self.retriever.retrieve(
+            query=query,
+            top_k=self.top_k,
+        )
+
+        retrieval_latency_ms = (
+            time.perf_counter() - retrieval_start
+        ) * 1000
+
+        context_start = time.perf_counter()
+
+        context = self.context_builder.build(
+            query=query,
+            results=results,
+        )
+
+        context_latency_ms = (
+            time.perf_counter() - context_start
+        ) * 1000
+
+        yield PipelineStatus(
+            status="generating",
+        )
+
+        generation_start = time.perf_counter()
+        completed = False
+
+        for event in self.generator.stream(context):
+            if not isinstance(
+                event,
+                GenerationComplete,
+            ):
+                yield event
+                continue
+
+            completed = True
+
+            generation_stage_latency_ms = (
+                time.perf_counter()
+                - generation_start
+            ) * 1000
+
+            end_to_end_latency_ms = (
+                time.perf_counter()
+                - pipeline_start
+            ) * 1000
+
+            metadata = dict(
+                event.result.metadata
+            )
+            metadata.update(
+                {
+                    "retrieval_latency_ms": retrieval_latency_ms,
+                    "context_build_latency_ms": context_latency_ms,
+                    "generation_stage_latency_ms": (
+                        generation_stage_latency_ms
+                    ),
+                    "end_to_end_latency_ms": end_to_end_latency_ms,
+                    "retrieved_results": len(results),
+                    "context_sources": len(context.sources),
+                    "context_tokens": context.token_count,
+                    "cited_sources": len(
+                        event.result.citations
+                    ),
+                }
+            )
+
+            yield GenerationComplete(
+                result=replace(
+                    event.result,
+                    metadata=metadata,
+                ),
+            )
+
+        if not completed:
+            raise RuntimeError(
+                "generator stream ended without a result"
+            )

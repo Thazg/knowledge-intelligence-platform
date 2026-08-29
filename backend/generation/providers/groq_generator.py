@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import re
 import threading
 import time
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -16,8 +18,11 @@ from backend.core.errors import (
 from backend.generation.generator import LLMGenerator
 from backend.generation.models import (
     Citation,
+    GenerationComplete,
     GenerationContext,
+    GenerationDelta,
     GenerationResult,
+    GeneratorStreamEvent,
 )
 from backend.generation.prompt_builder import PromptBuilder
 
@@ -95,6 +100,7 @@ class GroqGenerator(LLMGenerator):
             user_prompt=(
                 messages.user_prompt
             ),
+            stream=False,
         )
 
         headers = {
@@ -233,11 +239,6 @@ class GroqGenerator(LLMGenerator):
             - start
         ) * 1000
 
-        citations = self._extract_citations(
-            answer=answer,
-            context=context,
-        )
-
         usage = data.get(
             "usage",
             {},
@@ -248,6 +249,237 @@ class GroqGenerator(LLMGenerator):
             dict,
         ):
             usage = {}
+
+        return self._build_result(
+            context=context,
+            answer=answer,
+            latency_ms=latency_ms,
+            usage=usage,
+        )
+
+    def stream(
+        self,
+        context: GenerationContext,
+    ) -> Iterator[GeneratorStreamEvent]:
+        messages = self.prompt_builder.build(
+            context
+        )
+
+        payload = self._build_payload(
+            system_prompt=(
+                messages.system_prompt
+            ),
+            user_prompt=(
+                messages.user_prompt
+            ),
+            stream=True,
+        )
+
+        headers = {
+            "Authorization": (
+                f"Bearer {self.api_key}"
+            ),
+            "Content-Type": "application/json",
+        }
+
+        slot_acquired = (
+            self._generation_slots.acquire(
+                blocking=False,
+            )
+        )
+
+        if not slot_acquired:
+            raise DependencyBusyError("groq")
+
+        start = time.perf_counter()
+        answer_parts: list[str] = []
+        usage: dict[str, Any] = {}
+
+        try:
+            try:
+                with httpx.Client(
+                    timeout=self.timeout_seconds,
+                ) as client:
+                    with client.stream(
+                        "POST",
+                        (
+                            f"{self.base_url}"
+                            "/chat/completions"
+                        ),
+                        headers=headers,
+                        json=payload,
+                    ) as response:
+                        response.raise_for_status()
+
+                        for line in response.iter_lines():
+                            if not line.startswith(
+                                "data:"
+                            ):
+                                continue
+
+                            raw_data = line[5:].strip()
+
+                            if raw_data == "[DONE]":
+                                break
+
+                            data = json.loads(raw_data)
+
+                            event_usage = data.get(
+                                "usage"
+                            )
+                            if isinstance(
+                                event_usage,
+                                dict,
+                            ):
+                                usage = event_usage
+
+                            choices = data.get(
+                                "choices"
+                            )
+                            if not choices:
+                                continue
+
+                            first_choice = choices[0]
+                            delta = first_choice.get(
+                                "delta"
+                            )
+
+                            if not isinstance(
+                                delta,
+                                dict,
+                            ):
+                                raise ValueError(
+                                    "Groq stream delta "
+                                    "has invalid shape."
+                                )
+
+                            content = delta.get(
+                                "content"
+                            )
+
+                            if content is None:
+                                continue
+
+                            if not isinstance(
+                                content,
+                                str,
+                            ):
+                                raise ValueError(
+                                    "Groq stream content "
+                                    "is not text."
+                                )
+
+                            if content:
+                                answer_parts.append(
+                                    content
+                                )
+                                yield GenerationDelta(
+                                    text=content,
+                                )
+
+            except httpx.ConnectError as exc:
+                raise DependencyUnavailableError(
+                    "groq"
+                ) from exc
+
+            except httpx.TimeoutException as exc:
+                raise DependencyTimeoutError(
+                    "groq"
+                ) from exc
+
+            except httpx.HTTPStatusError as exc:
+                raise DependencyResponseError(
+                    "groq"
+                ) from exc
+
+            except httpx.TransportError as exc:
+                raise DependencyUnavailableError(
+                    "groq"
+                ) from exc
+
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                IndexError,
+            ) as exc:
+                raise DependencyResponseError(
+                    "groq"
+                ) from exc
+
+            answer = "".join(
+                answer_parts
+            ).strip()
+
+            if not answer:
+                raise DependencyResponseError(
+                    "groq"
+                )
+
+        finally:
+            self._generation_slots.release()
+
+        latency_ms = (
+            time.perf_counter() - start
+        ) * 1000
+
+        yield GenerationComplete(
+            result=self._build_result(
+                context=context,
+                answer=answer,
+                latency_ms=latency_ms,
+                usage=usage,
+            ),
+        )
+
+    def _build_payload(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        stream: bool = False,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "stream": stream,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+            "temperature": 0.0,
+            "max_completion_tokens": 1024,
+        }
+
+        if self.model.startswith(
+            self.GPT_OSS_MODEL_PREFIX
+        ):
+            payload.update(
+                {
+                    "reasoning_effort": "low",
+                    "include_reasoning": False,
+                }
+            )
+
+        return payload
+
+    def _build_result(
+        self,
+        *,
+        context: GenerationContext,
+        answer: str,
+        latency_ms: float,
+        usage: dict[str, Any],
+    ) -> GenerationResult:
+        citations = self._extract_citations(
+            answer=answer,
+            context=context,
+        )
 
         prompt_tokens = self._optional_int(
             usage.get("prompt_tokens")
@@ -290,41 +522,6 @@ class GroqGenerator(LLMGenerator):
                 "base_url": self.base_url,
             },
         )
-
-    def _build_payload(
-        self,
-        *,
-        system_prompt: str,
-        user_prompt: str,
-    ) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "model": self.model,
-            "stream": False,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
-            "temperature": 0.0,
-            "max_completion_tokens": 1024,
-        }
-
-        if self.model.startswith(
-            self.GPT_OSS_MODEL_PREFIX
-        ):
-            payload.update(
-                {
-                    "reasoning_effort": "low",
-                    "include_reasoning": False,
-                }
-            )
-
-        return payload
 
     @staticmethod
     def _extract_citations(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -46,3 +46,24 @@ class GenerationResult:
     latency_ms: float | None = None
 
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class GenerationDelta:
+    text: str
+
+
+@dataclass(frozen=True)
+class GenerationComplete:
+    result: GenerationResult
+
+
+GeneratorStreamEvent = GenerationDelta | GenerationComplete
+
+
+@dataclass(frozen=True)
+class PipelineStatus:
+    status: Literal["retrieving", "generating"]
+
+
+PipelineStreamEvent = PipelineStatus | GeneratorStreamEvent

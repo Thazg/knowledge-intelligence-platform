@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 from backend.api.dependencies import get_rag_service
 from backend.api.query_mapper import to_query_response
@@ -107,3 +110,181 @@ def query_rag(
             status_code=503,
             detail="A required backend service returned an error.",
         ) from exc
+
+
+def _encode_sse(
+    event: str,
+    data: dict[str, object],
+) -> str:
+    payload = json.dumps(
+        data,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return f"event: {event}\ndata: {payload}\n\n"
+
+
+def _stream_error(
+    exc: Exception,
+) -> dict[str, object]:
+    if isinstance(
+        exc,
+        DependencyBusyError,
+    ):
+        return {
+            "code": "generation_busy",
+            "message": (
+                "The generator is handling another request. "
+                "Please retry shortly."
+            ),
+            "retryable": True,
+        }
+
+    if isinstance(
+        exc,
+        DependencyTimeoutError,
+    ):
+        return {
+            "code": "generation_timeout",
+            "message": (
+                "Answer generation timed out. Please retry."
+            ),
+            "retryable": True,
+        }
+
+    if isinstance(
+        exc,
+        DependencyUnavailableError,
+    ):
+        return {
+            "code": "backend_unavailable",
+            "message": (
+                "A required backend service is unavailable. "
+                "Please retry shortly."
+            ),
+            "retryable": True,
+        }
+
+    if isinstance(
+        exc,
+        DependencyResponseError,
+    ):
+        return {
+            "code": "backend_response_error",
+            "message": (
+                "A required backend service returned an error. "
+                "Please retry."
+            ),
+            "retryable": True,
+        }
+
+    return {
+        "code": "stream_error",
+        "message": (
+            "The answer stream ended unexpectedly. "
+            "Please retry."
+        ),
+        "retryable": True,
+    }
+
+
+def _query_event_stream(
+    *,
+    query: str,
+    service: RAGService,
+) -> Iterator[str]:
+    try:
+        for event in service.stream(query):
+            if event.event == "status":
+                yield _encode_sse(
+                    "status",
+                    {
+                        "status": event.status,
+                    },
+                )
+                continue
+
+            if event.event == "answer_delta":
+                yield _encode_sse(
+                    "answer_delta",
+                    {
+                        "delta": event.delta or "",
+                    },
+                )
+                continue
+
+            if (
+                event.event == "done"
+                and event.result is not None
+            ):
+                response = to_query_response(
+                    event.result
+                )
+
+                yield _encode_sse(
+                    "citations",
+                    {
+                        "citations": [
+                            citation.model_dump()
+                            for citation in response.citations
+                        ],
+                        "sources": [
+                            source.model_dump()
+                            for source in response.sources
+                        ],
+                    },
+                )
+                yield _encode_sse(
+                    "done",
+                    {
+                        "query": response.query,
+                        "model": response.model,
+                        "metrics": (
+                            response.metrics.model_dump()
+                        ),
+                    },
+                )
+
+    except Exception as exc:
+        yield _encode_sse(
+            "error",
+            _stream_error(exc),
+        )
+
+
+@router.post(
+    "/query/stream",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "content": {
+                "text/event-stream": {}
+            },
+            "description": (
+                "Grounded answer as Server-Sent Events."
+            ),
+        }
+    },
+)
+def stream_query_rag(
+    request: Annotated[
+        QueryRequest,
+        Body(
+            openapi_examples=(
+                QUERY_OPENAPI_EXAMPLES
+            ),
+        ),
+    ],
+    service: RAGService = Depends(get_rag_service),
+) -> StreamingResponse:
+    return StreamingResponse(
+        _query_event_stream(
+            query=request.query,
+            service=service,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )

@@ -1,14 +1,23 @@
 from __future__ import annotations
 
+import json
 import re
+import threading
 import time
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
-import threading
 
 from backend.generation.generator import LLMGenerator
-from backend.generation.models import Citation, GenerationContext, GenerationResult
+from backend.generation.models import (
+    Citation,
+    GenerationComplete,
+    GenerationContext,
+    GenerationDelta,
+    GenerationResult,
+    GeneratorStreamEvent,
+)
 from backend.generation.prompt_builder import PromptBuilder
 from backend.core.errors import (
     DependencyResponseError,
@@ -154,6 +163,190 @@ class OllamaGenerator(LLMGenerator):
                 "provider": "ollama",
                 "base_url": self.base_url,
             },
+        )
+
+    def stream(
+        self,
+        context: GenerationContext,
+    ) -> Iterator[GeneratorStreamEvent]:
+        messages = self.prompt_builder.build(
+            context
+        )
+
+        payload = {
+            "model": self.model,
+            "stream": True,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": messages.system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": messages.user_prompt,
+                },
+            ],
+            "options": {
+                "temperature": 0.0,
+                "num_predict": 384,
+            },
+        }
+
+        slot_acquired = (
+            self._generation_slots.acquire(
+                blocking=False,
+            )
+        )
+
+        if not slot_acquired:
+            raise DependencyBusyError(
+                "ollama"
+            )
+
+        start = time.perf_counter()
+        answer_parts: list[str] = []
+        final_data: dict[str, Any] = {}
+
+        try:
+            try:
+                with httpx.Client(
+                    timeout=self.timeout_seconds,
+                ) as client:
+                    with client.stream(
+                        "POST",
+                        f"{self.base_url}/api/chat",
+                        json=payload,
+                    ) as response:
+                        response.raise_for_status()
+
+                        for line in response.iter_lines():
+                            if not line.strip():
+                                continue
+
+                            data = json.loads(line)
+                            final_data = data
+                            message = data.get(
+                                "message",
+                                {},
+                            )
+
+                            if not isinstance(
+                                message,
+                                dict,
+                            ):
+                                raise ValueError(
+                                    "Ollama stream message "
+                                    "has invalid shape."
+                                )
+
+                            content = message.get(
+                                "content"
+                            )
+
+                            if content is None:
+                                continue
+
+                            if not isinstance(
+                                content,
+                                str,
+                            ):
+                                raise ValueError(
+                                    "Ollama stream content "
+                                    "is not text."
+                                )
+
+                            if content:
+                                answer_parts.append(
+                                    content
+                                )
+                                yield GenerationDelta(
+                                    text=content,
+                                )
+
+            except httpx.ConnectError as exc:
+                raise DependencyUnavailableError(
+                    "ollama"
+                ) from exc
+
+            except httpx.TimeoutException as exc:
+                raise DependencyTimeoutError(
+                    "ollama"
+                ) from exc
+
+            except httpx.HTTPStatusError as exc:
+                raise DependencyResponseError(
+                    "ollama"
+                ) from exc
+
+            except httpx.TransportError as exc:
+                raise DependencyUnavailableError(
+                    "ollama"
+                ) from exc
+
+            except (
+                ValueError,
+                TypeError,
+            ) as exc:
+                raise DependencyResponseError(
+                    "ollama"
+                ) from exc
+
+            answer = "".join(
+                answer_parts
+            ).strip()
+
+            if not answer:
+                raise DependencyResponseError(
+                    "ollama"
+                )
+
+        finally:
+            self._generation_slots.release()
+
+        latency_ms = (
+            time.perf_counter() - start
+        ) * 1000
+
+        prompt_tokens = self._optional_int(
+            final_data.get(
+                "prompt_eval_count"
+            )
+        )
+        completion_tokens = self._optional_int(
+            final_data.get("eval_count")
+        )
+        total_tokens = None
+
+        if (
+            prompt_tokens is not None
+            and completion_tokens is not None
+        ):
+            total_tokens = (
+                prompt_tokens
+                + completion_tokens
+            )
+
+        yield GenerationComplete(
+            result=GenerationResult(
+                query=context.query,
+                answer=answer,
+                citations=self._extract_citations(
+                    answer=answer,
+                    context=context,
+                ),
+                sources=context.sources,
+                model=self.model,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=(
+                    completion_tokens
+                ),
+                total_tokens=total_tokens,
+                latency_ms=latency_ms,
+                metadata={
+                    "provider": "ollama",
+                    "base_url": self.base_url,
+                },
+            ),
         )
 
     @staticmethod
