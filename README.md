@@ -7,7 +7,7 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 ## Live Demo
 
-- Web demo: [enterprisekip.vercel.app](https://enterprisekip.vercel.app)
+- Web demo: https://enterprisekip.vercel.app
 - Public API: https://enterprise-kip-api.onrender.com
 - Interactive Swagger UI: https://enterprise-kip-api.onrender.com/docs
 - Liveness: https://enterprise-kip-api.onrender.com/health
