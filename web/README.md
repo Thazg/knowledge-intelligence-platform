@@ -1,105 +1,115 @@
 # Enterprise KIP Web Demo
 
-A small Next.js interface for the Enterprise Knowledge Intelligence Platform. It helps recruiters understand the indexed corpus, run benchmark-backed example questions, watch grounded answers stream, and inspect cited documentation.
+This folder contains the web interface for Enterprise KIP.
 
-The browser never calls Render directly:
+I added it mainly to make the project easier to try without going through Swagger. The page shows what documentation is available in the corpus, provides a few example questions, streams answers from the existing RAG backend, and displays the sources used for each response.
+
+Live demo:
+
+https://enterprisekip.vercel.app
+
+## How it works
+
+The frontend is built with Next.js.
+
+The browser sends requests through a Next.js API route instead of calling the Render backend directly:
 
 ```text
 Browser
-  → Next.js POST /api/query/stream
-  → FastAPI POST /v1/query/stream
-  → existing RAGService and RAGPipeline
+  ↓
+Next.js /api/query/stream
+  ↓
+FastAPI /v1/query/stream
+  ↓
+RAGService / RAGPipeline
 ```
 
-The interface is intentionally a single-query demo. It has no authentication, persistence, analytics, or conversation database.
+The existing Enterprise KIP retrieval and generation pipeline is reused as-is.
+
+The UI is intentionally small. It is meant to demonstrate the RAG system, not provide accounts, saved conversations, analytics, or a full chat product.
 
 ## Local development
 
 Requirements:
 
-- Node.js 20.9 or newer
-- The existing Enterprise KIP backend, including its configured Qdrant and generation dependencies
+- Node.js 20.9+
+- A running Enterprise KIP backend
 
-Terminal 1, from the repository root:
+Start the backend from the repository root:
 
 ```bash
 python -m uvicorn backend.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Terminal 2:
+Then start the frontend:
 
 ```bash
 cd web
-cp .env.example .env.local
 npm install
-npm run dev
 ```
 
-On PowerShell, copy the environment file with:
+Copy the environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+On PowerShell:
 
 ```powershell
 Copy-Item .env.example .env.local
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
-
-The only frontend environment variable is server-side:
+For a local backend, set:
 
 ```ini
 ENTERPRISE_KIP_API_BASE_URL=http://localhost:8000
 ```
 
-To use the public Render backend locally, keep the value from `.env.example`.
+Then run:
 
-## Stream contract
-
-`POST /v1/query/stream` returns `text/event-stream` using the existing query validation and citation/source models.
-
-```text
-event: status
-data: {"status":"retrieving"}
-
-event: status
-data: {"status":"generating"}
-
-event: answer_delta
-data: {"delta":"..."}
-
-event: citations
-data: {"citations":[...],"sources":[...]}
-
-event: done
-data: {"query":"...","model":"...","metrics":{...}}
+```bash
+npm run dev
 ```
 
-Failures after streaming begins use one safe event:
+Open:
+
+http://localhost:3000
+
+If you want to use the public backend instead, keep the API URL from `.env.example`.
+
+## Streaming
+
+The frontend uses:
 
 ```text
-event: error
-data: {"code":"generation_timeout","message":"...","retryable":true}
+POST /v1/query/stream
 ```
 
-The stream exposes only answer text and user-safe operational states. It does not expose model reasoning. Groq and Ollama use their native streaming responses; a generator without native streaming support may emit one completed answer delta.
+The backend returns Server-Sent Events while a query is processed.
+
+A normal request looks roughly like this:
+
+```text
+status        retrieving
+status        generating
+answer_delta  ...
+citations     ...
+done
+```
+
+The final citation event uses the same source information returned by the existing RAG pipeline.
+
+If something fails after the stream has started, the backend sends an error event instead of exposing the internal exception.
+
+The stream only contains answer text, source information, and basic request status. Model reasoning is not exposed.
 
 ## Checks
+
+From the `web` directory:
 
 ```bash
 npm run lint
 npm test
 npm run build
 ```
-
-## Deploy to Vercel
-
-1. Import `https://github.com/Thazg/knowledge-intelligence-platform` into Vercel.
-2. Set **Root Directory** to `web`.
-3. Keep the detected **Framework Preset** as Next.js.
-4. Add this Production, Preview, and Development environment variable:
-
-   ```ini
-   ENTERPRISE_KIP_API_BASE_URL=https://enterprise-kip-api.onrender.com
-   ```
-
-5. Deploy. No database, persistent volume, or `NEXT_PUBLIC_` variable is required.
-
-Production demo: [enterprisekip.vercel.app](https://enterprisekip.vercel.app)
