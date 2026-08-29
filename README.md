@@ -7,7 +7,7 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 ## Live Demo
 
-- Web demo: `<VERCEL_WEB_DEMO_URL>`
+- Web demo: [enterprisekip.vercel.app](https://enterprisekip.vercel.app)
 - Public API: https://enterprise-kip-api.onrender.com
 - Interactive Swagger UI: https://enterprise-kip-api.onrender.com/docs
 - Liveness: https://enterprise-kip-api.onrender.com/health
@@ -19,7 +19,7 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 The recruiter-facing Next.js interface explains the curated corpus, provides benchmark-backed example questions, streams grounded answers, and renders the citations returned by the API. It is a documentation-corpus demo, not an open-web assistant.
 
-The Vercel deployment lives in [`web/`](web/README.md). After deployment, replace `<VERCEL_WEB_DEMO_URL>` in the **Live Demo** section above with the assigned Vercel URL. The interactive API documentation remains available at [enterprise-kip-api.onrender.com/docs](https://enterprise-kip-api.onrender.com/docs).
+The Vercel deployment lives in [`web/`](web/README.md) and is available at [enterprisekip.vercel.app](https://enterprisekip.vercel.app). The interactive API documentation remains available at [enterprise-kip-api.onrender.com/docs](https://enterprise-kip-api.onrender.com/docs).
 
 ## Try the Live API
 
