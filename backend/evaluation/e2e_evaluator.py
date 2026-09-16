@@ -7,7 +7,6 @@ from backend.evaluation.generation_evaluator import (
     evaluate_generation_records,
 )
 
-
 TIMING_FIELDS = (
     "http_round_trip_latency_ms",
     "retrieval_latency_ms",

@@ -3,9 +3,11 @@ import uuid
 import numpy as np
 from numpy.typing import NDArray
 from qdrant_client import QdrantClient, models
-from backend.chunking.models import Chunk
 from qdrant_client.http.exceptions import ResponseHandlingException
+
+from backend.chunking.models import Chunk
 from backend.core.errors import DependencyUnavailableError
+
 
 class QdrantVectorStore:
 

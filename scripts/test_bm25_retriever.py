@@ -3,7 +3,6 @@ from pathlib import Path
 from backend.chunking.serializer import ChunkSerializer
 from backend.retrieval.bm25_retriever import BM25Retriever
 
-
 CHUNKS_PATH = Path(
     "data/processed/chunks_fixed.jsonl"
 )

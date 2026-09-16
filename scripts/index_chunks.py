@@ -2,7 +2,6 @@ from pathlib import Path
 
 from backend.indexing.pipeline import IndexingPipeline
 
-
 COLLECTION_NAME = (
     "enterprise_knowledge_fixed_bge_small"
 )

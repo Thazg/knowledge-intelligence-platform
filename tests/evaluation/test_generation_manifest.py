@@ -6,7 +6,6 @@ import json
 import subprocess
 from pathlib import Path
 
-
 MANIFEST_PATH = Path(
     "benchmarks/generation/v1/manifest.json"
 )

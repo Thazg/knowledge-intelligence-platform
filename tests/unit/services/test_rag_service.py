@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from backend.generation.models import Citation, GenerationResult, SourceReference
+from backend.generation.models import (
+    Citation,
+    GenerationResult,
+    SourceReference,
+)
 from backend.services.rag_service import RAGService
 
 

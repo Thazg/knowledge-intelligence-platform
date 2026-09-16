@@ -13,7 +13,6 @@ from backend.evaluation.generation_runtime_provenance import (
     check_generation_runtime_provenance,
 )
 
-
 DEFAULT_MANIFEST_PATH = Path(
     "benchmarks/generation/v1/manifest.json"
 )

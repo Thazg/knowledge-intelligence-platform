@@ -5,7 +5,6 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-
 CASES_PATH = Path(
     "benchmarks/e2e/cases_v1.jsonl"
 )

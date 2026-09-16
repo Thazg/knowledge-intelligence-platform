@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 import backend.api.app as app_module
 from backend.core.config import Settings
 
-
 client = TestClient(
     app_module.app
 )

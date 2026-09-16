@@ -10,7 +10,6 @@ from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
 CHUNKS_PATH = Path("data/processed/chunks_fixed.jsonl")
 QDRANT_COLLECTION = "enterprise_knowledge_fixed_bge_small"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

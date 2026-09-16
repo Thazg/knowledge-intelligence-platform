@@ -15,7 +15,6 @@ from backend.services.models import (
     RAGServiceStreamEvent,
 )
 
-
 client = TestClient(app)
 
 

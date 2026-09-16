@@ -9,6 +9,12 @@ from typing import Any
 
 import httpx
 
+from backend.core.errors import (
+    DependencyBusyError,
+    DependencyResponseError,
+    DependencyTimeoutError,
+    DependencyUnavailableError,
+)
 from backend.generation.generator import LLMGenerator
 from backend.generation.models import (
     Citation,
@@ -19,12 +25,7 @@ from backend.generation.models import (
     GeneratorStreamEvent,
 )
 from backend.generation.prompt_builder import PromptBuilder
-from backend.core.errors import (
-    DependencyResponseError,
-    DependencyTimeoutError,
-    DependencyUnavailableError,
-    DependencyBusyError,
-)
+
 
 class OllamaGenerator(LLMGenerator):
     def __init__(

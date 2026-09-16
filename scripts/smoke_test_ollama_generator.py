@@ -6,7 +6,6 @@ from backend.generation.providers.ollama_generator import (
     OllamaGenerator,
 )
 
-
 context = GenerationContext(
     query="What does a Kubernetes Deployment manage?",
     context_text=(

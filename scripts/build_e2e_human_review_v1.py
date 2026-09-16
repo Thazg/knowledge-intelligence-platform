@@ -7,7 +7,6 @@ from typing import Any
 
 from backend.chunking.serializer import ChunkSerializer
 
-
 CASES_PATH = Path(
     "benchmarks/e2e/cases_v1.jsonl"
 )

@@ -7,13 +7,12 @@ import random
 import statistics
 import time
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import count
 from pathlib import Path
 from typing import Any
 
 import httpx
-
 
 DEFAULT_QUERY = "What is a Kubernetes Deployment?"
 BUSY_DETAIL = "A required backend service is busy."
@@ -879,7 +878,7 @@ async def _main_async(
     mode = _load_mode(args)
 
     run_id = datetime.now(
-        timezone.utc
+        UTC
     ).strftime("%Y%m%dT%H%M%SZ")
 
     timeout = httpx.Timeout(
@@ -1015,7 +1014,7 @@ async def _main_async(
     return {
         "run_id": run_id,
         "timestamp_utc": datetime.now(
-            timezone.utc
+            UTC
         ).isoformat(),
         "protocol": {
             "base_url": base_url,

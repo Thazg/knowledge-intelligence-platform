@@ -11,7 +11,6 @@ from backend.evaluation.generation_regression import (
     check_generation_regression,
 )
 
-
 DEFAULT_CASES_PATH = Path(
     "benchmarks/generation/cases_v1.jsonl"
 )

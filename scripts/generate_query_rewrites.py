@@ -9,7 +9,6 @@ from backend.query_rewriting.query_rewriter import (
     QueryRewriter,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 DEFAULT_DATASET_PATH = (

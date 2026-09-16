@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import pytest
-
 from fastapi.testclient import TestClient
 
 from backend.api.app import app
 from backend.api.dependencies import get_rag_service
+from backend.core.config import get_settings
 from backend.core.errors import (
+    DependencyBusyError,
     DependencyResponseError,
     DependencyTimeoutError,
     DependencyUnavailableError,
-    DependencyBusyError,
 )
 from backend.generation.models import Citation, SourceReference
 from backend.services.models import RAGServiceResult
-from backend.core.config import get_settings
 
 client = TestClient(app)
 

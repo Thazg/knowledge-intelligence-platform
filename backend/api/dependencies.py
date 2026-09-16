@@ -11,7 +11,6 @@ from backend.generation.rag_pipeline import RAGPipeline
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.services.rag_service import RAGService
 
-
 logger = logging.getLogger(__name__)
 
 CLOUD_DENSE_VECTOR_NAME = "dense_vector"

@@ -7,14 +7,14 @@ from backend.evaluation.retrieval_evaluator import (
     EvaluationCase,
     RetrievalEvaluator,
 )
+from backend.query_rewriting.frozen_query_rewriter import (
+    FrozenQueryRewriter,
+)
 from backend.retrieval.bm25_retriever import BM25Retriever
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.retrieval.multi_query_retriever import MultiQueryRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
-from backend.query_rewriting.frozen_query_rewriter import (
-    FrozenQueryRewriter,
-)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = Path(
@@ -39,7 +39,7 @@ def load_cases(
         "r",
         encoding="utf-8",
     ) as file:
-        for line_number, line in enumerate(
+        for _line_number, line in enumerate(
             file,
             start=1,
         ):

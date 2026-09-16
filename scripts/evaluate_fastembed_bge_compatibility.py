@@ -21,7 +21,6 @@ from backend.evaluation.retrieval_evaluator import (
 )
 from backend.retrieval.models import RetrievalResult
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 DATASET_PATH = (

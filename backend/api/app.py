@@ -20,7 +20,6 @@ from backend.api.schemas.health import (
 from backend.core.config import Settings, get_settings
 from backend.core.logging import configure_logging
 
-
 GROQ_MODELS_URL = (
     "https://api.groq.com/openai/v1/models"
 )

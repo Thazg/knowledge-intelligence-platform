@@ -2,7 +2,6 @@ from pathlib import Path
 
 from backend.ingestion.discovery import DocumentDiscovery
 
-
 TARGET_SUFFIX = (
     "content/manuals/build/buildkit/_index.md"
 )

@@ -1,6 +1,7 @@
 import json
-from pathlib import Path
 from collections.abc import Iterator
+from pathlib import Path
+
 from backend.chunking.models import Chunk
 
 

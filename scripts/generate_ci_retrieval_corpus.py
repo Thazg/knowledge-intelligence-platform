@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-
 from pathlib import Path
 
 from backend.chunking.serializer import ChunkSerializer
@@ -10,7 +9,6 @@ from backend.retrieval.bm25_retriever import BM25Retriever
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

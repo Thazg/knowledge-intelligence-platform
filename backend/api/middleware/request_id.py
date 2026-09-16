@@ -14,7 +14,6 @@ from backend.core.metrics import (
 )
 from backend.core.request_context import request_id_context
 
-
 REQUEST_ID_HEADER = "X-Request-ID"
 
 logger = logging.getLogger(__name__)

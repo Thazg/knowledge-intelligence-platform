@@ -2,7 +2,6 @@ from backend.embedding.embedder import LocalEmbedder
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
 COLLECTION_NAME = "enterprise_knowledge_fixed_bge_small"
 
 

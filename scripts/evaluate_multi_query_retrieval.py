@@ -2,6 +2,14 @@ from pathlib import Path
 
 from backend.chunking.serializer import ChunkSerializer
 from backend.embedding.embedder import LocalEmbedder
+from backend.evaluation.dataset_loader import (
+    load_evaluation_cases,
+)
+from backend.evaluation.metrics import (
+    calculate_metrics,
+    calculate_metrics_by_category,
+    print_metrics,
+)
 from backend.evaluation.retrieval_evaluator import RetrievalEvaluator
 from backend.query_rewriting.frozen_query_rewriter import (
     FrozenQueryRewriter,
@@ -11,14 +19,6 @@ from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.retrieval.multi_query_retriever import MultiQueryRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
-from backend.evaluation.dataset_loader import (
-    load_evaluation_cases,
-)
-from backend.evaluation.metrics import (
-    calculate_metrics,
-    calculate_metrics_by_category,
-    print_metrics,
-)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = Path(

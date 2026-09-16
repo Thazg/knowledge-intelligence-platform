@@ -12,7 +12,6 @@ from generate_benchmark_candidates import (
     write_candidates_jsonl,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 DEFAULT_CASES_PATH = (

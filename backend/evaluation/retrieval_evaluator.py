@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
 from math import log2
+from typing import Protocol
+
 from backend.retrieval.models import RetrievalResult
 
 

@@ -132,6 +132,7 @@ class MultiQueryRetriever:
         for rewritten_query, query_weight in zip(
             queries,
             query_weights,
+            strict=False,
         ):
             results = (
                 self.base_retriever.retrieve(
