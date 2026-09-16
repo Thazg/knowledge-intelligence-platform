@@ -4,10 +4,17 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -16,6 +23,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -30,7 +38,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -40,3 +48,6 @@ jobs:
 
       - name: Build API Docker image
         run: docker compose build api
+
+      - name: Build cloud API image
+        run: docker build -f docker/Dockerfile.api.cloud -t kip-cloud:ci .
