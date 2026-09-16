@@ -125,7 +125,7 @@ def test_generation_manifest_matches_frozen_provenance() -> None:
 
     prompt = manifest["prompt"]
 
-    assert prompt["version"] == "v3"
+    assert prompt["version"] == "v4"
 
     assert (
         prompt["fingerprint_strategy"]
