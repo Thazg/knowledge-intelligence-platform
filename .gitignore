@@ -100,3 +100,8 @@ scripts/migrate_bge_bm25_to_qdrant_cloud.py
 scripts/probe_cloud_retrieval_runtime_memory.py
 scripts/probe_fastembed_bge_memory.py
 scripts/probe_qdrant_cloud_retrieval.py
+
+# Local secrets - never commit
+env.txt
+enterprise-kip_*_api_key.txt
+ENTERPRISE_KIP_FUTURE_MILESTONES_FINAL.txt

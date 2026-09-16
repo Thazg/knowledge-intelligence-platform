@@ -25,3 +25,7 @@ tests
 .env.*
 
 deepagents
+
+env.txt
+enterprise-kip_*_api_key.txt
+ENTERPRISE_KIP_FUTURE_MILESTONES_FINAL.txt
