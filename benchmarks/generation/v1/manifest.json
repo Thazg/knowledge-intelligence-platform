@@ -30,10 +30,10 @@
     "num_predict": 384
   },
   "prompt": {
-    "version": "v3",
+    "version": "v4",
     "source_path": "backend/generation/prompt_builder.py",
     "fingerprint_strategy": "canonical_prompt_ast_v1",
-    "sha256": "2AF02AE87A96AE5C7883359B108B8C04454D3AF753A68FB65E24399547C07B0D"
+    "sha256": "0D7791A407990E4BD176D391D96F1C5F6DC54AF820D8DC0D20433B0A4D4A1F8D"
   },
   "regression": {
     "hard_gates": {
