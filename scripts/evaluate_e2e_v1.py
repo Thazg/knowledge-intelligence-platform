@@ -8,7 +8,6 @@ from typing import Any
 
 import httpx
 
-
 DEFAULT_MANIFEST_PATH = Path(
     "benchmarks/e2e/v1/manifest.json"
 )

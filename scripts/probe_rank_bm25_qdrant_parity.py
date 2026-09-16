@@ -17,7 +17,6 @@ from backend.evaluation.dataset_loader import (
 )
 from backend.retrieval.bm25_retriever import BM25Retriever
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 CHUNKS_PATH = (

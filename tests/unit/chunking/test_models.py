@@ -4,7 +4,6 @@ import pytest
 
 from backend.chunking.models import Chunk
 
-
 CHUNK_FIELDS = {
     "chunk_id": "chunk-001",
     "document_id": "document-001",

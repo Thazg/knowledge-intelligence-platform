@@ -3,7 +3,6 @@ from __future__ import annotations
 import httpx
 import numpy as np
 import pytest
-
 from qdrant_client.http.exceptions import ResponseHandlingException
 
 from backend.core.errors import DependencyUnavailableError

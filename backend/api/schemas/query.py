@@ -4,7 +4,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, StringConstraints
 
-
 QueryText = Annotated[
     str,
     StringConstraints(

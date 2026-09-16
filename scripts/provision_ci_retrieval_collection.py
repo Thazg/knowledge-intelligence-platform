@@ -6,7 +6,6 @@ from backend.chunking.serializer import ChunkSerializer
 from backend.embedding.embedder import LocalEmbedder
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 CHUNKS_PATH = (

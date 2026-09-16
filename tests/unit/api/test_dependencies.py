@@ -276,6 +276,7 @@ def test_build_cloud_retriever_uses_cloud_components(
             return []
 
     import qdrant_client
+
     import backend.retrieval.fastembed_cloud_dense_retriever as dense_module
     import backend.retrieval.rank_bm25_cloud_retriever as bm25_module
     import backend.retrieval.rank_bm25_query_encoder as encoder_module

@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 DOCUMENTS_PATH = Path(
     "data/processed/documents.jsonl"
 )

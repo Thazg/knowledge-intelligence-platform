@@ -1,10 +1,17 @@
 from __future__ import annotations
 
-import httpx
-import pytest
 import threading
 from contextlib import contextmanager
 
+import httpx
+import pytest
+
+from backend.core.errors import (
+    DependencyBusyError,
+    DependencyResponseError,
+    DependencyTimeoutError,
+    DependencyUnavailableError,
+)
 from backend.generation.models import (
     GenerationComplete,
     GenerationContext,
@@ -13,12 +20,6 @@ from backend.generation.models import (
 )
 from backend.generation.providers.ollama_generator import (
     OllamaGenerator,
-)
-from backend.core.errors import (
-    DependencyBusyError,
-    DependencyResponseError,
-    DependencyTimeoutError,
-    DependencyUnavailableError,
 )
 
 

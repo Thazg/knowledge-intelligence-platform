@@ -18,7 +18,6 @@ from backend.core.errors import (
 )
 from backend.services.rag_service import RAGService
 
-
 QUERY_OPENAPI_EXAMPLES = {
     "docker_buildkit": {
         "summary": "Docker BuildKit",
@@ -75,7 +74,7 @@ def query_rag(
             openapi_examples=QUERY_OPENAPI_EXAMPLES,
         ),
     ],
-    service: RAGService = Depends(get_rag_service),
+    service: Annotated[RAGService, Depends(get_rag_service)],
 ) -> QueryResponse:
     try:
         result = service.query(request.query)
@@ -275,7 +274,7 @@ def stream_query_rag(
             ),
         ),
     ],
-    service: RAGService = Depends(get_rag_service),
+    service: Annotated[RAGService, Depends(get_rag_service)],
 ) -> StreamingResponse:
     return StreamingResponse(
         _query_event_stream(

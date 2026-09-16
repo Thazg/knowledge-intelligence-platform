@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from backend.generation.generator import LLMGenerator
-from backend.generation.models import Citation, GenerationContext, GenerationResult
+from backend.generation.models import (
+    Citation,
+    GenerationContext,
+    GenerationResult,
+)
 
 
 class FakeGenerator(LLMGenerator):

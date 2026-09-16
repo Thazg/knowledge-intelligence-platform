@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import re
 import subprocess
-import httpx
 from collections.abc import Callable
+
+import httpx
+
 
 def parse_ollama_version(output: str) -> str:
     match = re.search(

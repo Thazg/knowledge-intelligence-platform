@@ -1,6 +1,5 @@
 from qdrant_client import QdrantClient
 
-
 COLLECTION_NAME = "enterprise_knowledge_fixed_bge_small"
 
 

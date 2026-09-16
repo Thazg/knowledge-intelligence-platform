@@ -27,7 +27,6 @@ from backend.retrieval.rank_bm25_query_encoder import (
     RankBM25QueryEncoder,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 DATASET_PATH = (

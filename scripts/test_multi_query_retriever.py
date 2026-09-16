@@ -1,3 +1,4 @@
+from backend.chunking.serializer import ChunkSerializer
 from backend.embedding.embedder import LocalEmbedder
 from backend.query_rewriting import QueryRewriter
 from backend.retrieval.bm25_retriever import BM25Retriever
@@ -6,7 +7,7 @@ from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.retrieval.multi_query_retriever import MultiQueryRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 from scripts.evaluate_reranked_retrieval import PROJECT_ROOT
-from backend.chunking.serializer import ChunkSerializer
+
 
 def main() -> None:
     embedder = LocalEmbedder(

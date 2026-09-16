@@ -1,10 +1,11 @@
 from pathlib import Path
 
 from backend.chunking.fixed_token_chunker import FixedTokenChunker
+from backend.chunking.serializer import ChunkSerializer
 from backend.ingestion.id_generator import generate_document_id
 from backend.ingestion.models import Document
 from backend.tokenization.tokenizer import DocumentTokenizer
-from backend.chunking.serializer import ChunkSerializer
+
 
 def main() -> None:
     tokenizer = DocumentTokenizer()

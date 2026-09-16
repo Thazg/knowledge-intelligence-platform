@@ -5,14 +5,14 @@ import hashlib
 import json
 import os
 import time
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from qdrant_client import QdrantClient, models
 
 from backend.chunking.serializer import ChunkSerializer
 from backend.retrieval.bm25_retriever import BM25Retriever
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

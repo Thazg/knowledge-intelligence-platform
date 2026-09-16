@@ -14,7 +14,6 @@ from backend.retrieval.bm25_retriever import BM25Retriever
 from backend.retrieval.dense_retriever import DenseRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
 # ---------------------------------------------------------------------------
 # Project paths
 # ---------------------------------------------------------------------------
@@ -227,7 +226,7 @@ def parse_case_plan(path: Path) -> list[PlannedCase]:
             if len(cells) != len(headers):
                 continue
 
-            row = dict(zip(headers, cells))
+            row = dict(zip(headers, cells, strict=False))
 
             case_id = row.get("id")
             query = row.get("query")

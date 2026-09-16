@@ -15,7 +15,6 @@ from backend.retrieval.dense_retriever import DenseRetriever
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.vector_store.qdrant_store import QdrantVectorStore
 
-
 CASES_PATH = Path("benchmarks/generation/cases_v1.jsonl")
 DEFAULT_OUTPUT_PATH = Path("benchmarks/generation/results_v3.jsonl")
 
