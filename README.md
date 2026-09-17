@@ -133,10 +133,12 @@ For the cloud deployment profile, FastEmbed BGE + canonical BGE vectors + exact 
 | MRR | 0.7119 |
 
 The cloud profile preserves Hit@10 while trading a small amount of ranking quality for substantially lower deployment memory.
+Source: [`benchmarks/retrieval/reports/cloud-hybrid-v1.md`](benchmarks/retrieval/reports/cloud-hybrid-v1.md) (re-run 2026-09-17 reproduces the table exactly).
 
 Detailed reports:
 
 - [`benchmarks/retrieval/reports/retrieval_benchmark_v1.md`](benchmarks/retrieval/reports/retrieval_benchmark_v1.md)
+- [`benchmarks/retrieval/reports/cloud-hybrid-v1.md`](benchmarks/retrieval/reports/cloud-hybrid-v1.md)
 - [`benchmarks/retrieval/routing/adaptive_retrieval_v1_decision.md`](benchmarks/retrieval/routing/adaptive_retrieval_v1_decision.md)
 
 ## Exact BM25 Cloud Retrieval
@@ -152,6 +154,7 @@ Exact top-10 order              100 / 100
 Mean top-10 local coverage      1.000000
 Maximum shared score delta      0.0000024688
 Mismatched queries              0
+Source: [`benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json`](benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json)
 ```
 
 This avoids loading the local corpus and `rank_bm25` package in the cloud runtime.

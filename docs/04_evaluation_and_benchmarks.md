@@ -393,6 +393,7 @@ Cloud MRR:
 ```
 
 The cloud profile therefore preserves Hit@10 while accepting a small ranking-quality reduction in exchange for much lower deployment memory.
+Source: [`benchmarks/retrieval/reports/cloud-hybrid-v1.md`](../benchmarks/retrieval/reports/cloud-hybrid-v1.md) (re-run 2026-09-17 reproduces the table exactly).
 
 ### Exact BM25 Parity Canary
 
@@ -406,6 +407,9 @@ Mismatched queries            0
 ```
 
 This validated the exact rank_bm25-compatible sparse representation before full cloud migration.
+Source artifact: `benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json`
+(generator: `scripts/probe_rank_bm25_qdrant_parity.py`; 500 evenly-spaced
+chunks from 36,199; 100 query texts; top-10 exact-order comparison).
 
 ---
 
