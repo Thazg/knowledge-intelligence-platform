@@ -309,7 +309,7 @@ qwen3:4b-instruct
 prompt v3
 The production prompt is now v4 (injection guardrails — rule 15,
 `<question>` delimiters, 2000-char cap). The v3 numbers above are kept
-as history; v4 has not been re-benchmarked yet. See
+as history; v4 validated by Generation Regression #17 (Success, run 35179512580). See
 `benchmarks/generation/v1/manifest.json` (`prompt.version`).
 ```
 

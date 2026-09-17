@@ -271,7 +271,7 @@ Prompt tuning was stopped after v3 to avoid overfitting the same 12 development 
 > guardrails (rule 15, `<question>` delimiters, 2000-char cap — see
 > `backend/generation/prompt_builder.py`, manifest `prompt.version: v4`).
 > The quality/latency numbers above were measured with prompt v3 and have
-> not been re-run for v4 yet.
+> validated for v4 by Generation Regression #17 (Success, 16m 32s, run 35179512580, commit a1452b4).
 
 ---
 
