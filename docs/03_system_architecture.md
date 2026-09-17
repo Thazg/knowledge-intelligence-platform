@@ -266,6 +266,7 @@ GET  /health
 GET  /ready
 GET  /metrics
 POST /v1/query
+POST /v1/query/stream
 GET  /docs
 ```
 

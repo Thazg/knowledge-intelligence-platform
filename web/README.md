@@ -96,6 +96,7 @@ status        generating
 answer_delta  ...
 citations     ...
 done
+error         ...         (only if the stream fails mid-way)
 ```
 
 The final citation event uses the same source information returned by the existing RAG pipeline.

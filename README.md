@@ -307,14 +307,22 @@ Project vision and dataset analysis:
 ## Repository Structure
 
 ```text
-knowledge-intelligence-platform/
+Enterprise-AI-Engineering-Knowledge-Platform/
 ├── backend/
 │   ├── api/
 │   ├── chunking/
+│   ├── core/
+│   ├── embedding/
+│   ├── evaluation/
 │   ├── generation/
+│   ├── indexing/
 │   ├── ingestion/
+│   ├── query_rewriting/
+│   ├── reranking/
 │   ├── retrieval/
-│   └── tokenization/
+│   ├── services/
+│   ├── tokenization/
+│   └── vector_store/
 ├── benchmarks/
 │   ├── e2e/
 │   ├── generation/
@@ -330,6 +338,10 @@ knowledge-intelligence-platform/
 ├── docker-compose.yml
 ├── requirements.txt
 ├── requirements-cloud.txt
+├── requirements-dev.txt
+├── pyproject.toml
+├── pytest.ini
+├── .env.example
 └── README.md
 ```
 
