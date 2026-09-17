@@ -64,7 +64,7 @@ git diff --check
 The current v1 validation baseline reached:
 
 ```text
-216 passed
+225 passed
 2 deselected
 1 non-blocking warning
 ```
@@ -307,6 +307,10 @@ That benchmark evaluates:
 Ollama
 qwen3:4b-instruct
 prompt v3
+The production prompt is now v4 (injection guardrails — rule 15,
+`<question>` delimiters, 2000-char cap). The v3 numbers above are kept
+as history; v4 validated by Generation Regression #17 (Success, run 35179512580). See
+`benchmarks/generation/v1/manifest.json` (`prompt.version`).
 ```
 
 The public deployment later uses:
@@ -368,7 +372,13 @@ Canonical decision artifact:
 ```text
 benchmarks/e2e/reports/e2e_v1_decision.md
 ```
-
+> Prompt-version split (intentional, not drift): the frozen E2E v1 manifest
+> (`benchmarks/e2e/v1/manifest.json`, `prompt.version: v3`) records the prompt
+> the E2E cases were validated against and must stay frozen — do not tune the
+> prompt to these cases (`e2e_v1_decision.md` remediation policy). Production
+> has since moved to prompt v4 (injection guardrails; see
+> `benchmarks/generation/v1/manifest.json`). E2E numbers therefore describe
+> v3 behavior, not current production prompts.
 ---
 
 ## 14. Public Runtime Verification
