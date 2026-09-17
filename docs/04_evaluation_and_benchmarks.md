@@ -267,6 +267,11 @@ Known limitations included:
 Prompt tuning was stopped after v3 to avoid overfitting the same 12 development cases.
 
 > The generation benchmark above evaluates the local Ollama profile. It should not be interpreted as a benchmark of the later Groq cloud profile.
+> Note (prompt v4): the production prompt has since added injection
+> guardrails (rule 15, `<question>` delimiters, 2000-char cap — see
+> `backend/generation/prompt_builder.py`, manifest `prompt.version: v4`).
+> The quality/latency numbers above were measured with prompt v3 and have
+> not been re-run for v4 yet.
 
 ---
 
