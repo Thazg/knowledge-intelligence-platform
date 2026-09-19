@@ -1,3 +1,5 @@
+# Requires CPython 3.13 (see README, Dockerfile, CI).
+# In particular, numpy==2.5.2 needs Python >=3.12.
 numpy==2.5.2
 fastembed==0.8.0
 
