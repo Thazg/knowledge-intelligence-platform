@@ -2,7 +2,12 @@
 
 import {
   FormEvent,
+  Fragment,
   KeyboardEvent,
+  MouseEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -74,7 +79,19 @@ type Source = {
   title: string | null;
   source: string | null;
   url: string | null;
+  excerpt: string | null;
 };
+
+const HISTORY_STORAGE_KEY = "ekip-recent-queries";
+const MAX_HISTORY_ITEMS = 8;
+const MAX_QUERY_CHARS = 1024;
+
+const PIPELINE_STEPS = [
+  "Query",
+  "Hybrid retrieval",
+  "Grounded generation",
+  "Citations",
+] as const;
 
 type QueryStatus =
   | "idle"
@@ -83,18 +100,119 @@ type QueryStatus =
   | "generating"
   | "complete";
 
-function isSource(value: unknown): value is Source {
+function loadHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed: unknown = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter(
+        (item): item is string => typeof item === "string",
+      )
+      .slice(0, MAX_HISTORY_ITEMS);
+  } catch {
+    return [];
+  }
+}
+
+function asSource(value: unknown): Source | null {
   if (!value || typeof value !== "object") {
-    return false;
+    return null;
   }
 
-  const source = value as Partial<Source>;
+  const candidate = value as Partial<Source>;
 
+  if (
+    typeof candidate.citation_id !== "string" ||
+    typeof candidate.document_id !== "string" ||
+    typeof candidate.chunk_id !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    citation_id: candidate.citation_id,
+    document_id: candidate.document_id,
+    chunk_id: candidate.chunk_id,
+    title:
+      typeof candidate.title === "string"
+        ? candidate.title
+        : null,
+    source:
+      typeof candidate.source === "string"
+        ? candidate.source
+        : null,
+    url:
+      typeof candidate.url === "string"
+        ? candidate.url
+        : null,
+    excerpt:
+      typeof candidate.excerpt === "string"
+        ? candidate.excerpt
+        : null,
+  };
+}
+
+function ExternalIcon() {
   return (
-    typeof source.citation_id === "string" &&
-    typeof source.document_id === "string" &&
-    typeof source.chunk_id === "string"
+    <svg
+      className="external-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
   );
+}
+
+function isSafeHttpUrl(url: string): boolean {  try {
+    const parsed = new URL(url);
+
+    return (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function renderAnswer(answer: string): ReactNode[] {
+  return answer.split(/(\[\d+\])/g).map((part, index) => {
+    const match = /^\[(\d+)\]$/.exec(part);
+
+    if (!match) {
+      return <Fragment key={index}>{part}</Fragment>;
+    }
+
+    return (
+      <button
+        key={index}
+        type="button"
+        className="citation-link"
+        data-citation={match[1]}
+        aria-label={`Jump to source ${match[1]}`}
+      >
+        {part}
+      </button>
+    );
+  });
 }
 
 function sourceLabel(source: Source): string {
@@ -145,7 +263,121 @@ export default function QueryDemo() {
   const [error, setError] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [showColdStart, setShowColdStart] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [flashCitation, setFlashCitation] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>(() => loadHistory());
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const flashTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!lastQuestion) {
+      return;
+    }
+
+    const target = resultRef.current;
+
+    if (target && typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [lastQuestion]);
+
+  useEffect(
+    () => () => {
+      if (flashTimer.current !== null) {
+        window.clearTimeout(flashTimer.current);
+      }
+    },
+    [],
+  );
+
+  function rememberQuestion(question: string) {
+    setHistory((current) => {
+      const next = [
+        question,
+        ...current.filter((item) => item !== question),
+      ].slice(0, MAX_HISTORY_ITEMS);
+
+      try {
+        localStorage.setItem(
+          HISTORY_STORAGE_KEY,
+          JSON.stringify(next),
+        );
+      } catch {
+        // Private browsing or disabled storage: history stays in memory.
+      }
+
+      return next;
+    });
+  }
+
+  function clearHistory() {
+    setHistory([]);
+
+    try {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+    } catch {
+      // Ignore storage failures; in-memory state is already cleared.
+    }
+  }
+
+  const jumpToSource = useCallback((citationId: string) => {
+    setFlashCitation(citationId);
+
+    if (flashTimer.current !== null) {
+      window.clearTimeout(flashTimer.current);
+    }
+
+    flashTimer.current = window.setTimeout(() => {
+      setFlashCitation(null);
+    }, 1600);
+
+    const target = document.getElementById(
+      `source-${citationId}`,
+    );
+
+    if (target && typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, []);
+
+  async function copyAnswer() {
+    if (!answer) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(answer);
+      setCopied(true);
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function handleAnswerClick(
+    event: MouseEvent<HTMLDivElement>,
+  ) {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const button = target.closest("button[data-citation]");
+
+    if (button instanceof HTMLButtonElement) {
+      jumpToSource(button.dataset.citation ?? "");
+    }
+  }
 
   function chooseExample(question: string) {
     setQuery(question);
@@ -167,6 +399,9 @@ export default function QueryDemo() {
     setError(null);
     setStatus("connecting");
     setShowColdStart(false);
+    setCopied(false);
+    setFlashCitation(null);
+    rememberQuestion(cleanedQuestion);
 
     let receivedEvent = false;
     let receivedDone = false;
@@ -262,9 +497,15 @@ export default function QueryDemo() {
           );
 
           setSources(
-            rawSources
-              .filter(isSource)
-              .filter((source) => citedIds.has(source.citation_id)),
+            rawSources.flatMap((entry) => {
+              const source = asSource(entry);
+
+              if (!source || !citedIds.has(source.citation_id)) {
+                return [];
+              }
+
+              return [source];
+            }),
           );
           return;
         }
@@ -327,6 +568,14 @@ export default function QueryDemo() {
     complete: "Grounded answer complete",
   }[status];
 
+  const activePipelineStep = {
+    idle: -1,
+    connecting: 0,
+    retrieving: 1,
+    generating: 2,
+    complete: 3,
+  }[status];
+
   return (
     <main>
       <header className="site-header">
@@ -338,20 +587,18 @@ export default function QueryDemo() {
         </a>
         <nav className="header-actions" aria-label="Project links">
           <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-            GitHub <span aria-hidden="true">↗</span>
+            GitHub <span aria-hidden="true"><ExternalIcon /></span>
           </a>
           <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-            API Docs <span aria-hidden="true">↗</span>
+            API Docs <span aria-hidden="true"><ExternalIcon /></span>
           </a>
         </nav>
       </header>
 
       <section className="hero" id="top" aria-labelledby="hero-title">
-        <div className="eyebrow">
-          <span className="live-dot" aria-hidden="true" />
-          Current v1 demo
-        </div>
-        <h1 id="hero-title">Enterprise Knowledge Intelligence Platform</h1>
+        <h1 id="hero-title">
+          Enterprise <em>Knowledge Intelligence</em> Platform
+        </h1>
         <p className="hero-subtitle">
           Production RAG over curated technical documentation
         </p>
@@ -361,13 +608,23 @@ export default function QueryDemo() {
           grounded generation, and citations.
         </p>
         <div className="pipeline" aria-label="Enterprise KIP query pipeline">
-          <span>Query</span>
-          <i aria-hidden="true">→</i>
-          <span>Hybrid retrieval</span>
-          <i aria-hidden="true">→</i>
-          <span>Grounded generation</span>
-          <i aria-hidden="true">→</i>
-          <span>Citations</span>
+          {isActive ? (
+            <span className="pulse" aria-hidden="true" />
+          ) : null}
+          {PIPELINE_STEPS.map((step, index) => (
+            <Fragment key={step}>
+              <span
+                className={
+                  index <= activePipelineStep ? "active" : undefined
+                }
+              >
+                {step}
+              </span>
+              {index < PIPELINE_STEPS.length - 1 ? (
+                <i aria-hidden="true">→</i>
+              ) : null}
+            </Fragment>
+          ))}
         </div>
       </section>
 
@@ -443,26 +700,75 @@ export default function QueryDemo() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={handleKeyDown}
-                maxLength={1024}
+                maxLength={MAX_QUERY_CHARS}
                 rows={4}
                 placeholder="Ask about Docker builds, Kubernetes operations, FastAPI patterns, vector search…"
                 disabled={isActive}
               />
               <div className="form-footer">
                 <span>
-                  <kbd>Enter</kbd> to ask · <kbd>Shift</kbd> + <kbd>Enter</kbd> for
-                  a new line
+                  <kbd>Enter</kbd> to ask · <kbd>Shift</kbd> + <kbd>Enter</kbd>{" "}
+                  for a new line ·{" "}
+                  <span className="char-count">
+                    {query.length}/{MAX_QUERY_CHARS}
+                  </span>
                 </span>
-                <button
-                  className="ask-button"
-                  type="submit"
-                  disabled={isActive || !query.trim()}
-                >
-                  {isActive ? "Working…" : "Ask Enterprise KIP"}
-                  <span aria-hidden="true">→</span>
-                </button>
+                <div className="form-actions">
+                  {query && !isActive ? (
+                    <button
+                      className="clear-button"
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setError(null);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                  <button
+                    className="ask-button"
+                    type="submit"
+                    disabled={isActive || !query.trim()}
+                  >
+                    {isActive ? "Working…" : "Ask Enterprise KIP"}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
               </div>
             </form>
+
+            {history.length > 0 && !isActive ? (
+              <div className="history">
+                <div className="history-heading">
+                  <span>Recent questions</span>
+                  <button
+                    className="history-clear"
+                    type="button"
+                    onClick={clearHistory}
+                  >
+                    Clear history
+                  </button>
+                </div>
+                <div className="history-list">
+                  {history.map((item) => (
+                    <button
+                      key={item}
+                      className="history-item"
+                      type="button"
+                      onClick={() => {
+                        setQuery(item);
+                        setError(null);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {showColdStart && isActive ? (
               <div className="cold-start" role="status">
@@ -475,7 +781,7 @@ export default function QueryDemo() {
             ) : null}
 
             {lastQuestion ? (
-              <div className="result" aria-live="polite">
+              <div className="result" aria-live="polite" ref={resultRef}>
                 <div className="question-block">
                   <span>Your question</span>
                   <p>{lastQuestion}</p>
@@ -491,9 +797,29 @@ export default function QueryDemo() {
                         <strong>Grounded answer</strong>
                         <span>{isActive ? statusCopy : "From indexed evidence"}</span>
                       </div>
+                      {answer && !isActive ? (
+                        <button
+                          className="copy-button"
+                          type="button"
+                          onClick={() => void copyAnswer()}
+                        >
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      ) : null}
                     </div>
                     {answer ? (
-                      <div className="answer-copy">{answer}</div>
+                      <div
+                        className="answer-copy"
+                        onClick={handleAnswerClick}
+                      >
+                        {renderAnswer(answer)}
+                        {isActive ? (
+                          <span
+                            className="typing-caret"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                      </div>
                     ) : (
                       <div className="answer-skeleton" aria-label="Waiting for answer">
                         <span />
@@ -527,20 +853,35 @@ export default function QueryDemo() {
                     </div>
                     <div className="source-list">
                       {sources.map((source) => (
-                        <article className="source-card" key={source.citation_id}>
+                        <article
+                          className={
+                            flashCitation === source.citation_id
+                              ? "source-card flash"
+                              : "source-card"
+                          }
+                          id={`source-${source.citation_id}`}
+                          key={source.citation_id}
+                        >
                           <span className="citation-number">[{source.citation_id}]</span>
                           <div>
                             <span className="source-name">{sourceLabel(source)}</span>
                             <h4>{source.title ?? "Untitled documentation source"}</h4>
+                            {source.excerpt ? (
+                              <p className="source-excerpt">{source.excerpt}</p>
+                            ) : null}
                             <details>
                               <summary>Source identifiers</summary>
                               <code>Document {source.document_id}</code>
                               <code>Chunk {source.chunk_id}</code>
                             </details>
                           </div>
-                          {source.url ? (
-                            <a href={source.url} target="_blank" rel="noreferrer">
-                              Open source <span aria-hidden="true">↗</span>
+                          {source.url && isSafeHttpUrl(source.url) ? (
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                            >
+                              Open source <span aria-hidden="true"><ExternalIcon /></span>
                             </a>
                           ) : null}
                         </article>
@@ -581,17 +922,17 @@ export default function QueryDemo() {
           </dl>
           <div className="about-links">
             <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-              GitHub Repository <span aria-hidden="true">↗</span>
+              GitHub Repository <span aria-hidden="true"><ExternalIcon /></span>
             </a>
             <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-              API Documentation <span aria-hidden="true">↗</span>
+              API Documentation <span aria-hidden="true"><ExternalIcon /></span>
             </a>
           </div>
         </aside>
       </div>
 
       <footer>
-        <span>Enterprise KIP · Current v1 demo</span>
+        <span>© 2026 Nguyen Tam Thang. All rights reserved.</span>
         <span>Answers from curated documentation, not the open web.</span>
       </footer>
     </main>

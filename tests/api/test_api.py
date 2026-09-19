@@ -285,6 +285,7 @@ def test_query_returns_rag_response() -> None:
             "title": "Deployments",
             "source": "kubernetes",
             "url": None,
+            "excerpt": None,
         },
     ]
 

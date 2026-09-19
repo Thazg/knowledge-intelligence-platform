@@ -48,8 +48,41 @@ def test_context_builder_builds_context() -> None:
     assert context.sources[0].citation_id == "1"
     assert context.sources[1].citation_id == "2"
 
+    assert (
+        context.sources[0].excerpt
+        == "FastAPI supports dependency injection."
+    )
+    assert (
+        context.sources[1].excerpt
+        == "Kubernetes Deployments manage replicated applications."
+    )
+
     assert "[SOURCE 1]" in context.context_text
     assert "[SOURCE 2]" in context.context_text
     assert "FastAPI supports dependency injection." in context.context_text
     assert context.token_count is not None
     assert context.token_count > 0
+
+
+def test_context_builder_truncates_long_excerpts() -> None:
+    long_content = "x" * 600
+
+    builder = ContextBuilder(
+        max_context_tokens=10000,
+        max_sources=8,
+    )
+
+    context = builder.build(
+        query="What is x?",
+        results=[
+            FakeRetrievalResult(
+                document_id="doc-1",
+                chunk_id="chunk-1",
+                content=long_content,
+            ),
+        ],  # type: ignore[arg-type]
+    )
+
+    assert len(context.sources) == 1
+    assert context.sources[0].excerpt == "x" * 500
+    assert long_content in context.context_text

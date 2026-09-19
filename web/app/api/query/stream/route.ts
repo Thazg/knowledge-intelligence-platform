@@ -36,6 +36,29 @@ export async function POST(request: NextRequest): Promise<Response> {
     return jsonError("The query request could not be read.", 400);
   }
 
+  if (requestBody.length > 8192) {
+    return jsonError("The query request is too large.", 413);
+  }
+
+  try {
+    const parsed = JSON.parse(requestBody) as {
+      query?: unknown;
+    };
+
+    if (
+      typeof parsed.query !== "string" ||
+      parsed.query.trim().length < 1 ||
+      parsed.query.trim().length > 1024
+    ) {
+      return jsonError(
+        "Query must be a question between 1 and 1,024 characters.",
+        422,
+      );
+    }
+  } catch {
+    return jsonError("The query request is not valid JSON.", 400);
+  }
+
   let upstream: Response;
 
   try {

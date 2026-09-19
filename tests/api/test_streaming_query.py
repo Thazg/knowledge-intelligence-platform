@@ -200,6 +200,7 @@ def test_stream_query_emits_existing_citation_schema() -> None:
                     "https://docs.docker.com/"
                     "build/buildkit/"
                 ),
+                "excerpt": None,
             }
         ],
     }
