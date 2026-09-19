@@ -29,6 +29,7 @@ def to_query_response(result: RAGServiceResult) -> QueryResponse:
                 title=source.title,
                 source=source.source,
                 url=source.url,
+                excerpt=source.excerpt,
             )
             for source in result.sources
         ],

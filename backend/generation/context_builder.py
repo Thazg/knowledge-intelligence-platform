@@ -6,6 +6,8 @@ from typing import Any
 from backend.generation.models import GenerationContext, SourceReference
 from backend.retrieval.models import RetrievalResult
 
+MAX_EXCERPT_CHARS = 500
+
 
 class ContextBuilder:
     def __init__(
@@ -78,6 +80,7 @@ class ContextBuilder:
                 title=title,
                 source=source,
                 url=url,
+                excerpt=content[:MAX_EXCERPT_CHARS],
                 metadata=metadata,
             )
 

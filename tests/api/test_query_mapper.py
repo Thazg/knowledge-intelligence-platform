@@ -19,6 +19,7 @@ def test_query_mapper_preserves_api_response_contract() -> None:
                 title="First source",
                 source="docker",
                 url="https://example.test/first",
+                excerpt="BuildKit is part of docker build.",
                 metadata={"relative_path": "docker/first.md"},
             ),
             SourceReference(
@@ -61,6 +62,7 @@ def test_query_mapper_preserves_api_response_contract() -> None:
                 "title": "First source",
                 "source": "docker",
                 "url": "https://example.test/first",
+                "excerpt": "BuildKit is part of docker build.",
             },
             {
                 "citation_id": "2",
@@ -69,6 +71,7 @@ def test_query_mapper_preserves_api_response_contract() -> None:
                 "title": "Second source",
                 "source": "kubernetes",
                 "url": None,
+                "excerpt": None,
             },
         ],
         "model": "synthetic-model",

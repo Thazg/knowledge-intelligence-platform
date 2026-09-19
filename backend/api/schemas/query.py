@@ -34,6 +34,7 @@ class SourceResponse(BaseModel):
     title: str | None = None
     source: str | None = None
     url: str | None = None
+    excerpt: str | None = None
 
 
 class MetricsResponse(BaseModel):

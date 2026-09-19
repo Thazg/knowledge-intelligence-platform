@@ -12,6 +12,7 @@ class SourceReference:
     title: str | None = None
     source: str | None = None
     url: str | None = None
+    excerpt: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
