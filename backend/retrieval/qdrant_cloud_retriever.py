@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from qdrant_client import models
+from qdrant_client.http.exceptions import (
+    ResponseHandlingException,
+    UnexpectedResponse,
+)
 
+from backend.core.errors import DependencyUnavailableError
 from backend.retrieval.models import RetrievalResult
 
 
@@ -86,16 +91,24 @@ class QdrantCloudRetriever:
                 top_k * candidate_multiplier
             )
 
-        response = self.client.query_points(
-            collection_name=self.collection_name,
-            query=models.Document(
-                text=query,
-                model=self.model_name,
-            ),
-            using=self.vector_name,
-            limit=search_limit,
-            with_payload=True,
-        )
+        try:
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=models.Document(
+                    text=query,
+                    model=self.model_name,
+                ),
+                using=self.vector_name,
+                limit=search_limit,
+                with_payload=True,
+            )
+        except (
+            ResponseHandlingException,
+            UnexpectedResponse,
+        ) as exc:
+            raise DependencyUnavailableError(
+                "qdrant"
+            ) from exc
 
         results: list[RetrievalResult] = []
         document_counts: dict[str, int] = {}

@@ -371,6 +371,50 @@ def test_generate_translates_timeout_to_dependency_timeout(
     )
 
 
+def test_generate_translates_transport_error_to_dependency_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request = httpx.Request(
+        "POST",
+        (
+            "https://api.groq.com/"
+            "openai/v1/chat/completions"
+        ),
+    )
+
+    def fail_post(
+        _client: httpx.Client,
+        _url: str,
+        **_kwargs: object,
+    ) -> httpx.Response:
+        raise httpx.ReadError(
+            "Groq transport failed",
+            request=request,
+        )
+
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        fail_post,
+    )
+
+    with pytest.raises(
+        DependencyUnavailableError,
+    ) as exc_info:
+        _generator().generate(
+            _context()
+        )
+
+    assert (
+        exc_info.value.dependency
+        == "groq"
+    )
+    assert isinstance(
+        exc_info.value.__cause__,
+        httpx.TransportError,
+    )
+
+
 def test_generate_translates_http_error_to_dependency_response_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
