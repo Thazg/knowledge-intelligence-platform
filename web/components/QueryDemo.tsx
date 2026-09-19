@@ -5,7 +5,6 @@ import {
   Fragment,
   KeyboardEvent,
   MouseEvent,
-  ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -16,6 +15,10 @@ import {
   consumeEventStream,
   StreamEvent,
 } from "../lib/stream";
+import {
+  isSafeHttpUrl,
+  renderRichText,
+} from "../lib/markdown";
 
 const REPOSITORY_URL =
   "https://github.com/Thazg/knowledge-intelligence-platform";
@@ -180,41 +183,6 @@ function ExternalIcon() {
     </svg>
   );
 }
-
-function isSafeHttpUrl(url: string): boolean {  try {
-    const parsed = new URL(url);
-
-    return (
-      parsed.protocol === "http:" ||
-      parsed.protocol === "https:"
-    );
-  } catch {
-    return false;
-  }
-}
-
-function renderAnswer(answer: string): ReactNode[] {
-  return answer.split(/(\[\d+\])/g).map((part, index) => {
-    const match = /^\[(\d+)\]$/.exec(part);
-
-    if (!match) {
-      return <Fragment key={index}>{part}</Fragment>;
-    }
-
-    return (
-      <button
-        key={index}
-        type="button"
-        className="citation-link"
-        data-citation={match[1]}
-        aria-label={`Jump to source ${match[1]}`}
-      >
-        {part}
-      </button>
-    );
-  });
-}
-
 function sourceLabel(source: Source): string {
   if (!source.source) {
     return "Documentation";
@@ -812,7 +780,7 @@ export default function QueryDemo() {
                         className="answer-copy"
                         onClick={handleAnswerClick}
                       >
-                        {renderAnswer(answer)}
+                        {renderRichText(answer)}
                         {isActive ? (
                           <span
                             className="typing-caret"
@@ -867,7 +835,11 @@ export default function QueryDemo() {
                             <span className="source-name">{sourceLabel(source)}</span>
                             <h4>{source.title ?? "Untitled documentation source"}</h4>
                             {source.excerpt ? (
-                              <p className="source-excerpt">{source.excerpt}</p>
+                              <div className="source-excerpt">
+                                {renderRichText(source.excerpt, {
+                                  citations: false,
+                                })}
+                              </div>
                             ) : null}
                             <details>
                               <summary>Source identifiers</summary>

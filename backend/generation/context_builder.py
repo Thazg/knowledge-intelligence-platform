@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -7,6 +8,9 @@ from backend.generation.models import GenerationContext, SourceReference
 from backend.retrieval.models import RetrievalResult
 
 MAX_EXCERPT_CHARS = 500
+
+_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
+_BLANK_RUN_PATTERN = re.compile(r"\n{3,}")
 
 
 class ContextBuilder:
@@ -80,7 +84,9 @@ class ContextBuilder:
                 title=title,
                 source=source,
                 url=url,
-                excerpt=content[:MAX_EXCERPT_CHARS],
+                excerpt=self._clean_excerpt(content)[
+                    :MAX_EXCERPT_CHARS
+                ],
                 metadata=metadata,
             )
 
@@ -131,6 +137,26 @@ class ContextBuilder:
                 return value.strip()
 
         return ""
+
+    @staticmethod
+    def _clean_excerpt(content: str) -> str:
+        """
+        Strip display noise from chunk text used as a UI preview.
+
+        Removes embedded HTML comments and lone code-fence markers
+        and collapses long blank runs. Inline markdown is preserved
+        for the frontend renderer.
+        """
+        text = _HTML_COMMENT_PATTERN.sub("", content)
+        lines = [
+            line
+            for line in text.splitlines()
+            if not line.strip().startswith("```")
+        ]
+        collapsed = "\n".join(lines)
+        collapsed = _BLANK_RUN_PATTERN.sub("\n\n", collapsed)
+
+        return collapsed.strip()
 
     @staticmethod
     def _get_metadata(
