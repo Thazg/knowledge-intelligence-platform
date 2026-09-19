@@ -193,6 +193,8 @@ The frozen E2E benchmark contains 18 cases covering:
 
 The validation suite exercises the real API → RAG service → retrieval → context → prompt → generator path.
 
+Structural: 18/18 pass; semantic: 12 pass / 5 partial / 1 fail (e2e-009) — release gate NOT PASSED, see decision report.
+
 E2E decision report:
 
 - [`benchmarks/e2e/reports/e2e_v1_decision.md`](benchmarks/e2e/reports/e2e_v1_decision.md)
