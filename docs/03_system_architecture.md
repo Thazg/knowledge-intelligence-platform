@@ -104,6 +104,8 @@ Maximum sources    6
 Maximum tokens     4000
 ```
 
+Each selected source also carries a display excerpt: the chunk text cleaned of HTML comments, lone code-fence markers, and long blank runs, truncated to 500 characters (`MAX_EXCERPT_CHARS`). The excerpt is stored on `SourceReference.excerpt` (`backend/generation/models.py`), mapped to `SourceResponse.excerpt` (`backend/api/schemas/query.py`, `backend/api/query_mapper.py`), and delivered to clients in the SSE `citations` event. It never enters the generation prompt or any frozen benchmark — it is display-only.
+
 Adaptive retrieval was evaluated separately but was not enabled for the v1 production path. The deterministic hybrid pipeline remains the frozen v1 baseline.
 
 ---
