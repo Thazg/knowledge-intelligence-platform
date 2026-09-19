@@ -162,8 +162,26 @@ function asSource(value: unknown): Source | null {
   };
 }
 
-function isSafeHttpUrl(url: string): boolean {
-  try {
+function ExternalIcon() {
+  return (
+    <svg
+      className="external-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function isSafeHttpUrl(url: string): boolean {  try {
     const parsed = new URL(url);
 
     return (
@@ -569,20 +587,18 @@ export default function QueryDemo() {
         </a>
         <nav className="header-actions" aria-label="Project links">
           <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-            GitHub <span aria-hidden="true">↗</span>
+            GitHub <span aria-hidden="true"><ExternalIcon /></span>
           </a>
           <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-            API Docs <span aria-hidden="true">↗</span>
+            API Docs <span aria-hidden="true"><ExternalIcon /></span>
           </a>
         </nav>
       </header>
 
       <section className="hero" id="top" aria-labelledby="hero-title">
-        <div className="eyebrow">
-          <span className="live-dot" aria-hidden="true" />
-          Current v1 demo
-        </div>
-        <h1 id="hero-title">Enterprise Knowledge Intelligence Platform</h1>
+        <h1 id="hero-title">
+          Enterprise <em>Knowledge Intelligence</em> Platform
+        </h1>
         <p className="hero-subtitle">
           Production RAG over curated technical documentation
         </p>
@@ -592,6 +608,9 @@ export default function QueryDemo() {
           grounded generation, and citations.
         </p>
         <div className="pipeline" aria-label="Enterprise KIP query pipeline">
+          {isActive ? (
+            <span className="pulse" aria-hidden="true" />
+          ) : null}
           {PIPELINE_STEPS.map((step, index) => (
             <Fragment key={step}>
               <span
@@ -794,6 +813,12 @@ export default function QueryDemo() {
                         onClick={handleAnswerClick}
                       >
                         {renderAnswer(answer)}
+                        {isActive ? (
+                          <span
+                            className="typing-caret"
+                            aria-hidden="true"
+                          />
+                        ) : null}
                       </div>
                     ) : (
                       <div className="answer-skeleton" aria-label="Waiting for answer">
@@ -856,7 +881,7 @@ export default function QueryDemo() {
                               target="_blank"
                               rel="noreferrer noopener"
                             >
-                              Open source <span aria-hidden="true">↗</span>
+                              Open source <span aria-hidden="true"><ExternalIcon /></span>
                             </a>
                           ) : null}
                         </article>
@@ -897,17 +922,17 @@ export default function QueryDemo() {
           </dl>
           <div className="about-links">
             <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-              GitHub Repository <span aria-hidden="true">↗</span>
+              GitHub Repository <span aria-hidden="true"><ExternalIcon /></span>
             </a>
             <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-              API Documentation <span aria-hidden="true">↗</span>
+              API Documentation <span aria-hidden="true"><ExternalIcon /></span>
             </a>
           </div>
         </aside>
       </div>
 
       <footer>
-        <span>Enterprise KIP · Current v1 demo</span>
+        <span>© 2026 Nguyen Tam Thang. All rights reserved.</span>
         <span>Answers from curated documentation, not the open web.</span>
       </footer>
     </main>
