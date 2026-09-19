@@ -86,3 +86,38 @@ def test_context_builder_truncates_long_excerpts() -> None:
     assert len(context.sources) == 1
     assert context.sources[0].excerpt == "x" * 500
     assert long_content in context.context_text
+
+
+def test_context_builder_cleans_excerpt_display_noise() -> None:
+    builder = ContextBuilder(
+        max_context_tokens=10000,
+        max_sources=8,
+    )
+
+    context = builder.build(
+        query="How do I generate text?",
+        results=[
+            FakeRetrievalResult(
+                document_id="doc-1",
+                chunk_id="chunk-1",
+                content=(
+                    "<!--Copyright 2024 Example-->\n"
+                    "Use `generate()`.\n"
+                    "```py\n"
+                    "model.generate()\n"
+                    "```\n\n\n"
+                    "Done."
+                ),
+            ),
+        ],  # type: ignore[arg-type]
+    )
+
+    assert len(context.sources) == 1
+
+    excerpt = context.sources[0].excerpt
+
+    assert excerpt is not None
+    assert "Copyright" not in excerpt
+    assert "```" not in excerpt
+    assert "\n\n\n" not in excerpt
+    assert "Use `generate()`." in excerpt
