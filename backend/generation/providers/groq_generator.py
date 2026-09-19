@@ -157,6 +157,11 @@ class GroqGenerator(LLMGenerator):
                     "groq"
                 ) from exc
 
+            except httpx.TransportError as exc:
+                raise DependencyUnavailableError(
+                    "groq"
+                ) from exc
+
             try:
                 data: dict[str, Any] = (
                     response.json()

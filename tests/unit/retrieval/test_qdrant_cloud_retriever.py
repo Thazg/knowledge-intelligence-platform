@@ -3,9 +3,15 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
+import httpx
 import pytest
 from qdrant_client import models
+from qdrant_client.http.exceptions import (
+    ResponseHandlingException,
+    UnexpectedResponse,
+)
 
+from backend.core.errors import DependencyUnavailableError
 from backend.retrieval.qdrant_cloud_retriever import (
     QdrantCloudRetriever,
 )
@@ -313,3 +319,66 @@ def test_constructor_rejects_empty_configuration(
             vector_name=vector,
             model_name=model,
         )
+
+
+class FailingQdrantClient:
+    def __init__(
+        self,
+        error: Exception,
+    ) -> None:
+        self.error = error
+
+    def query_points(
+        self,
+        **kwargs: Any,
+    ) -> SimpleNamespace:
+        raise self.error
+
+
+def test_retrieve_maps_transport_failure_to_dependency_unavailable() -> None:
+    retriever = _retriever(
+        FailingQdrantClient(
+            ResponseHandlingException(
+                RuntimeError("Qdrant unreachable")
+            )
+        )
+    )
+
+    with pytest.raises(
+        DependencyUnavailableError,
+    ) as exc_info:
+        retriever.retrieve(
+            "What is Qdrant?"
+        )
+
+    assert exc_info.value.dependency == "qdrant"
+    assert isinstance(
+        exc_info.value.__cause__,
+        ResponseHandlingException,
+    )
+
+
+def test_retrieve_maps_unexpected_status_to_dependency_unavailable() -> None:
+    retriever = _retriever(
+        FailingQdrantClient(
+            UnexpectedResponse(
+                401,
+                "Unauthorized",
+                b"{}",
+                httpx.Headers(),
+            )
+        )
+    )
+
+    with pytest.raises(
+        DependencyUnavailableError,
+    ) as exc_info:
+        retriever.retrieve(
+            "What is Qdrant?"
+        )
+
+    assert exc_info.value.dependency == "qdrant"
+    assert isinstance(
+        exc_info.value.__cause__,
+        UnexpectedResponse,
+    )

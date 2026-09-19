@@ -3,7 +3,10 @@ import uuid
 import numpy as np
 from numpy.typing import NDArray
 from qdrant_client import QdrantClient, models
-from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.exceptions import (
+    ResponseHandlingException,
+    UnexpectedResponse,
+)
 
 from backend.chunking.models import Chunk
 from backend.core.errors import DependencyUnavailableError
@@ -170,7 +173,10 @@ class QdrantVectorStore:
                 with_vectors=False,
             )
 
-        except ResponseHandlingException as exc:
+        except (
+            ResponseHandlingException,
+            UnexpectedResponse,
+        ) as exc:
             raise DependencyUnavailableError(
                 "qdrant"
             ) from exc

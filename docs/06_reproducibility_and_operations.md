@@ -64,7 +64,7 @@ git diff --check
 The current v1 validation baseline reached:
 
 ```text
-227 passed
+235 passed
 2 deselected
 1 non-blocking warning
 ```

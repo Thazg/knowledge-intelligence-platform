@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any, Protocol
 
+from backend.core.errors import DependencyUnavailableError
 from backend.retrieval.models import RetrievalResult
 
 
@@ -140,13 +141,35 @@ class FastEmbedCloudDenseRetriever:
                 top_k * candidate_multiplier
             )
 
-        response = self.client.query_points(
-            collection_name=self.collection_name,
-            query=query_embedding,
-            using=self.vector_name,
-            limit=search_limit,
-            with_payload=True,
-        )
+        try:
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=query_embedding,
+                using=self.vector_name,
+                limit=search_limit,
+                with_payload=True,
+            )
+        except Exception as exc:
+            # Imported lazily so this module never pulls
+            # qdrant_client (and transitively fastembed)
+            # at import time.
+            from qdrant_client.http.exceptions import (
+                ResponseHandlingException,
+                UnexpectedResponse,
+            )
+
+            if not isinstance(
+                exc,
+                (
+                    ResponseHandlingException,
+                    UnexpectedResponse,
+                ),
+            ):
+                raise
+
+            raise DependencyUnavailableError(
+                "qdrant"
+            ) from exc
 
         results: list[RetrievalResult] = []
         document_counts: dict[str, int] = {}
