@@ -304,22 +304,22 @@ The probe calls a bash script that uses
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `1`
+- Faithfulness: `1`
+- Citation correctness: `1`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `partial`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+The core explanation is correct, but the answer incorrectly says a failed startup probe restarts the container only after the startup phase is complete. The evidence says a failed startup probe causes the kubelet to kill the container and apply its restart policy.
 
 ---
 
@@ -560,22 +560,22 @@ Without memory, every conversation starts from scratch. Memory lets your agent r
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Clearly distinguishes thread-scoped checkpoint persistence from cross-thread long-term memory, with the major claims supported by the retrieved LangGraph evidence.
 
 ---
 
@@ -770,7 +770,7 @@ For best results, create payload indexes **before** uploading data. When uploadi
 ### Source [5]
 
 - Source: `qdrant`
-- Title: `None`
+- Title: `(no title — snippet chunk)`
 - Document ID: `5fcad0aecd090ff5a230e84fd3181db2bd7bbe6a695ae37a82339d9fe59eeeec`
 - Chunk ID: `0ce70d15a6699b5251924967b91435b16d426538cf4e05ba2b76fe2048b7e89d`
 
@@ -808,22 +808,22 @@ The HNSW graph will only get
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Explains the role of payload indexes in filtered search and query-planning decisions without a material unsupported claim.
 
 ---
 
@@ -1178,22 +1178,22 @@ See the examples section for language-specific migration examples:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly explains COPY --from as copying artifacts from another build stage into the current stage and supports the explanation with Docker multi-stage-build evidence.
 
 ---
 
@@ -1528,22 +1528,22 @@ Use a custom resource (CRD or Aggregated API) if most of the following apply:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `1`
+- Faithfulness: `1`
+- Citation correctness: `1`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `partial`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+The envFrom explanation is correct, but the claim that this enables dynamic configuration updates without restarts is not supported by the retrieved evidence and overstates the behavior.
 
 ---
 
@@ -1826,22 +1826,22 @@ messages = [
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly describes generate() as model-driven token generation followed by decoding, consistent with the retrieved Transformers documentation.
 
 ---
 
@@ -2174,22 +2174,22 @@ See [Long-term memory](/oss/deepagents/memory) for setup and use cases.
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `1`
+- Ambiguity handling: `1`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `partial`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+The LangGraph-specific persistence advice is technically supported, but the generic query does not establish that the application uses LangGraph or what state lifetime is required. The answer should explicitly qualify its recommendation by those assumptions.
 
 ---
 
@@ -2452,22 +2452,22 @@ And here’s a sneak peek at what you’ll get from the vector search:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `1`
+- Faithfulness: `1`
+- Citation correctness: `1`
+- Citation completeness: `2`
+- Evidence sufficiency: `1`
+- Ambiguity handling: `1`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `partial`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+The answer is too prescriptive for an underspecified performance question. Most importantly, it presents static embeddings as a vector-search speed optimization even though the retrieved evidence explicitly says retrieval itself is not faster; static embeddings speed up vector creation.
 
 ---
 
@@ -2773,22 +2773,22 @@ When a timeout fires, LangGraph raises @[`NodeTimeoutError`] with structured con
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `1`
+- Faithfulness: `1`
+- Citation correctness: `1`
+- Citation completeness: `2`
+- Evidence sufficiency: `0`
+- Ambiguity handling: `0`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `fail`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `blocker`
 
 **Reviewer notes:**
 
-TODO
+The generic API question is answered as though it were specifically a LangGraph workflow. LangGraph task and heartbeat mechanisms are generalized into universal API guidance without stating that assumption. This violates the required qualified-answer behavior.
 
 ---
 
@@ -3035,22 +3035,22 @@ services defined in
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Accurately distinguishes the legacy docker-compose command and implementation from the current docker compose CLI using retrieved Docker documentation.
 
 ---
 
@@ -3316,22 +3316,22 @@ You can learn a lot more at the **SQLModel** docs, there's a longer mini [tutori
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly states the current FastAPI recommendation to build a custom image instead of using the deprecated tiangolo/uvicorn-gunicorn-fastapi base image.
 
 ---
 
@@ -3616,22 +3616,22 @@ You will see the JSON response
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Directly and correctly answers that current FastAPI guidance prefers the lifespan parameter over startup and shutdown event handlers.
 
 ---
 
@@ -3899,22 +3899,22 @@ partition: ecosystem
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `1`
+- Faithfulness: `1`
+- Citation correctness: `1`
+- Citation completeness: `1`
+- Evidence sufficiency: `1`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `1`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `partial`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+The high-level separation of LangGraph state management and Qdrant retrieval is reasonable, but the answer makes stronger claims such as Qdrant being used solely for retrieval and attributes broad persistence behavior to a limited cited source. The synthesis needs stronger direct persistence evidence and more careful qualification.
 
 ---
 
@@ -4194,22 +4194,22 @@ Setting `model_impl="transformers"` bypasses the vLLM model registry and loads d
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `2`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Cleanly separates Transformers model-serving responsibilities from Kubernetes Service networking, discovery, and exposure responsibilities using evidence from both tool areas.
 
 ---
 
@@ -4484,22 +4484,22 @@ content:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `2`
+- Abstention: `N/A`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly separates FastAPI's HTTP/API-layer responsibilities from Qdrant's vector storage, indexing, and retrieval responsibilities.
 
 ---
 
@@ -4814,22 +4814,22 @@ For examples on using limits, see:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `2`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly refuses to derive exact CPU and memory limits for 500 RPS because the retrieved Kubernetes documentation provides resource configuration concepts but no throughput-to-resource model.
 
 ---
 
@@ -5081,22 +5081,22 @@ def avg_recall_at_k(
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `2`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly refuses to claim an HNSW configuration that guarantees a hardware-specific p95 latency target. The retrieved sources provide optimization guidance but not a laptop-specific guarantee.
 
 ---
 
@@ -5414,20 +5414,20 @@ CVE mitigation:
 
 ## Human scores
 
-- Correctness: `TODO`
-- Faithfulness: `TODO`
-- Citation correctness: `TODO`
-- Citation completeness: `TODO`
-- Evidence sufficiency: `TODO`
-- Ambiguity handling: `TODO`
-- Multi-source synthesis: `TODO`
-- Abstention: `TODO`
+- Correctness: `2`
+- Faithfulness: `2`
+- Citation correctness: `2`
+- Citation completeness: `2`
+- Evidence sufficiency: `2`
+- Ambiguity handling: `N/A`
+- Multi-source synthesis: `N/A`
+- Abstention: `2`
 
-**Verdict:** `TODO`
+**Verdict:** `pass`
 
-**Severity / blocker:** `TODO`
+**Severity / blocker:** `non-blocking`
 
 **Reviewer notes:**
 
-TODO
+Correctly refuses to identify a base image guaranteed to have no known vulnerabilities today because the static retrieved documentation cannot establish that current guarantee.
 
