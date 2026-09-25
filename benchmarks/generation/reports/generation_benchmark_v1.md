@@ -121,7 +121,7 @@ The final prompt behavior emphasizes:
 - using only sources directly necessary for the answer,
 - prioritizing answer completion over additional detail.
 
-The final 12-case v3 benchmark had no output truncation. The highest completion length was 360 tokens, below the 384-token generation limit. :contentReference[oaicite:0]{index=0}
+The final 12-case v3 benchmark had no output truncation. The highest completion length was 360 tokens, below the 384-token generation limit.
 
 ---
 
@@ -135,7 +135,7 @@ The final 12-case v3 benchmark had no output truncation. The highest completion 
 | Mean completion tokens | 194.75 |
 | Maximum completion tokens | 360 |
 
-The 384-token output budget provides sufficient headroom for the current benchmark while keeping responses bounded. :contentReference[oaicite:1]{index=1}
+The 384-token output budget provides sufficient headroom for the current benchmark while keeping responses bounded.
 
 ### Latency
 
@@ -147,7 +147,7 @@ The 384-token output budget provides sufficient headroom for the current benchma
 | Median end-to-end latency | 17,609.48 ms |
 | P95 end-to-end latency | 23,224.35 ms |
 
-Generation dominates end-to-end latency, while retrieval remains comparatively small. Across the final run, retrieval was generally measured in hundreds of milliseconds whereas local LLM generation took several seconds to tens of seconds. :contentReference[oaicite:2]{index=2}
+Generation dominates end-to-end latency, while retrieval remains comparatively small. Across the final run, retrieval was generally measured in hundreds of milliseconds whereas local LLM generation took several seconds to tens of seconds.
 
 ---
 
@@ -168,7 +168,7 @@ Generation dominates end-to-end latency, while retrieval remains comparatively s
 | gen-011 | Insufficient evidence | Pass | Correctly refuses to fabricate project-specific Kubernetes YAML. |
 | gen-012 | Insufficient evidence | Pass | Correctly refuses to infer future cloud-provider pricing from unrelated documentation. |
 
-The final run therefore shows strong behavior for factual, lexical, version-specific, cross-tool, and insufficient-evidence queries, while ambiguous-query handling remains the clearest quality limitation. :contentReference[oaicite:3]{index=3}
+The final run therefore shows strong behavior for factual, lexical, version-specific, cross-tool, and insufficient-evidence queries, while ambiguous-query handling remains the clearest quality limitation.
 
 ---
 
@@ -178,15 +178,15 @@ The final run therefore shows strong behavior for factual, lexical, version-spec
 
 The system generally answers technical questions using retrieved documentation rather than relying on unsupported model knowledge.
 
-For example, the Kubernetes Deployment cases use retrieved Kubernetes sources to explain desired state, ReplicaSets, rollouts, and self-healing behavior. :contentReference[oaicite:4]{index=4}
+For example, the Kubernetes Deployment cases use retrieved Kubernetes sources to explain desired state, ReplicaSets, rollouts, and self-healing behavior.
 
 ### Abstention
 
 The strongest result in the benchmark is insufficient-evidence handling.
 
-For the project-specific Kubernetes YAML case, the model explicitly states that the retrieved evidence does not contain enough information to construct the requested manifest instead of fabricating one. :contentReference[oaicite:5]{index=5}
+For the project-specific Kubernetes YAML case, the model explicitly states that the retrieved evidence does not contain enough information to construct the requested manifest instead of fabricating one.
 
-The cloud-pricing case similarly refuses to identify a cheapest provider because the corpus does not contain the required pricing information. :contentReference[oaicite:6]{index=6}
+The cloud-pricing case similarly refuses to identify a cheapest provider because the corpus does not contain the required pricing information.
 
 ### Cross-source synthesis
 
@@ -197,7 +197,7 @@ Docker → application containerization
 Kubernetes → orchestration and lifecycle management
 ```
 
-while combining evidence from Docker and Kubernetes documentation. :contentReference[oaicite:7]{index=7}
+while combining evidence from Docker and Kubernetes documentation.
 
 ---
 
@@ -219,7 +219,7 @@ How do I make my application scalable?
 
 remain challenging.
 
-The retriever can return evidence from several valid but unrelated technology domains, after which the generator may attempt to synthesize too many of them into one answer. :contentReference[oaicite:8]{index=8}
+The retriever can return evidence from several valid but unrelated technology domains, after which the generator may attempt to synthesize too many of them into one answer.
 
 This suggests that ambiguity handling is not exclusively a generation problem.
 
@@ -248,7 +248,7 @@ The cross-tool FastAPI/Kubernetes case still produced raw citations such as:
 
 despite explicit instructions requiring `[3]` and `[6]`.
 
-The citation parser currently handles this defensively, but raw-format compliance should be tracked separately from citation extraction success. :contentReference[oaicite:9]{index=9}
+The citation parser currently handles this defensively, but raw-format compliance should be tracked separately from citation extraction success.
 
 ### Local inference latency
 
@@ -295,6 +295,8 @@ Prompt
 ------
 Prompt v3
 ```
+
+> Note: this benchmark ran on Prompt v3. Current production code is Prompt v4 (see `backend/generation/prompt_builder.py` and `benchmarks/generation/v1/manifest.json`).
 
 This configuration provides the best balance observed during the current development benchmark between:
 
