@@ -21,7 +21,7 @@
     "manifest_path": "benchmarks/e2e/v1/manifest.json",
     "manifest_sha256": "2190EDA38BB4E849E2A4FF84B97EF07436455861FC93F10D9D716377D2D194FE",
     "cases_path": "benchmarks/e2e/cases_v1.jsonl",
-    "cases_git_blob_sha256": "241FF4A6246CCCF4D4C3E076AFCE0F2E6913692B",
+    "cases_git_blob_sha256": "0D0B42B52E4DFD0317909ED6E6941FA8B3C07D5B9999F72B1E3D55AFAEBA81E4",
     "results_path": "benchmarks/e2e/results_v1.jsonl",
     "results_sha256": "5A8721341BED4A03A886996BC5A2F3BDEE0A5753691674980D1BF95A8B52F1A2",
     "corpus_path": "data/processed/chunks_fixed.jsonl",
@@ -29,7 +29,7 @@
     "review_packet_path": "benchmarks/e2e/review/human_review_packet_v1.md",
     "review_packet_sha256": "19785C3843939EA56177303595605DBB16875FFC2D1D3342FB8BF8D8BB76FEEF",
     "human_scores_path": "benchmarks/e2e/review/human_scores_v1.jsonl",
-    "human_scores_sha256": "DB2C928C019201E75E7832CCA1654F89A7510BBD29334904BFAD00E9AC5A7475",
+    "human_scores_sha256": "899F303FE91E8F06B9BB6D01D6B2400C724BE26203B65EABFB29CE3F68863461",
     "structural_report_path": "benchmarks/e2e/reports/e2e_structural_v1.json",
     "structural_report_sha256": "9D490C93CCFCA75592519659692FD6E1B9F8C2DECE0AF30C9C5CE84F41E9A3EC"
   },
