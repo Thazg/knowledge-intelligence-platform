@@ -296,11 +296,3 @@ Human semantic scores:
 Semantic report:
 
 `benchmarks/e2e/reports/e2e_semantic_v1.json`
-
-## Next milestone
-
-With E2E Validation v1 complete, the project proceeds to:
-
-**Production Hardening**
-
-The ambiguity-handling blocker remains an explicit remediation item and should be addressed using new development data rather than the frozen E2E v1 validation set.
