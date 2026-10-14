@@ -5,12 +5,22 @@ from collections.abc import Callable
 from typing import Any
 
 from backend.generation.models import GenerationContext, SourceReference
+from backend.generation.source_links import source_document_url
 from backend.retrieval.models import RetrievalResult
 
 MAX_EXCERPT_CHARS = 500
 
 _HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 _BLANK_RUN_PATTERN = re.compile(r"\n{3,}")
+_FRONT_MATTER_PATTERN = re.compile(
+    r"\A[ \t]*---[ \t]*\r?\n.*?\r?\n---[ \t]*(?:\r?\n|$)",
+    re.DOTALL,
+)
+_FRONT_MATTER_SUMMARY_PATTERN = re.compile(
+    r"^short_description:[ \t]*(.+)$",
+    re.MULTILINE,
+)
+_TITLE_ANCHOR_PATTERN = re.compile(r"\s*\{\s*#[^}]+\}\s*$")
 
 
 class ContextBuilder:
@@ -70,12 +80,19 @@ class ContextBuilder:
             title = self._optional_str(
                 self._get_value(result, metadata, "title")
             )
+            if title:
+                title = _TITLE_ANCHOR_PATTERN.sub("", title).strip()
             source = self._optional_str(
                 self._get_value(result, metadata, "source")
             )
             url = self._optional_str(
                 self._get_value(result, metadata, "url")
             )
+            if not url:
+                relative_path = self._optional_str(
+                    self._get_value(result, metadata, "relative_path")
+                )
+                url = source_document_url(source, relative_path)
 
             source_reference = SourceReference(
                 citation_id=citation_id,
@@ -147,7 +164,16 @@ class ContextBuilder:
         and collapses long blank runs. Inline markdown is preserved
         for the frontend renderer.
         """
-        text = _HTML_COMMENT_PATTERN.sub("", content)
+        text = _FRONT_MATTER_PATTERN.sub("", content)
+        if text == content and content.lstrip().startswith("---\n"):
+            # A long YAML header can fill the entire first chunk before
+            # its closing delimiter. Show its summary, not raw metadata.
+            summary = _FRONT_MATTER_SUMMARY_PATTERN.search(content)
+            if summary:
+                value = summary.group(1).strip().strip('"\'')
+                return f"Document summary: {value}"
+            return "Document metadata; open source to view the full page."
+        text = _HTML_COMMENT_PATTERN.sub("", text)
         lines = [
             line
             for line in text.splitlines()

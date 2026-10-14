@@ -1,0 +1,9 @@
+# Citation source links in the v1 corpus
+
+The indexed v1 chunks already carry `source` and `relative_path`. During answer construction, `ContextBuilder` uses those fields to generate a public link to the corresponding upstream documentation. The API includes that link in the existing `SourceReference.url` field; the web demo renders **Open source** only for safe HTTP(S) URLs. This works with the existing local and Qdrant Cloud payloads and does not require embedding, indexing, or migrating the corpus again. The project's local `data/raw` directory is not published to GitHub and is not used as a link target.
+
+Source cards also remove leading YAML front matter and trailing Markdown heading anchors from their display preview. If an entire chunk consists of an unfinished YAML header, the card shows its `short_description` as a labeled document summary rather than raw metadata. The full retrieved chunk supplied to the generator is unchanged.
+
+Most links point to the upstream repository's **current default branch**, whose name was checked for each supported source. The legacy `langgraph/llms.txt` entry instead links to the live [LangGraph documentation index](https://langchain-ai.github.io/langgraph/llms.txt): its original `src/langgraph/llms.txt` repository path now returns 404. These links identify a current public source, but they are not immutable links to the exact revision used when the v1 corpus was ingested. A file moved or deleted upstream may later make a link stale. Unknown sources and unsafe paths produce no link.
+
+For an immutable audit trail in a future dataset release, record each source repository's commit SHA during ingestion and include it in chunk metadata. Then construct GitHub permalinks with that SHA and validate a sample of URLs as part of the release process. The current v1 dataset does not contain those per-source SHAs, so this change does not invent them.
