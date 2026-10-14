@@ -5,14 +5,6 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 **v1.0.0 highlights:** Weighted RRF reached **0.7247 MRR** and **0.9300 Hit@10** on the 100-query retrieval benchmark. The cloud retrieval profile preserved **0.9300 Hit@10**, reproduced local BM25 ranking with **100/100 exact top-10 parity** in the parity canary, and runs from a **~130.5 MB** deployment image.
 
-## See it in 60 seconds
-
-1. [Open the web demo](https://enterprisekip.vercel.app), select **“What is Docker BuildKit and how is it used during image builds?”**, and ask the question.
-2. Follow a citation number from the streamed answer to its source card. The card shows the supporting excerpt; this repository version also constructs a link to the upstream documentation when the updated backend is deployed. [How source links work](docs/07_citation_provenance.md).
-3. For the engineering evidence, start with the [retrieval benchmark](docs/04_evaluation_and_benchmarks.md) and [system architecture](docs/03_system_architecture.md).
-
-The demo searches seven curated documentation sets, not the open web. The [dataset analysis](docs/02_dataset_analysis.md) explains their selection. Retrieval scores measure whether relevant documents were found; the [E2E report](benchmarks/e2e/reports/e2e_v1_decision.md) separately records successful structural checks and a semantic release gate that **did not pass**.
-
 ## Live Demo
 
 - Web demo: https://enterprisekip.vercel.app
