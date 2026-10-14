@@ -2,7 +2,6 @@
 
 import {
   FormEvent,
-  Fragment,
   KeyboardEvent,
   MouseEvent,
   useCallback,
@@ -23,6 +22,20 @@ import {
 const REPOSITORY_URL =
   "https://github.com/Thazg/knowledge-intelligence-platform";
 const API_DOCS_URL = "https://enterprise-kip-api.onrender.com/docs";
+const RETRIEVAL_REPORT_URL = `${REPOSITORY_URL}/blob/main/benchmarks/retrieval/reports/cloud-hybrid-v1.md`;
+const FEATURED_QUESTION = "What is Docker BuildKit and how is it used during image builds?";
+const FEATURED_SOURCES = [
+  {
+    number: "1",
+    title: "BuildKit",
+    url: "https://github.com/docker/docs/blob/main/content/manuals/build/buildkit/_index.md",
+  },
+  {
+    number: "2",
+    title: "Docker Build Overview",
+    url: "https://github.com/docker/docs/blob/main/content/manuals/build/concepts/overview.md",
+  },
+] as const;
 
 const CORPUS_SOURCES = [
   "Docker",
@@ -36,42 +49,17 @@ const CORPUS_SOURCES = [
 
 const EXAMPLE_QUESTIONS = [
   {
-    source: "Docker",
-    question:
-      "What is Docker BuildKit and how is it used during image builds?",
-  },
-  {
     source: "Kubernetes",
     question: "What does kubectl apply do?",
-  },
-  {
-    source: "Kubernetes",
-    question:
-      "What should Kubernetes users consider when moving from KMS v1 to KMS v2?",
   },
   {
     source: "FastAPI",
     question: "What problem does FastAPI dependency injection solve?",
   },
   {
-    source: "Transformers",
-    question:
-      "What does generate() do when generating text with a Transformers model?",
-  },
-  {
     source: "Qdrant",
     question:
       "How does a Qdrant payload index help filtered vector search?",
-  },
-  {
-    source: "Cross-tool",
-    question:
-      "What responsibilities belong to FastAPI versus Qdrant when building a vector-search API?",
-  },
-  {
-    source: "Docker",
-    question:
-      "How does current Docker documentation distinguish docker-compose from docker compose?",
   },
 ];
 
@@ -88,13 +76,6 @@ type Source = {
 const HISTORY_STORAGE_KEY = "ekip-recent-queries";
 const MAX_HISTORY_ITEMS = 8;
 const MAX_QUERY_CHARS = 1024;
-
-const PIPELINE_STEPS = [
-  "Query",
-  "Hybrid retrieval",
-  "Grounded generation",
-  "Citations",
-] as const;
 
 type QueryStatus =
   | "idle"
@@ -165,24 +146,53 @@ function asSource(value: unknown): Source | null {
   };
 }
 
-function ExternalIcon() {
+function GitHubIcon() {
   return (
-    <svg
-      className="external-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      <polyline points="15 3 21 3 21 9" />
-      <line x1="10" y1="14" x2="21" y2="3" />
+    <svg className="header-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" />
     </svg>
   );
 }
+
+function DocsIcon() {
+  return (
+    <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 7v14M3 18V5a2 2 0 0 1 2-2h3a4 4 0 0 1 4 4v14a4 4 0 0 0-4-3H3Zm18 0V5a2 2 0 0 0-2-2h-3a4 4 0 0 0-4 4v14a4 4 0 0 1 4-3h5Z" />
+    </svg>
+  );
+}
+
+// FileTypeCorner © 2026 Lucide Icons and Contributors (ISC).
+// Permission to use, copy, modify, and/or distribute this icon for any purpose
+// with or without fee is granted when this copyright and permission notice remain.
+// https://lucide.dev/icons/file-type-corner
+function FileTypeCornerIcon() {
+  return (
+    <svg className="source-document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6" />
+      <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+      <path d="M3 16v-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5V16" />
+      <path d="M6 22h2" />
+      <path d="M7 14v8" />
+    </svg>
+  );
+}
+
+function BrandMark() {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" focusable="false">
+      <path
+        d="M10 8v24M16 20 29 8M16 20l13 12"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="square"
+      />
+      <circle cx="30" cy="8" r="2.3" fill="currentColor" />
+      <circle cx="30" cy="32" r="2.3" fill="currentColor" />
+    </svg>
+  );
+}
+
 function sourceLabel(source: Source): string {
   if (!source.source) {
     return "Documentation";
@@ -233,10 +243,16 @@ export default function QueryDemo() {
   const [showColdStart, setShowColdStart] = useState(false);
   const [copied, setCopied] = useState(false);
   const [flashCitation, setFlashCitation] = useState<string | null>(null);
-  const [history, setHistory] = useState<string[]>(() => loadHistory());
+  const [history, setHistory] = useState<string[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const flashTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Browser storage is unavailable during SSR; load it only after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistory(loadHistory());
+  }, []);
 
   useEffect(() => {
     if (!lastQuestion) {
@@ -529,121 +545,61 @@ export default function QueryDemo() {
   }
 
   const statusCopy = {
-    idle: "Ready for a corpus-grounded question",
+    idle: "Ready when you are",
     connecting: "Connecting to the documentation service…",
-    retrieving: "Retrieving documentation…",
-    generating: "Generating grounded answer…",
-    complete: "Grounded answer complete",
-  }[status];
-
-  const activePipelineStep = {
-    idle: -1,
-    connecting: 0,
-    retrieving: 1,
-    generating: 2,
-    complete: 3,
+    retrieving: "Searching the documentation…",
+    generating: "Writing an answer with sources…",
+    complete: "Answer ready",
   }[status];
 
   return (
     <main>
+      <a className="skip-link" href="#query-title">Skip to question</a>
       <header className="site-header">
-        <a className="wordmark" href="#top" aria-label="Enterprise KIP home">
-          <span className="wordmark-mark" aria-hidden="true">
-            EK
-          </span>
-          <span>Enterprise KIP</span>
-        </a>
-        <nav className="header-actions" aria-label="Project links">
-          <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-            GitHub <span aria-hidden="true"><ExternalIcon /></span>
+        <div className="site-header-inner">
+          <a className="wordmark" href="#top" aria-label="Enterprise Knowledge Intelligence Platform home">
+            <span className="wordmark-mark" aria-hidden="true">
+              <BrandMark />
+            </span>
+            <span className="wordmark-name">Enterprise Knowledge Intelligence Platform</span>
           </a>
-          <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-            API Docs <span aria-hidden="true"><ExternalIcon /></span>
-          </a>
-        </nav>
+          <nav className="header-actions" aria-label="Project links">
+            <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
+              <GitHubIcon /> GitHub
+            </a>
+            <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
+              <DocsIcon /> API Docs
+            </a>
+          </nav>
+        </div>
       </header>
 
       <section className="hero" id="top" aria-labelledby="hero-title">
-        <h1 id="hero-title">
-          Enterprise <em>Knowledge Intelligence</em> Platform
-        </h1>
-        <p className="hero-subtitle">
-          Production RAG over curated technical documentation
-        </p>
-        <p className="hero-description">
-          Enterprise KIP retrieves evidence from a curated corpus of engineering
-          documentation using Dense + BM25 hybrid retrieval, Weighted RRF,
-          grounded generation, and citations.
-        </p>
-        <div className="pipeline" aria-label="Enterprise KIP query pipeline">
-          {isActive ? (
-            <span className="pulse" aria-hidden="true" />
-          ) : null}
-          {PIPELINE_STEPS.map((step, index) => (
-            <Fragment key={step}>
-              <span
-                className={
-                  index <= activePipelineStep ? "active" : undefined
-                }
-              >
-                {step}
-              </span>
-              {index < PIPELINE_STEPS.length - 1 ? (
-                <i aria-hidden="true">→</i>
-              ) : null}
-            </Fragment>
-          ))}
+        <div className="hero-copy">
+          <h1 id="hero-title">Ask the docs.<br />See the source.</h1>
+          <p className="hero-subtitle">
+            Get a useful answer, then open the documentation behind it.
+          </p>
         </div>
+        <ol className="hero-workflow" aria-label="How a question becomes an answer">
+          <li><span>Query</span></li>
+          <li><span>Hybrid retrieval</span></li>
+          <li><span>Evidence selection</span></li>
+          <li><span>Grounded generation</span></li>
+          <li><span>Citations</span></li>
+        </ol>
       </section>
 
       <div className="content-grid">
         <div className="main-column">
           <section className="panel corpus-panel" aria-labelledby="corpus-title">
-            <div className="section-kicker">Indexed scope</div>
-            <h2 id="corpus-title">What can Enterprise KIP answer?</h2>
-            <p>
-              Enterprise KIP searches a curated corpus of official technical
-              documentation. It does not perform open-web search.
-            </p>
+            <div>
+              <h2 id="corpus-title">Indexed scope</h2>
+              <p>Seven documentation sets are searchable here. The demo does not search the open web.</p>
+            </div>
             <div className="source-badges" aria-label="Indexed documentation sources">
               {CORPUS_SOURCES.map((source) => (
                 <span key={source}>{source}</span>
-              ))}
-            </div>
-            <div className="scope-note">
-              <span aria-hidden="true">i</span>
-              <div>
-                <strong>Ask within the indexed scope</strong>
-                <p>
-                  Best results come from questions about the technologies
-                  represented in this corpus. This demo answers from indexed
-                  documentation rather than the general internet.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="examples" aria-labelledby="examples-title">
-            <div className="section-heading">
-              <div>
-                <div className="section-kicker">Validated prompts</div>
-                <h2 id="examples-title">Try an example</h2>
-              </div>
-              <p>Choose a question to place it in the query box.</p>
-            </div>
-            <div className="example-grid">
-              {EXAMPLE_QUESTIONS.map((example) => (
-                <button
-                  className="example-card"
-                  key={example.question}
-                  type="button"
-                  onClick={() => chooseExample(example.question)}
-                  disabled={isActive}
-                >
-                  <span>{example.source}</span>
-                  <strong>{example.question}</strong>
-                  <i aria-hidden="true">Use question →</i>
-                </button>
               ))}
             </div>
           </section>
@@ -651,8 +607,7 @@ export default function QueryDemo() {
           <section className="query-section" aria-labelledby="query-title">
             <div className="query-header">
               <div>
-                <div className="section-kicker">Live query</div>
-                <h2 id="query-title">Ask the documentation</h2>
+                <h2 id="query-title" tabIndex={-1}>What would you like to know?</h2>
               </div>
               <span className={`status-pill status-${status}`}>
                 <span aria-hidden="true" />
@@ -669,12 +624,13 @@ export default function QueryDemo() {
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={handleKeyDown}
                 maxLength={MAX_QUERY_CHARS}
-                rows={4}
-                placeholder="Ask about Docker builds, Kubernetes operations, FastAPI patterns, vector search…"
+                rows={2}
+                placeholder="For example: What does kubectl apply do?"
+                aria-describedby="query-help"
                 disabled={isActive}
               />
               <div className="form-footer">
-                <span>
+                <span id="query-help">
                   <kbd>Enter</kbd> to ask · <kbd>Shift</kbd> + <kbd>Enter</kbd>{" "}
                   for a new line ·{" "}
                   <span className="char-count">
@@ -700,12 +656,19 @@ export default function QueryDemo() {
                     type="submit"
                     disabled={isActive || !query.trim()}
                   >
-                    {isActive ? "Working…" : "Ask Enterprise KIP"}
+                    {isActive ? "Searching…" : "Ask the docs"}
                     <span aria-hidden="true">→</span>
                   </button>
                 </div>
               </div>
             </form>
+
+            {isActive ? (
+              <div className="live-progress" role="status">
+                <span className="live-progress-track" aria-hidden="true" />
+                {statusCopy}
+              </div>
+            ) : null}
 
             {history.length > 0 && !isActive ? (
               <div className="history">
@@ -759,10 +722,10 @@ export default function QueryDemo() {
                   <div className="answer-block">
                     <div className="answer-heading">
                       <span className="answer-mark" aria-hidden="true">
-                        EK
+                        <BrandMark />
                       </span>
                       <div>
-                        <strong>Grounded answer</strong>
+                        <strong>Answer from the docs</strong>
                         <span>{isActive ? statusCopy : "From indexed evidence"}</span>
                       </div>
                       {answer && !isActive ? (
@@ -853,7 +816,7 @@ export default function QueryDemo() {
                               target="_blank"
                               rel="noreferrer noopener"
                             >
-                              Open source <span aria-hidden="true"><ExternalIcon /></span>
+                              <FileTypeCornerIcon /> Open source
                             </a>
                           ) : null}
                         </article>
@@ -864,42 +827,106 @@ export default function QueryDemo() {
               </div>
             ) : null}
           </section>
+
+          <section className="examples" aria-labelledby="examples-title">
+            <div className="section-heading">
+              <div>
+                <h2 id="examples-title">Need a place to start?</h2>
+              </div>
+              <p>Choose a question to place it in the query box.</p>
+            </div>
+            <div className="example-grid">
+              {EXAMPLE_QUESTIONS.map((example) => (
+                <button
+                  className="example-card"
+                  key={example.question}
+                  type="button"
+                  onClick={() => chooseExample(example.question)}
+                  disabled={isActive}
+                >
+                  <span>{example.source}</span>
+                  <strong>{example.question}</strong>
+                  <i aria-hidden="true">Use question →</i>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="sample-result" aria-labelledby="sample-title">
+            <div className="sample-heading">
+              <div>
+                <h2 id="sample-title">An answer with sources</h2>
+              </div>
+              <span className="sample-badge">2 sources</span>
+            </div>
+            <p className="sample-question">{FEATURED_QUESTION}</p>
+            <p className="sample-answer">
+              BuildKit is Docker&apos;s builder backend. It can skip unused build
+              stages, run independent stages in parallel, and transfer only
+              changed files in the build context{" "}
+              <a href={FEATURED_SOURCES[0].url} target="_blank" rel="noreferrer noopener">[1]</a>.
+              {" "}Buildx sends build requests to BuildKit, which resolves
+              instructions and executes build steps{" "}
+              <a href={FEATURED_SOURCES[1].url} target="_blank" rel="noreferrer noopener">[2]</a>.
+            </p>
+            <div className="sample-sources" aria-label="Example documentation sources">
+              {FEATURED_SOURCES.map((source) => (
+                <a
+                  key={source.number}
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <span>[{source.number}]</span> {source.title} <FileTypeCornerIcon />
+                </a>
+              ))}
+            </div>
+            <div className="sample-footer">
+              <span>Condensed from a local run. Live wording may vary.</span>
+              <button
+                type="button"
+                onClick={() => chooseExample(FEATURED_QUESTION)}
+                disabled={isActive}
+              >
+                Ask this live <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </section>
+
         </div>
 
         <aside className="about-panel" aria-labelledby="about-title">
-          <div className="section-kicker">About this demo</div>
-          <h2 id="about-title">A production-minded RAG system</h2>
-          <p>
-            Enterprise KIP is an end-to-end RAG platform built around
-            benchmark-driven hybrid retrieval, grounded generation, production
-            observability, CI, and cloud deployment.
-          </p>
-          <dl>
-            <div>
-              <dt>Retrieval</dt>
-              <dd>Dense + BM25</dd>
-            </div>
-            <div>
-              <dt>Fusion</dt>
-              <dd>Weighted RRF</dd>
-            </div>
-            <div>
-              <dt>Vector store</dt>
-              <dd>Qdrant</dd>
-            </div>
-            <div>
-              <dt>API</dt>
-              <dd>FastAPI</dd>
-            </div>
-          </dl>
-          <div className="about-links">
-            <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
-              GitHub Repository <span aria-hidden="true"><ExternalIcon /></span>
-            </a>
-            <a href={API_DOCS_URL} target="_blank" rel="noreferrer">
-              API Documentation <span aria-hidden="true"><ExternalIcon /></span>
-            </a>
+          <h2 id="about-title">Evidence behind the demo</h2>
+          <p>Cloud deployment profile, evaluated on manually verified questions.</p>
+          <div className="metric-grid" aria-label="Cloud retrieval benchmark scores">
+            <div><strong>100</strong><span>Verified queries</span></div>
+            <div><strong>93%</strong><span>Hit@10</span></div>
+            <div><strong>0.7119</strong><span>MRR</span></div>
           </div>
+          <p className="metric-scope">Dense + BM25 with Weighted RRF. These are retrieval scores, not answer-quality scores.</p>
+          <a className="report-link" href={RETRIEVAL_REPORT_URL} target="_blank" rel="noreferrer noopener">
+            Read the retrieval benchmark <FileTypeCornerIcon />
+          </a>
+          <section className="answer-path" aria-labelledby="answer-path-title">
+            <h3 id="answer-path-title">How an answer gets its sources</h3>
+            <ol>
+              <li>
+                <span aria-hidden="true">01</span>
+                <strong>Search</strong>
+                <p>Dense and BM25 search the seven indexed documentation sets.</p>
+              </li>
+              <li>
+                <span aria-hidden="true">02</span>
+                <strong>Rank</strong>
+                <p>Weighted RRF combines results before the context builder selects passages.</p>
+              </li>
+              <li>
+                <span aria-hidden="true">03</span>
+                <strong>Check</strong>
+                <p>Numbered citations let you open the documentation behind an answer.</p>
+              </li>
+            </ol>
+          </section>
         </aside>
       </div>
 

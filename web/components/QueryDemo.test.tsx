@@ -4,8 +4,11 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import QueryDemo from "./QueryDemo";
@@ -63,18 +66,65 @@ afterEach(() => {
 });
 
 describe("QueryDemo", () => {
+  it("shows indexed scope before the live query form", () => {
+    render(<QueryDemo />);
+
+    const scope = screen.getByRole("region", {
+      name: "Indexed scope",
+    });
+    const query = screen.getByRole("region", {
+      name: "What would you like to know?",
+    });
+
+    expect(scope.compareDocumentPosition(query) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("populates the input from an example question", async () => {
     const user = userEvent.setup();
     render(<QueryDemo />);
 
     await user.click(
       screen.getByRole("button", {
-        name: /What is Docker BuildKit and how is it used during image builds/i,
+        name: /What does kubectl apply do/i,
       }),
     );
 
     expect(screen.getByLabelText("Technical question")).toHaveValue(
+      "What does kubectl apply do?",
+    );
+  });
+
+  it("shows a sourced sample and lets visitors try its question live", async () => {
+    const user = userEvent.setup();
+    render(<QueryDemo />);
+
+    const sample = screen.getByRole("region", {
+      name: "An answer with sources",
+    });
+    expect(within(sample).getByText(/Condensed from a local run/)).toBeInTheDocument();
+    expect(within(sample).getByRole("link", { name: /BuildKit/ })).toHaveAttribute(
+      "href",
+      "https://github.com/docker/docs/blob/main/content/manuals/build/buildkit/_index.md",
+    );
+
+    await user.click(within(sample).getByRole("button", { name: /Ask this live/i }));
+    expect(screen.getByLabelText("Technical question")).toHaveValue(
       "What is Docker BuildKit and how is it used during image builds?",
+    );
+  });
+
+  it("labels benchmark scores as retrieval-only and links to the report", () => {
+    render(<QueryDemo />);
+
+    const evidence = screen.getByRole("complementary", {
+      name: "Evidence behind the demo",
+    });
+    expect(within(evidence).getByText("93%")).toBeInTheDocument();
+    expect(within(evidence).getByText("0.7119")).toBeInTheDocument();
+    expect(within(evidence).getByText(/not answer-quality scores/i)).toBeInTheDocument();
+    expect(within(evidence).getByRole("link", { name: /retrieval benchmark/i })).toHaveAttribute(
+      "href",
+      "https://github.com/Thazg/knowledge-intelligence-platform/blob/main/benchmarks/retrieval/reports/cloud-hybrid-v1.md",
     );
   });
 
@@ -84,7 +134,7 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is BuildKit?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
 
     expect(
       await screen.findByRole("button", { name: "Jump to source 1" }),
@@ -105,7 +155,7 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is BuildKit?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
     await user.click(
       await screen.findByRole("button", { name: "Jump to source 1" }),
     );
@@ -124,7 +174,7 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is BuildKit?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
     await user.click(await screen.findByRole("button", { name: "Copy" }));
 
     expect(writeText).toHaveBeenCalledWith(
@@ -152,12 +202,40 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is BuildKit?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
     await screen.findByRole("heading", { name: "BuildKit" });
 
     expect(
       screen.getByRole("button", { name: "What is BuildKit?" }),
     ).toBeInTheDocument();
+  });
+
+  it("hydrates with saved recent questions without a server/client mismatch", async () => {
+    const savedQuestion = "What is Qdrant?";
+    localStorage.setItem("ekip-recent-queries", JSON.stringify([savedQuestion]));
+    const browserStorage = localStorage;
+    vi.stubGlobal("localStorage", undefined);
+    const serverHtml = renderToString(<QueryDemo />);
+    vi.stubGlobal("localStorage", browserStorage);
+
+    const container = document.createElement("div");
+    container.innerHTML = serverHtml;
+    document.body.appendChild(container);
+    const onRecoverableError = vi.fn();
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, <QueryDemo />, { onRecoverableError });
+      });
+
+      expect(onRecoverableError).not.toHaveBeenCalled();
+      expect(within(container).getByRole("button", { name: savedQuestion })).toBeInTheDocument();
+    } finally {
+      await act(async () => root?.unmount());
+      container.remove();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("does not render links for unsafe source URLs", async () => {
@@ -169,7 +247,7 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is BuildKit?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
     await screen.findByRole("heading", { name: "BuildKit" });
 
     expect(screen.queryByRole("link", { name: /Open source/i })).not.toBeInTheDocument();
@@ -181,7 +259,7 @@ describe("QueryDemo", () => {
     render(<QueryDemo />);
 
     await user.type(screen.getByLabelText("Technical question"), "What is Qdrant?");
-    await user.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    await user.click(screen.getByRole("button", { name: /Ask the docs/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The demo backend is unavailable. It may still be waking up.",
@@ -199,7 +277,7 @@ describe("QueryDemo", () => {
         value: "What is Kubernetes?",
       },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Ask Enterprise KIP/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ask the docs/i }));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(6500);
