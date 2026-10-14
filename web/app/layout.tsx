@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Enterprise KIP | Grounded Technical Documentation Search",
+  title: "Enterprise Knowledge Intelligence Platform | Documentation Search",
   description:
     "A production RAG demo over curated Docker, Kubernetes, FastAPI, Transformers, LangChain, LangGraph, and Qdrant documentation.",
 };

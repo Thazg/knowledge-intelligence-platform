@@ -121,3 +121,92 @@ def test_context_builder_cleans_excerpt_display_noise() -> None:
     assert "```" not in excerpt
     assert "\n\n\n" not in excerpt
     assert "Use `generate()`." in excerpt
+
+
+def test_context_builder_links_original_file_and_hides_front_matter() -> None:
+    builder = ContextBuilder(max_context_tokens=10000)
+    context = builder.build(
+        query="What is BuildKit?",
+        results=[
+            FakeRetrievalResult(
+                document_id="doc-1",
+                chunk_id="chunk-1",
+                content=(
+                    "---\n"
+                    "title: Multi-stage builds\n"
+                    "description: Build Docker images\n"
+                    "---\n"
+                    "# Multi-stage builds\n"
+                    "Copy artifacts into the runtime image."
+                ),
+                metadata={
+                    "source": "docker",
+                    "relative_path": (
+                        "content/get-started/docker-concepts/"
+                        "building-images/multi-stage-builds.md"
+                    ),
+                    "title": "Multi-stage builds { #multi-stage-builds }",
+                },
+            )
+        ],  # type: ignore[arg-type]
+    )
+
+    source = context.sources[0]
+    assert source.title == "Multi-stage builds"
+    assert source.url == (
+        "https://github.com/docker/docs/blob/main/"
+        "content/get-started/docker-concepts/"
+        "building-images/multi-stage-builds.md"
+    )
+    assert source.excerpt == (
+        "# Multi-stage builds\n"
+        "Copy artifacts into the runtime image."
+    )
+    assert "description: Build Docker images" in context.context_text
+
+
+def test_context_builder_keeps_explicit_source_url() -> None:
+    builder = ContextBuilder(max_context_tokens=10000)
+    context = builder.build(
+        query="What is BuildKit?",
+        results=[
+            FakeRetrievalResult(
+                document_id="doc-1",
+                chunk_id="chunk-1",
+                content="BuildKit builds images.",
+                metadata={
+                    "source": "docker",
+                    "relative_path": "content/buildkit.md",
+                    "url": "https://docs.docker.com/build/buildkit/",
+                },
+            )
+        ],  # type: ignore[arg-type]
+    )
+    assert context.sources[0].url == (
+        "https://docs.docker.com/build/buildkit/"
+    )
+
+
+def test_context_builder_summarizes_front_matter_only_chunk() -> None:
+    builder = ContextBuilder(max_context_tokens=10000)
+    context = builder.build(
+        query="What does Qdrant document?",
+        results=[
+            FakeRetrievalResult(
+                document_id="doc-1",
+                chunk_id="chunk-1",
+                content=(
+                    "---\n"
+                    "title: Documentation\n"
+                    'short_description: "Build with Qdrant and FastAPI."\n'
+                    "content:\n"
+                    "  - partial: documentation/banner\n"
+                ),
+            )
+        ],  # type: ignore[arg-type]
+    )
+
+    assert context.sources[0].excerpt == (
+        "Document summary: Build with Qdrant and FastAPI."
+    )
+    assert "partial: documentation/banner" in context.context_text

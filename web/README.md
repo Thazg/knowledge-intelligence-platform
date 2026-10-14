@@ -2,7 +2,7 @@
 
 This folder contains the web interface for Enterprise KIP.
 
-I added it mainly to make the project easier to try without going through Swagger. The page shows what documentation is available in the corpus, provides a few example questions, streams markdown-formatted answers from the existing RAG backend, and displays the cited sources for each response with text excerpts.
+The page makes the RAG project easier to try without going through Swagger. It places the seven indexed documentation sets before the question form, offers example questions and a labeled sample answer, streams markdown-formatted answers from the existing backend, and displays cited evidence with links to upstream documentation when available.
 
 Live demo:
 
@@ -26,9 +26,13 @@ RAGService / RAGPipeline
 
 The existing Enterprise KIP retrieval and generation pipeline is reused as-is.
 
-The UI is intentionally small. It is meant to demonstrate the RAG system, not provide accounts, server-side history, analytics, or a full chat product. The only persistence is up to 8 recent questions in the browser's `localStorage` (`ekip-recent-queries`), deduplicated and clearable anytime — nothing leaves the browser.
+The UI is a focused RAG demo, not an account-based chat product. Up to 8 recent questions are saved in the browser's `localStorage` (`ekip-recent-queries`), deduplicated and clearable anytime. **Submitting a question sends that question to the API**; the browser history itself is not uploaded as a separate dataset.
 
 ## Interface
+
+The sticky header shows the project identity and links to GitHub and API documentation. The hero sketches the five-stage path: query → hybrid retrieval → evidence selection → grounded generation → citations. **Indexed scope** lists Docker, FastAPI, Hugging Face Transformers, Kubernetes, LangChain, LangGraph, and Qdrant before the form. The demo does not search the open web.
+
+The example questions fill the form without auto-submitting. A separate Docker BuildKit answer is condensed from a local run and links to two original documents; its wording is a preview, not the result of a live request. The evidence panel reports the **cloud retrieval profile** on 100 verified queries (Hit@10 **0.9300**, MRR **0.7119**) and links to the [benchmark](../benchmarks/retrieval/reports/cloud-hybrid-v1.md). These retrieval scores are not answer-quality scores. The separate [E2E review](../benchmarks/e2e/reports/e2e_v1_decision.md) records that structural checks passed while the semantic release gate did not.
 
 Query form:
 
@@ -46,11 +50,11 @@ Answer rendering:
 Sources:
 
 - Only sources actually cited in the answer are shown (uncited or malformed entries are dropped), with an `N cited` counter.
-- Each card shows the source label, title, an excerpt (≤500 characters, cleaned of HTML comments and code-fence markers by the backend), collapsible document/chunk identifiers, and an `Open source` link rendered only for `http(s)` URLs with `noopener`.
+- Each card shows the source label, title, an excerpt (≤500 characters, cleaned of HTML comments and code-fence markers by the backend), collapsible document/chunk identifiers, and an `Open source` link only for safe `http(s)` URLs with `noopener`. Links identify current upstream documentation paths, not immutable revisions of the indexed corpus; see [citation provenance](../docs/07_citation_provenance.md).
 
 Status and errors:
 
-- Pipeline steps light up with the live phase: `idle → connecting → retrieving → generating → complete`.
+- A status pill and animated progress track show the live phase: `idle → connecting → retrieving → generating → complete`.
 - A cold-start notice appears if the first event takes longer than ~6.5s (Render free-tier wake-up).
 - Failures show an error card with a Retry button; stream errors arrive as `error` events without leaking internals.
 
@@ -59,9 +63,9 @@ Status and errors:
 Requirements:
 
 - Node.js 20.9+
-- A running Enterprise KIP backend
+- An available Enterprise KIP backend (the example environment points to the public API)
 
-Start the backend from the repository root:
+If you want to use your own local backend, follow the [deployment runbook](../docs/05_deployment_runbook.md) to configure its corpus, Qdrant, and generator, then start the API from the repository root:
 
 ```bash
 python -m uvicorn backend.api.app:app --host 0.0.0.0 --port 8000 --reload
@@ -71,7 +75,7 @@ Then start the frontend:
 
 ```bash
 cd web
-npm install
+npm ci
 ```
 
 Copy the environment file:
@@ -102,7 +106,7 @@ Open:
 
 http://localhost:3000
 
-If you want to use the public backend instead, keep the API URL from `.env.example`.
+If you want to use the public backend instead, keep the API URL from `.env.example`. `ENTERPRISE_KIP_API_BASE_URL` is read server-side by the Next.js proxy; it is not a browser-exposed `NEXT_PUBLIC_` variable.
 
 ## Streaming
 
@@ -150,8 +154,9 @@ From the `web` directory:
 ```bash
 npm run lint
 npm test
+npx tsc --noEmit
 npm run build
 npm start
 ```
 
-`npm test` runs vitest once (jsdom). `npm run build` also type-checks. `devIndicators` and the `X-Powered-By` header are disabled in `next.config.ts`.
+`npm test` runs Vitest once (jsdom). The same lint, test, typecheck, and build checks run in [CI](../.github/workflows/ci.yml). `devIndicators` and the `X-Powered-By` header are disabled in `next.config.ts`.

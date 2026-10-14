@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from functools import lru_cache
 
@@ -12,6 +13,7 @@ from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.services.rag_service import RAGService
 
 logger = logging.getLogger(__name__)
+_RAG_SERVICE_INIT_LOCK = threading.Lock()
 
 CLOUD_DENSE_VECTOR_NAME = "dense_vector"
 CLOUD_BM25_VECTOR_NAME = "rank_bm25_sparse"
@@ -220,7 +222,7 @@ def _build_generator(
 
 
 @lru_cache(maxsize=1)
-def get_rag_service() -> RAGService:
+def _get_rag_service_cached() -> RAGService:
     settings = get_settings()
 
     start_time = time.perf_counter()
@@ -288,3 +290,10 @@ def get_rag_service() -> RAGService:
     )
 
     return service
+
+
+def get_rag_service() -> RAGService:
+    # lru_cache protects its dictionary, but concurrent cache misses can
+    # still execute the expensive model initialization more than once.
+    with _RAG_SERVICE_INIT_LOCK:
+        return _get_rag_service_cached()
