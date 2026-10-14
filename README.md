@@ -5,6 +5,14 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 **v1.0.0 highlights:** Weighted RRF reached **0.7247 MRR** and **0.9300 Hit@10** on the 100-query retrieval benchmark. The cloud retrieval profile preserved **0.9300 Hit@10**, reproduced local BM25 ranking with **100/100 exact top-10 parity** in the parity canary, and runs from a **~130.5 MB** deployment image.
 
+## See it in 60 seconds
+
+1. [Open the web demo](https://enterprisekip.vercel.app), select **“What is Docker BuildKit and how is it used during image builds?”**, and ask the question.
+2. Follow a citation number from the streamed answer to its source card. The card shows the supporting excerpt; this repository version also constructs a link to the upstream documentation when the updated backend is deployed. [How source links work](docs/07_citation_provenance.md).
+3. For the engineering evidence, start with the [retrieval benchmark](docs/04_evaluation_and_benchmarks.md) and [system architecture](docs/03_system_architecture.md).
+
+The demo searches seven curated documentation sets, not the open web. The [dataset analysis](docs/02_dataset_analysis.md) explains their selection. Retrieval scores measure whether relevant documents were found; the [E2E report](benchmarks/e2e/reports/e2e_v1_decision.md) separately records successful structural checks and a semantic release gate that **did not pass**.
+
 ## Live Demo
 
 - Web demo: https://enterprisekip.vercel.app
@@ -17,7 +25,7 @@ I built Enterprise KIP as an end-to-end AI engineering system covering ingestion
 
 ## Web Demo
 
-The recruiter-facing Next.js interface explains the curated corpus, provides benchmark-backed example questions, streams grounded answers, and renders the citations returned by the API. It is a documentation-corpus demo, not an open-web assistant.
+The recruiter-facing Next.js interface places the seven-source indexed scope before the question form, provides example questions and a labeled sample answer, streams grounded answers, and renders the citations returned by the API. It is a documentation-corpus demo, not an open-web assistant. The current interface and its local setup are described in the [web README](web/README.md).
 
 The Vercel deployment lives in [`web/`](web/README.md) and is available at [enterprisekip.vercel.app](https://enterprisekip.vercel.app). The interactive API documentation remains available at [enterprise-kip-api.onrender.com/docs](https://enterprise-kip-api.onrender.com/docs).
 
@@ -41,7 +49,7 @@ Open `POST /v1/query`, click **Try it out**, choose an example, and execute the 
 - **Two runtime profiles**: a full local production-style stack and a lightweight cloud deployment profile.
 - **Grounded generation with citations** and explicit insufficient-evidence behavior.
 - **Production hardening**: readiness checks, timeouts, bounded generation concurrency, admission control, request IDs, metrics, and dependency error normalization.
-- **Public deployment** validated end-to-end on Render + Qdrant Cloud + Groq.
+- **Public deployment** on Render + Qdrant Cloud + Groq, with the semantic E2E limitation documented below.
 
 ## Architecture
 
@@ -195,6 +203,8 @@ The validation suite exercises the real API → RAG service → retrieval → co
 
 Structural: 18/18 pass; semantic: 12 pass / 5 partial / 1 fail (e2e-009) — release gate NOT PASSED, see decision report.
 
+These 18 frozen cases are a validation set, not a training set. The primary gap is handling underspecified questions without generalizing beyond the retrieved evidence.
+
 E2E decision report:
 
 - [`benchmarks/e2e/reports/e2e_v1_decision.md`](benchmarks/e2e/reports/e2e_v1_decision.md)
@@ -309,6 +319,8 @@ Project vision and dataset analysis:
 - [`docs/01_project_vision.md`](docs/01_project_vision.md)
 - [`docs/02_dataset_analysis.md`](docs/02_dataset_analysis.md)
 
+The raw documentation in `data/raw/` is not published in this repository. Source-card links and their revision limits are documented in [`docs/07_citation_provenance.md`](docs/07_citation_provenance.md).
+
 ## Repository Structure
 
 ```text
@@ -415,7 +427,7 @@ These can be explored in later versions without destabilizing the reproducible v
 
 ## Current Status
 
-Production v1 backend is complete and publicly deployed.
+The v1 backend is publicly deployed. Its runtime and citation-structure checks passed, while the frozen E2E semantic release gate did not; see the [decision report](benchmarks/e2e/reports/e2e_v1_decision.md) before treating answer quality as release-ready.
 
 Completed milestones include:
 
