@@ -306,6 +306,8 @@ The current processed corpus is built from English technical documentation from:
 
 The ingestion pipeline performs discovery, filtering, parsing, normalization, metadata extraction, quality filtering, and JSONL serialization before tokenization and chunking.
 
+See the [dataset guide](data/README.md) for the frozen corpus scope, source counts, and build process.
+
 Project vision and dataset analysis:
 
 - [`docs/01_project_vision.md`](docs/01_project_vision.md)
