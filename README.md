@@ -442,4 +442,4 @@ Completed milestones include:
 
 ## License
 
-This project is currently shared as part of my portfolio. I haven't added a formal open-source license yet, so please contact me before reusing substantial parts of the repository.
+The original code and documentation in this repository are licensed under the [MIT License](LICENSE). Third-party documentation used in the indexed corpus and third-party dependencies remain subject to their respective licenses.
