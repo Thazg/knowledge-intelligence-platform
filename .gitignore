@@ -17,6 +17,9 @@ env/
 .vscode/
 .idea/
 
+# Generated Next.js agent instructions
+web/AGENTS.md
+
 # Data artifacts
 data/raw/
 data/temp/
