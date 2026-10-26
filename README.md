@@ -1,266 +1,43 @@
-# Enterprise Knowledge Intelligence Platform
-A production-minded Retrieval-Augmented Generation (RAG) platform for searching and reasoning over technical documentation across AI, ML, cloud, and software engineering ecosystems.
+<h1 align="center">Enterprise Knowledge Intelligence Platform</h1>
 
-I built Enterprise KIP as an end-to-end AI engineering system covering ingestion, chunking, embeddings, hybrid retrieval, grounded generation, evaluation, API serving, observability, CI, and cloud deployment. Retrieval and deployment decisions are backed by benchmarks rather than chosen by intuition.
+<p align="center">
+  Ask seven curated technical-documentation collections, get grounded answers, and open the cited sources.
+</p>
 
-**v1.0.0 highlights:** Weighted RRF reached **0.7247 MRR** and **0.9300 Hit@10** on the 100-query retrieval benchmark. The cloud retrieval profile preserved **0.9300 Hit@10**, reproduced local BM25 ranking with **100/100 exact top-10 parity** in the parity canary, and runs from a **~130.5 MB** deployment image.
+<p align="center">
+  <img alt="Hybrid RAG: dense and BM25" src="https://img.shields.io/badge/Hybrid_RAG-Dense_%2B_BM25-173D34">
+  <img alt="Qdrant vector store" src="https://img.shields.io/badge/Vector_store-Qdrant-D72E6A?logo=qdrant&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white">
+  <img alt="Next.js web demo" src="https://img.shields.io/badge/Web-Next.js-000000?logo=nextdotjs&logoColor=white">
+  <a href="https://github.com/Thazg/knowledge-intelligence-platform/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/Thazg/knowledge-intelligence-platform/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+</p>
 
-## Live Demo
+<p align="center">
+  <a href="#live-demo">Live demo</a> &nbsp;|&nbsp;
+  <a href="#measured-results">Results</a> &nbsp;|&nbsp;
+  <a href="#how-it-works">Architecture</a> &nbsp;|&nbsp;
+  <a href="docs/06_reproducibility_and_operations.md">Reproduce</a>
+</p>
 
-- Web demo: https://enterprisekip.vercel.app
-- Public API: https://enterprise-kip-api.onrender.com
-- Interactive Swagger UI: https://enterprise-kip-api.onrender.com/docs
-- Liveness: https://enterprise-kip-api.onrender.com/health
-- Readiness: https://enterprise-kip-api.onrender.com/ready
+![The live Enterprise KIP homepage showing its workflow and seven-source indexed scope](docs/assets/demo-query.png)
 
-> The public service runs on a free-tier deployment, so occasional platform cold starts or transport variability may occur.
+*Screenshot of the live web demo on 26 October 2026. The five-step workflow and seven-source indexed scope appear above the question form. The form sends new questions to the backend; the separate example answer is a labeled preview condensed from a local run.*
 
-## Web Demo
+## Project highlights
 
-The recruiter-facing Next.js interface places the seven-source indexed scope before the question form, provides example questions and a labeled sample answer, streams grounded answers, and renders the citations returned by the API. It is a documentation-corpus demo, not an open-web assistant. The current interface and its local setup are described in the [web README](web/README.md).
+- **Measured retrieval decisions.** On 100 manually verified questions, the frozen local v1 Weighted RRF path improved Hit@10 from the Dense baseline's **89/100 to 93/100** and MRR from **0.6644 to 0.7247**. [Retrieval report](benchmarks/retrieval/reports/retrieval_benchmark_v1.md)
+- **A cloud profile with checked lexical parity.** The cloud profile kept **93/100 Hit@10** on the same evaluation set. In a 500-chunk canary, Qdrant sparse retrieval matched local BM25's exact top-10 ordering for **100/100 queries**. Its validated deployment image is **~130.5 MB**. [Cloud evaluation](benchmarks/retrieval/reports/cloud-hybrid-v1.md) | [Parity artifact](benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json) | [Deployment characterization](docs/04_evaluation_and_benchmarks.md#10-deployment-characterization)
+- **An inspectable end-to-end system.** The project includes ingestion, hybrid search, grounded generation, citation links, FastAPI serving, observability, CI, and a public Next.js interface. The [E2E review](benchmarks/e2e/reports/e2e_v1_decision.md) also records the semantic failure that prevents claiming release-ready answer quality.
 
-The Vercel deployment lives in [`web/`](web/README.md) and is available at [enterprisekip.vercel.app](https://enterprisekip.vercel.app). The interactive API documentation remains available at [enterprise-kip-api.onrender.com/docs](https://enterprise-kip-api.onrender.com/docs).
+## Live demo
 
-## Try the Live API
+[Open the web demo](https://enterprisekip.vercel.app/) | [API documentation](https://enterprise-kip-api.onrender.com/docs) | [API health](https://enterprise-kip-api.onrender.com/health)
 
-The public demo searches a curated corpus of technical documentation, so it is designed to answer questions grounded in the indexed sources rather than general-purpose questions.
+The web form streams answers from the public FastAPI backend. Retrieval searches a frozen corpus of Docker, FastAPI, Hugging Face Transformers, Kubernetes, LangChain, LangGraph, and Qdrant documentation; it does not search the open web. Numbered citations point to source cards, and source links open current upstream documentation paths when available. The homepage's example answer is a **preview**, not a live response. [Web interface details](web/README.md) | [Dataset guide](data/README.md) | [Citation provenance](docs/07_citation_provenance.md)
 
-You can try these examples directly from the [Swagger UI](https://enterprise-kip-api.onrender.com/docs):
+Try: **“What is Docker BuildKit and how is it used during image builds?”** You can also ask **“What does `kubectl apply` do?”** or **“What problem does FastAPI dependency injection solve?”** The backend runs on Render Free, so an idle service may take time to wake.
 
-- **Docker:** What is Docker BuildKit and how is it used during image builds?
-- **Kubernetes:** What does `kubectl apply` do?
-- **Version-specific:** What should Kubernetes users consider when moving from KMS v1 to KMS v2?
-
-Open `POST /v1/query`, click **Try it out**, choose an example, and execute the request.
-
-## What Makes This Project Different
-
-- **Benchmark-driven retrieval** instead of choosing a retriever by intuition.
-- **Dense + BM25 hybrid search** fused with Weighted Reciprocal Rank Fusion (RRF).
-- **Exact BM25-compatible sparse retrieval in the cloud** without loading the full corpus or `rank_bm25` at runtime.
-- **Two runtime profiles**: a full local production-style stack and a lightweight cloud deployment profile.
-- **Grounded generation with citations** and explicit insufficient-evidence behavior.
-- **Production hardening**: readiness checks, timeouts, bounded generation concurrency, admission control, request IDs, metrics, and dependency error normalization.
-- **Public deployment** on Render + Qdrant Cloud + Groq, with the semantic E2E limitation documented below.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    U["User / API Client"] --> API["FastAPI"]
-    API --> SERVICE["RAGService"]
-    SERVICE --> PIPELINE["RAGPipeline"]
-    PIPELINE --> HYBRID["HybridRetriever"]
-    HYBRID --> DENSE["Dense Retrieval"] & BM25["BM25 Retrieval"]
-    DENSE --> RRF["Weighted RRF"]
-    BM25 --> RRF
-    RRF --> CTX["Context Builder"]
-    CTX --> PROMPT["Prompt Builder"]
-    PROMPT --> GEN["Grounded Generator"]
-    GEN --> API
-```
-
-The application supports two runtime profiles:
-
-| Component | Local profile | Cloud profile |
-|---|---|---|
-| API | FastAPI | FastAPI |
-| Dense encoder | SentenceTransformers BGE | FastEmbed BGE |
-| Dense index | Local Qdrant | Qdrant Cloud |
-| Lexical retrieval | `rank_bm25` | Qdrant sparse vectors |
-| Fusion | Weighted RRF | Weighted RRF |
-| Generator | Ollama | Groq |
-| Model | `qwen3:4b-instruct` | `openai/gpt-oss-20b` |
-| Deployment | Docker Compose | Render |
-
-Detailed architecture: [`docs/03_system_architecture.md`](docs/03_system_architecture.md)
-
-## Retrieval Pipeline
-
-The frozen v1 retrieval path is deterministic:
-
-```text
-Query
-  ├── Dense retrieval
-  └── BM25 retrieval
-          ↓
-     Weighted RRF
-          ↓
-       Top-K
-          ↓
-   Context Builder
-          ↓
-      Generation
-```
-
-Default retrieval configuration:
-
-```text
-Dense weight       0.7
-BM25 weight        0.3
-RRF k              60
-Retrieval top-k    10
-Max context        4000 tokens
-Max sources        6
-```
-
-Adaptive retrieval was evaluated separately and intentionally rejected for the v1 production path in favor of the simpler deterministic hybrid baseline.
-
-## Retrieval Benchmark
-
-The canonical 100-case local hybrid benchmark achieved:
-
-| Metric | Score |
-|---|---:|
-| Hit@1 | 0.6200 |
-| Hit@3 | 0.8100 |
-| Hit@5 | 0.8700 |
-| Hit@10 | 0.9300 |
-| Recall@10 | 0.8392 |
-| nDCG@10 | 0.6788 |
-| MRR | 0.7247 |
-
-For the cloud deployment profile, FastEmbed BGE + canonical BGE vectors + exact BM25 sparse retrieval + the same Weighted RRF configuration achieved:
-
-| Metric | Score |
-|---|---:|
-| Hit@1 | 0.5800 |
-| Hit@3 | 0.8000 |
-| Hit@5 | 0.9000 |
-| Hit@10 | 0.9300 |
-| Recall@10 | 0.8208 |
-| nDCG@10 | 0.6677 |
-| MRR | 0.7119 |
-
-The cloud profile preserves Hit@10 while trading a small amount of ranking quality for substantially lower deployment memory.
-Source: [`benchmarks/retrieval/reports/cloud-hybrid-v1.md`](benchmarks/retrieval/reports/cloud-hybrid-v1.md) (re-run 2026-09-17 reproduces the table exactly).
-
-Detailed reports:
-
-- [`benchmarks/retrieval/reports/retrieval_benchmark_v1.md`](benchmarks/retrieval/reports/retrieval_benchmark_v1.md)
-- [`benchmarks/retrieval/reports/cloud-hybrid-v1.md`](benchmarks/retrieval/reports/cloud-hybrid-v1.md)
-- [`benchmarks/retrieval/routing/adaptive_retrieval_v1_decision.md`](benchmarks/retrieval/routing/adaptive_retrieval_v1_decision.md)
-
-## Exact BM25 Cloud Retrieval
-
-The local profile uses `rank_bm25.BM25Okapi`.
-
-For cloud deployment, the BM25 representation is migrated into Qdrant sparse vectors. The runtime query encoder loads only a compact deployment artifact containing vocabulary mappings, IDF values, tokenizer configuration, corpus statistics, and sparse feature indices.
-
-A 500-chunk parity canary over 100 query texts produced:
-
-```text
-Exact top-10 order              100 / 100
-Mean top-10 local coverage      1.000000
-Maximum shared score delta      0.0000024688
-Mismatched queries              0
-Source: [`benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json`](benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json)
-```
-
-This avoids loading the local corpus and `rank_bm25` package in the cloud runtime.
-
-## Generation
-
-The generator is instructed to:
-
-- answer only from retrieved sources,
-- use bracketed citations,
-- avoid unsupported claims,
-- report insufficient evidence when required,
-- acknowledge source disagreement where relevant.
-
-The cloud profile uses Groq with `openai/gpt-oss-20b`. Generation concurrency is intentionally bounded:
-
-```text
-MAX_CONCURRENT_GENERATIONS=1
-GENERATION_TIMEOUT_SECONDS=120
-```
-
-Generation benchmark artifacts:
-
-- [`benchmarks/generation/reports/generation_benchmark_v1.md`](benchmarks/generation/reports/generation_benchmark_v1.md)
-
-## End-to-End Validation
-
-The frozen E2E benchmark contains 18 cases covering:
-
-- lexical retrieval,
-- semantic retrieval,
-- ambiguous queries,
-- cross-tool questions,
-- version-specific questions,
-- insufficient-evidence behavior.
-
-The validation suite exercises the real API → RAG service → retrieval → context → prompt → generator path.
-
-Structural: 18/18 pass; semantic: 12 pass / 5 partial / 1 fail (e2e-009) — release gate NOT PASSED, see decision report.
-
-These 18 frozen cases are a validation set, not a training set. The primary gap is handling underspecified questions without generalizing beyond the retrieved evidence.
-
-E2E decision report:
-
-- [`benchmarks/e2e/reports/e2e_v1_decision.md`](benchmarks/e2e/reports/e2e_v1_decision.md)
-
-## Public Deployment
-
-The public v1 backend runs on:
-
-```text
-Render Free
-   ↓
-FastAPI
-   ├── FastEmbed BGE
-   ├── Exact BM25 query encoder
-   ├── Qdrant Cloud
-   └── Groq
-```
-
-Cloud-specific packaging:
-
-```text
-docker/Dockerfile.api.cloud
-requirements-cloud.txt
-deployment/artifacts/retrieval/rank-bm25-query-artifact-v1.json
-```
-
-The cloud image intentionally excludes PyTorch, SentenceTransformers, `rank_bm25`, and Ollama.
-
-### Deployment Characterization
-
-Validated cloud-slim image:
-
-```text
-Image size                  ~130.5 MB
-Linux Docker warm RSS       ~260.5 MiB
-Render hosted RSS           ~317 MiB
-Render memory budget        512 MiB
-Observed hosted headroom    ~195 MiB
-```
-
-Observed public warm request:
-
-```text
-Backend E2E                 ~2.9 s
-Client E2E                  ~3.4 s
-Warm /health client         ~0.3–0.7 s
-```
-
-Cold-start latency is intentionally not published as a fixed benchmark because the observed first-request samples included transport variability and were not collected under a controlled cold-start experiment.
-
-## API
-
-Main endpoints:
-
-```text
-GET  /health
-GET  /ready
-GET  /metrics
-POST /v1/query
-POST /v1/query/stream
-GET  /docs
-```
-
-Example request:
+The same request can be sent directly to `POST /v1/query`:
 
 ```bash
 curl -X POST "https://enterprise-kip-api.onrender.com/v1/query" \
@@ -268,178 +45,165 @@ curl -X POST "https://enterprise-kip-api.onrender.com/v1/query" \
   -d '{"query":"What is Docker BuildKit and how is it used during image builds?"}'
 ```
 
-The API validates requests before they enter the RAG pipeline. Invalid payloads, including empty queries, are rejected at the boundary.
+The [Swagger UI](https://enterprise-kip-api.onrender.com/docs) also accepts this example through **Try it out**. The public API exposes [liveness](https://enterprise-kip-api.onrender.com/health) and [readiness](https://enterprise-kip-api.onrender.com/ready) endpoints; readiness checks its configured dependencies rather than only the web process.
 
-## Observability and Hardening
+## Measured results
 
-The API includes:
+These are **offline retrieval scores**, not answer-quality or production-latency scores. The frozen evaluation set has **100 manually verified queries**: 20 each for semantic, lexical, ambiguous, version-specific, and cross-tool questions. Hit@10 counts queries with at least one relevant document in the first ten results; MRR measures the rank of the first relevant result. Scores are fractions from 0 to 1. [Cases and protocol](benchmarks/retrieval/reports/retrieval_benchmark_v1.md)
 
-- request ID middleware,
-- structured request logging,
-- Prometheus metrics,
-- `/health` liveness checks,
-- profile-aware `/ready` dependency checks,
-- dependency failure normalization,
-- generation timeout handling,
-- bounded generation concurrency,
-- admission control,
-- query length validation.
+| Retrieval configuration | Hit@10 (of 100) | MRR (0–1) | Status |
+| --- | ---: | ---: | --- |
+| Dense-only baseline, local | 89/100 (0.8900) | 0.6644 | Evaluated baseline |
+| BM25-only baseline, local | 87/100 (0.8700) | 0.6083 | Evaluated baseline |
+| Dense + BM25, Weighted RRF, local | **93/100 (0.9300)** | **0.7247** | Frozen v1 local path |
+| FastEmbed BGE + exact BM25 sparse, Weighted RRF, Qdrant Cloud | **93/100 (0.9300)** | 0.7119 | Public cloud retrieval profile |
+| Weighted RRF + Mixedbread v2 reranker, 20 candidates | **97/100 (0.9700)** | **0.7564** | Offline experiment; not deployed |
 
-Readiness checks are profile-aware:
+The deployed retrieval design is Weighted RRF. Its fuller local/cloud comparison preserves the original benchmark detail:
 
-```text
-Local:  RAG service + Qdrant + Ollama
-Cloud:  RAG service + Qdrant Cloud + Groq
+| Metric | Local Weighted RRF | Cloud Weighted RRF |
+| --- | ---: | ---: |
+| Hit@1 | 0.6200 | 0.5800 |
+| Hit@3 | 0.8100 | 0.8000 |
+| Hit@5 | 0.8700 | 0.9000 |
+| Hit@10 | 0.9300 | 0.9300 |
+| Recall@10 | 0.8392 | 0.8208 |
+| nDCG@10 | 0.6788 | 0.6677 |
+| MRR | 0.7247 | 0.7119 |
+
+[Local benchmark](benchmarks/retrieval/reports/retrieval_benchmark_v1.md) | [Cloud benchmark](benchmarks/retrieval/reports/cloud-hybrid-v1.md)
+
+### Why v1 keeps Weighted RRF
+
+On the same 100 cases, Multi-Query reached **95/100 Hit@10** but **0.7137 MRR**, below Weighted RRF's **0.7247 MRR**. Its local steady-state retrieval mean was **619.56 ms** versus **162.28 ms** for Weighted RRF; the Multi-Query measurement used frozen rewrites and excludes live rewrite-generation time. The Mixedbread v2 reranker improved MRR to **0.7564**, Recall@10 to **0.8758**, and nDCG@10 to **0.7276**, but its mean retrieval time rose to **4,076.07 ms** with a **4,676.60 ms p95** (20-candidate pool, 100 queries, three warmups, sequential single-process measurement). Reranking is retained as an evaluated experiment, not presented as the public path. [Quality report](benchmarks/retrieval/reports/retrieval_benchmark_v1.md) | [Latency protocol](benchmarks/retrieval/reports/retrieval_latency_v1.md)
+
+The cloud run averaged **594.76 ms per retrieval case** across 100 cases (59.48 s total). This is benchmark retrieval time, **not HTTP response time**. A separate observed warm public request took **~2.9 s backend end-to-end** and **~3.4 s client end-to-end**; these are operational observations, not a controlled latency distribution. The cloud image measured **~130.5 MB**, with **~260.5 MiB** warm RSS in Linux Docker and **~317 MiB** hosted RSS against a 512 MiB Render budget. Cold-start latency was not established by a controlled test. [Cloud run](benchmarks/retrieval/reports/cloud-hybrid-v1.md) | [Deployment characterization](docs/04_evaluation_and_benchmarks.md#10-deployment-characterization)
+
+The exact-BM25 parity result is a **500-chunk sample from 36,199 chunks**, evaluated with 100 query texts: **100/100 exact top-10 orders**, mean local top-10 coverage **1.000000**, maximum shared score delta **0.0000024688**, and **0 mismatched queries**. It is a canary, not a full-corpus equivalence claim. [Parity artifact](benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json)
+
+### Generation study and independent E2E review
+
+The local generation study used **12 manually designed development cases** across six categories to iterate on prompt behavior. Its final v3 review recorded **9 pass / 3 partial**, with no output truncation under a 384-token completion cap. On the local Ollama `qwen3:4b-instruct` run, mean retrieval was **178.00 ms**, mean generation **15,376.63 ms**, and mean end-to-end **15,554.84 ms** across those 12 cases. These are local inference-path measurements, not the public Groq service's response times, and the prompt-development cases should not be treated as an independent test set. [Generation report](benchmarks/generation/reports/generation_benchmark_v1.md)
+
+The separate frozen E2E validation has **18 cases**. Runtime and citation-structure checks passed **18/18**; human semantic review found **12 pass, 5 partial, 1 fail**. The semantic release gate **did not pass**. This evaluated the local Ollama path, so it is not a cloud Groq answer-quality score. [E2E decision](benchmarks/e2e/reports/e2e_v1_decision.md)
+
+Those 18 cases are a **validation set, not a training set**: three each for semantic, lexical, ambiguous, version-specific, cross-tool, and insufficient-evidence behavior. The structural evaluator checked **111/111 raw citations** with no invalid citation IDs or citation-to-source mapping errors. The human blocking failure involved an underspecified question whose answer generalized beyond the retrieved evidence. [E2E decision](benchmarks/e2e/reports/e2e_v1_decision.md)
+
+## How it works
+
+```mermaid
+flowchart LR
+    U["User"] --> WEB["Next.js web demo"]
+    WEB --> API["FastAPI / RAGService"]
+    API --> HYBRID["Hybrid retrieval"]
+    HYBRID --> DENSE["BGE dense vectors"]
+    HYBRID --> SPARSE["BM25 lexical retrieval"]
+    DENSE --> RRF["Weighted RRF"]
+    SPARSE --> RRF
+    RRF --> CONTEXT["Evidence selection / context builder"]
+    CONTEXT --> GEN["Grounded generator"]
+    GEN --> CITE["Answer + numbered citations"]
+    CITE --> WEB
 ```
 
-## Data Sources
+The frozen v1 retriever uses dense weight **0.7**, BM25 weight **0.3**, RRF `k=60`, retrieval top-`k=10`, up to **4,000** context tokens, and at most **6** sources. Adaptive routing and reranking were evaluated but are not in the deployed v1 path. [Architecture](docs/03_system_architecture.md) | [Retrieval decisions](benchmarks/retrieval/reports/retrieval_benchmark_v1.md) | [Routing decision](benchmarks/retrieval/routing/adaptive_retrieval_v1_decision.md)
 
-The current processed corpus is built from English technical documentation from:
+The query enters `RAGService` and `RAGPipeline` through FastAPI. Dense search and BM25 retrieve candidates from the same frozen chunk corpus; Weighted Reciprocal Rank Fusion combines their ranks. The context builder selects evidence within a token budget, the generator writes an answer constrained by that evidence, and the API returns both numbered citations and source metadata. The interface lets a reader jump from a citation to its source card.
 
-- Hugging Face Transformers
-- LangChain
-- LangGraph
-- Kubernetes
-- Docker
-- FastAPI
-- Qdrant
+| Component | Local reference stack | Public cloud profile |
+| --- | --- | --- |
+| API | FastAPI | FastAPI on Render |
+| Dense encoder / store | SentenceTransformers BGE / local Qdrant | FastEmbed BGE / Qdrant Cloud |
+| Lexical retrieval | `rank_bm25` | Exact-BM25 query artifact + Qdrant sparse vectors |
+| Generation | Ollama `qwen3:4b-instruct` | Groq `openai/gpt-oss-20b` |
+| Supporting services | Docker Compose, Prometheus, Grafana | Managed Qdrant and Groq |
 
-The ingestion pipeline performs discovery, filtering, parsing, normalization, metadata extraction, quality filtering, and JSONL serialization before tokenization and chunking.
+### Exact BM25 in the cloud
 
-See the [dataset guide](data/README.md) for the frozen corpus scope, source counts, and build process.
+The local reference profile uses `rank_bm25.BM25Okapi`. For cloud deployment, a migration converts the same BM25 representation into Qdrant sparse vectors. At query time the cloud service loads a compact artifact with vocabulary mappings, IDF values, tokenizer settings, corpus statistics, and sparse feature indices; it does **not** load all 36,199 chunks or `rank_bm25`. The parity canary above checks ranking behavior on a bounded sample before relying on the cloud index. [Architecture](docs/03_system_architecture.md) | [Parity evidence](benchmarks/retrieval/reports/rank-bm25-qdrant-parity-canary-v1.json)
 
-Project vision and dataset analysis:
+### Grounded generation and API behavior
 
-- [`docs/01_project_vision.md`](docs/01_project_vision.md)
-- [`docs/02_dataset_analysis.md`](docs/02_dataset_analysis.md)
+The prompt asks the generator to answer from retrieved sources, use bracketed citations, qualify uncertainty and source disagreement, and say when evidence is insufficient. Citation structure is checked separately from semantic answer quality. Generation concurrency is bounded at **one** cloud request and the configured generation timeout is **120 seconds**. [Generation benchmark](benchmarks/generation/reports/generation_benchmark_v1.md) | [E2E review](benchmarks/e2e/reports/e2e_v1_decision.md)
 
-The raw documentation in `data/raw/` is not published in this repository. Source-card links and their revision limits are documented in [`docs/07_citation_provenance.md`](docs/07_citation_provenance.md).
+The API supports `POST /v1/query` and `POST /v1/query/stream`, plus `GET /health`, `GET /ready`, `GET /metrics`, and Swagger `GET /docs`. Request validation rejects empty or overlong queries before retrieval. Operational controls include request IDs, structured logging, Prometheus metrics, dependency error normalization, timeouts, bounded generation concurrency, and admission control. The local readiness check covers the RAG service, Qdrant, and Ollama; the cloud check covers the service, Qdrant Cloud, and Groq. [Deployment runbook](docs/05_deployment_runbook.md)
 
-## Repository Structure
+The cloud package uses `docker/Dockerfile.api.cloud`, `requirements-cloud.txt`, and the versioned BM25 query artifact under `deployment/artifacts/retrieval/`. It omits PyTorch, SentenceTransformers, `rank_bm25`, and Ollama from the deployed image. The full Docker Compose stack remains a separate local reference architecture. [Deployment runbook](docs/05_deployment_runbook.md)
 
-```text
-Enterprise-AI-Engineering-Knowledge-Platform/
-├── backend/
-│   ├── api/
-│   ├── chunking/
-│   ├── core/
-│   ├── embedding/
-│   ├── evaluation/
-│   ├── generation/
-│   ├── indexing/
-│   ├── ingestion/
-│   ├── query_rewriting/
-│   ├── reranking/
-│   ├── retrieval/
-│   ├── services/
-│   ├── tokenization/
-│   └── vector_store/
-├── benchmarks/
-│   ├── e2e/
-│   ├── generation/
-│   ├── load/
-│   └── retrieval/
-├── constraints/
-├── deployment/
-├── docker/
-├── docs/
-├── scripts/
-├── tests/
-├── web/
-├── docker-compose.yml
-├── requirements.txt
-├── requirements-cloud.txt
-├── requirements-dev.txt
-├── pyproject.toml
-├── pytest.ini
-├── .env.example
-└── README.md
+### From documentation to an index
+
+The ingestion pipeline discovers source files, filters and parses them, normalizes content and metadata, applies quality checks, serializes accepted documents, tokenizes and chunks them, then builds dense and lexical indexes. The seven upstream repositories and their document/chunk counts are recorded in the [dataset guide](data/README.md); the project does not ship copies of the raw documentation. The [source-provenance note](docs/07_citation_provenance.md) explains why a live upstream URL is useful for inspection but cannot prove the exact historical indexed revision.
+
+## Quick start
+
+To run the **web interface** against the public backend, use Node.js **20.9+**:
+
+```bash
+git clone https://github.com/Thazg/knowledge-intelligence-platform.git
+cd knowledge-intelligence-platform/web
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
-## Local Development
+Open [http://localhost:3000](http://localhost:3000). On PowerShell, `Copy-Item .env.example .env.local` can replace `cp`. The example environment targets the public API; no local corpus or model is needed for this web-only path. Questions submitted through the form go to that API. For an independent local backend and the full Qdrant/Ollama/Prometheus/Grafana stack, follow the [deployment runbook](docs/05_deployment_runbook.md) and [web setup](web/README.md).
 
-The repository targets CPython 3.13.
+The repository's main areas are:
 
-Install development dependencies:
+```text
+backend/       ingestion, retrieval, generation, API, services
+benchmarks/    frozen cases, machine-readable outputs, decision reports
+data/          dataset guide; raw and processed corpora are local
+deployment/    versioned cloud retrieval artifact
+docker/        local and cloud API images
+docs/          architecture, evaluation, provenance, runbooks
+scripts/       data, benchmark, and deployment utilities
+tests/         backend tests
+web/           Next.js demo and its tests
+```
+
+The root `docker-compose.yml` defines the full local reference stack: FastAPI, Qdrant, Ollama, Prometheus, and Grafana. It requires the local corpus/index and model setup described in the [deployment runbook](docs/05_deployment_runbook.md); simply starting the frontend does not reproduce that stack. The public backend instead uses Render + Qdrant Cloud + Groq.
+
+## Testing and reproduction
+
+The repository targets **CPython 3.13**. From the repository root, the default non-integration gate is:
 
 ```bash
 python -m pip install -r requirements-dev.txt
-```
-
-Run quality checks:
-
-```bash
 ruff check .
 pytest tests/ -q -m "not integration"
 git diff --check
 ```
 
-Validate Docker Compose:
+Frontend and container checks:
 
 ```bash
+cd web
+npm ci
+npm run lint
+npm test
+npx tsc --noEmit
+npm run build
+cd ..
 docker compose config --quiet
 docker compose build api
+docker build -f docker/Dockerfile.api.cloud -t kip-cloud:ci .
 ```
 
-The default unit-test gate does not require the local corpus, downloaded ML models, Qdrant, Ollama, Prometheus, or Grafana to be running.
+These commands match the [CI workflow](.github/workflows/ci.yml); the status badge above reads the live `main` workflow state. Unit tests do not require Qdrant, Ollama, downloaded ML models, or the private local corpus. Integration and retrieval-regression jobs have their own [workflows](.github/workflows/integration.yml) and [protocols](docs/06_reproducibility_and_operations.md).
 
-## Local Production-Style Stack
+Reproducing benchmark numbers requires the frozen cases, corpus/index, model versions, and profile-specific services described in [reproducibility and operations](docs/06_reproducibility_and_operations.md). The published reports record the evaluation settings and artifacts; a clean checkout alone does not recreate the Qdrant Cloud collection. Retrieval quality, local retrieval latency, generation evaluation, E2E review, and hosted HTTP observations are **different measurements** and should not be compared as one latency or accuracy score.
 
-The repository-root `docker-compose.yml` provides the full local stack:
+## Limitations
 
-```text
-FastAPI
-Qdrant
-Ollama
-Prometheus
-Grafana
-```
+- The corpus is a **frozen English-language documentation snapshot**, not the open web or current product guidance. It contains **4,612 source documents and 36,199 chunks** across seven source groupings; coverage is uneven. Raw upstream documentation and the processed corpus are not committed here. [Dataset guide](data/README.md)
+- Citation URLs open **current upstream paths**, which can drift from the indexed revision; the cards are not immutable evidence snapshots. [Provenance](docs/07_citation_provenance.md)
+- The **18-case human semantic gate failed** on an ambiguous query. Retrieval accuracy and valid citation syntax do not establish answer correctness. [E2E review](benchmarks/e2e/reports/e2e_v1_decision.md)
+- The best offline reranker and adaptive routing experiments are **not deployed**. Public behavior uses the simpler frozen hybrid path. [Retrieval report](benchmarks/retrieval/reports/retrieval_benchmark_v1.md)
+- The public cloud profile depends on Render, Qdrant Cloud, and Groq. Free-tier wake-ups and transport variability affect user-perceived latency; the warm-request observations above are not a production SLO. [Operations](docs/06_reproducibility_and_operations.md)
 
-The cloud deployment profile is separate and must not replace the local reference architecture.
+## Documentation, contributing, and license
 
-## v1 Scope
-
-The deterministic v1 production path is intentionally frozen around:
-
-```text
-hybrid retrieval
-→ grounded context
-→ cited generation
-→ predictable failure behavior
-→ measurable performance
-→ deployability
-```
-
-The following are intentionally outside the v1 production path:
-
-- autonomous LangGraph agent behavior,
-- automatic adaptive retrieval routing,
-- dynamic retrieval strategy selection,
-- uncontrolled multi-query expansion.
-
-These can be explored in later versions without destabilizing the reproducible v1 baseline.
-
-## Current Status
-
-The v1 backend is publicly deployed. Its runtime and citation-structure checks passed, while the frozen E2E semantic release gate did not; see the [decision report](benchmarks/e2e/reports/e2e_v1_decision.md) before treating answer quality as release-ready.
-
-Completed milestones include:
-
-- ingestion,
-- tokenization and chunking,
-- embedding evaluation,
-- Qdrant vector search,
-- dense + BM25 hybrid retrieval,
-- Weighted RRF,
-- generation evaluation,
-- E2E validation,
-- production hardening,
-- CI,
-- load/performance characterization,
-- cloud deployment profile,
-- Docker slim-image optimization,
-- public Render deployment.
-
-## License
-
-The original code and documentation in this repository are licensed under the [MIT License](LICENSE). Third-party documentation used in the indexed corpus and third-party dependencies remain subject to their respective licenses.
+- [Dataset and source counts](data/README.md) | [Architecture](docs/03_system_architecture.md) | [Evaluation](docs/04_evaluation_and_benchmarks.md) | [Deployment](docs/05_deployment_runbook.md) | [Reproducibility](docs/06_reproducibility_and_operations.md) | [Citation provenance](docs/07_citation_provenance.md)
+- [Web interface guide](web/README.md) | [Contributing](CONTRIBUTING.md) | [Security reporting](SECURITY.md)
+- Original code and documentation are under the [MIT License](LICENSE). Indexed third-party documentation and dependencies retain their own licenses.
