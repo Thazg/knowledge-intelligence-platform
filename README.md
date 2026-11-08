@@ -5,10 +5,11 @@
 </p>
 
 <p align="center">
-  <img alt="Python 3.13" src="https://img.shields.io/badge/Python-3.13-3776AB?labelColor=555555">
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688">
-  <a href="https://github.com/Thazg/knowledge-intelligence-platform/actions/workflows/ci.yml"><img alt="CI with GitHub Actions" src="https://img.shields.io/badge/CI-GitHub_Actions-2388FF?labelColor=555555"></a>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-2EA44F?labelColor=555555"></a>
+  <img alt="Python 3.13" src="https://img.shields.io/badge/Python-3.13-3776AB?logo=python&amp;logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16.3.3-000000?logo=nextdotjs&amp;logoColor=white">
+  <img alt="Qdrant" src="https://img.shields.io/badge/Qdrant-Vector_Search-DC244C?logo=qdrant&amp;logoColor=white">
+  <a href="https://github.com/Thazg/knowledge-intelligence-platform/actions/workflows/ci.yml"><img alt="CI status on main" src="https://github.com/Thazg/knowledge-intelligence-platform/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
 <p align="center">
@@ -189,7 +190,7 @@ docker compose build api
 docker build -f docker/Dockerfile.api.cloud -t kip-cloud:ci .
 ```
 
-These commands match the [CI workflow](.github/workflows/ci.yml); the CI badge above links to the GitHub Actions workflow. Unit tests do not require Qdrant, Ollama, downloaded ML models, or the private local corpus. Integration and retrieval-regression jobs have their own [workflows](.github/workflows/integration.yml) and [protocols](docs/06_reproducibility_and_operations.md).
+These commands match the [CI workflow](.github/workflows/ci.yml); the CI badge above shows its current `main` status and links to the GitHub Actions workflow. Unit tests do not require Qdrant, Ollama, downloaded ML models, or the private local corpus. Integration and retrieval-regression jobs have their own [workflows](.github/workflows/integration.yml) and [protocols](docs/06_reproducibility_and_operations.md).
 
 Reproducing benchmark numbers requires the frozen cases, corpus/index, model versions, and profile-specific services described in [reproducibility and operations](docs/06_reproducibility_and_operations.md). The published reports record the evaluation settings and artifacts; a clean checkout alone does not recreate the Qdrant Cloud collection. Retrieval quality, local retrieval latency, generation evaluation, E2E review, and hosted HTTP observations are **different measurements** and should not be compared as one latency or accuracy score.
 
